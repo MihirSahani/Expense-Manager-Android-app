@@ -9,6 +9,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.financemanager.Graph
+import com.example.financemanager.viewmodel.*
 
 const val LOGIN_ROUTE = "login_screen"
 
@@ -20,7 +22,7 @@ fun Navigate() {
 
     Scaffold(
         bottomBar = {
-            if (currentRoute != LOGIN_ROUTE) {
+            if (currentRoute != LOGIN_ROUTE && currentRoute != Screen.UpdateUserDetails.route) {
                 NavigationBar(navController)
             }
         }
@@ -30,12 +32,27 @@ fun Navigate() {
             startDestination = LOGIN_ROUTE,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(LOGIN_ROUTE) { LoginScreen(navController) }
-            composable(Screen.Home.route) { HomeScreen(navController) }
-            composable(Screen.Accounts.route) { AccountsScreen() }
-            composable(Screen.Analysis.route) { AnalysisScreen() }
-            composable(Screen.TransactionHistory.route) { TransactionHistoryScreen() }
-            composable(Screen.Settings.route) { SettingsScreen() }
+            composable(LOGIN_ROUTE) { 
+                LoginScreen(navController, Graph.viewModelFactory.getViewModel(ViewModelName.LOGIN) as LoginVM)
+            }
+            composable(Screen.Home.route) { 
+                HomeScreen(navController, Graph.viewModelFactory.getViewModel(ViewModelName.HOME) as HomeVM) 
+            }
+            composable(Screen.Accounts.route) { 
+                AccountsScreen(navController, Graph.viewModelFactory.getViewModel(ViewModelName.ACCOUNTS) as AccountVM) 
+            }
+            composable(Screen.Analysis.route) { 
+                AnalysisScreen(navController, Graph.viewModelFactory.getViewModel(ViewModelName.HOME) as HomeVM) 
+            }
+            composable(Screen.TransactionHistory.route) { 
+                TransactionHistoryScreen(navController, Graph.viewModelFactory.getViewModel(ViewModelName.TRANSACTION) as TransactionVM) 
+            }
+            composable(Screen.Settings.route) { 
+                SettingsScreen(navController) 
+            }
+            composable(Screen.UpdateUserDetails.route) {
+                UpdateUserDetailsScreen(navController, Graph.viewModelFactory.getViewModel(ViewModelName.USER_DETAILS_UPDATE) as UserVM)
+            }
         }
     }
 }

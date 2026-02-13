@@ -19,6 +19,6 @@ abstract class TransactionDao {
     @Delete
     abstract suspend fun delete(transaction: Transaction)
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun create(transaction: Transaction)
 }

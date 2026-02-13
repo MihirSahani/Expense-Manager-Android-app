@@ -19,6 +19,6 @@ abstract class UserDao {
     @Delete
     abstract suspend fun delete(user: User)
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun create(user: User)
 }

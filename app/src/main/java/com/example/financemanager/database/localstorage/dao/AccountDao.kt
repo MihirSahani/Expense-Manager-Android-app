@@ -11,7 +11,7 @@ import com.example.financemanager.database.entity.Account
 @Dao
 abstract class AccountDao {
     @Query("SELECT * FROM `accounts`")
-    abstract suspend fun getAll(): List<Account>
+    abstract suspend fun getAll(): MutableList<Account>
     
     @Update
     abstract suspend fun update(account: Account)
@@ -19,6 +19,6 @@ abstract class AccountDao {
     @Delete
     abstract suspend fun delete(account: Account)
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun create(account: Account)
 }

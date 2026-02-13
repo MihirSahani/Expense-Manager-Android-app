@@ -9,12 +9,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.financemanager.viewmodel.HomeViewModel
+import com.example.financemanager.viewmodel.HomeVM
 
 @Composable
-fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewModel()) {
+fun HomeScreen(navController: NavController, viewModel: HomeVM) {
     val userName by viewModel.userName.collectAsState()
 
     Column(
@@ -37,24 +36,5 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel = viewMode
         Spacer(modifier = Modifier.height(32.dp))
         
         // You can add more summary widgets here later
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Quick Actions",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = { /* Navigate to add transaction */ },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Add New Transaction")
-                }
-            }
-        }
     }
 }

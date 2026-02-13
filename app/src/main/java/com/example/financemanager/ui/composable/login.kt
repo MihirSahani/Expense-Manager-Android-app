@@ -8,20 +8,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.financemanager.ui.LOGIN_ROUTE
-import com.example.financemanager.viewmodel.LoginViewModel
-
-// Assuming you are using a ViewModel provider in a real app, 
-// but sticking to your pattern for now.
-val loginViewModel = LoginViewModel()
+import com.example.financemanager.viewmodel.LoginVM
 
 @Composable
-fun LoginScreen(navController: NavController) {
-    val isUserLoaded by loginViewModel.isUserLoaded.collectAsState()
-    
+fun LoginScreen(navController: NavController, viewModel: LoginVM) {
+    val isUserLoaded by viewModel.isUserDetailsLoaded.collectAsState()
+
     LaunchedEffect(isUserLoaded) {
-        if (isUserLoaded && loginViewModel.userManager.user != null) {
+        if (isUserLoaded && viewModel.user != null) {
             navController.navigate(Screen.Home.route) {
                 popUpTo(LOGIN_ROUTE) { inclusive = true }
             }
@@ -30,13 +27,13 @@ fun LoginScreen(navController: NavController) {
 
     if (!isUserLoaded) {
         LoadingScreen()
-    } else if (loginViewModel.userManager.user == null) {
-        SignUpContent(navController)
+    } else if (viewModel.user == null) {
+        SignUpContent(navController, viewModel)
     }
 }
 
 @Composable
-fun SignUpContent(navController: NavController) {
+fun SignUpContent(navController: NavController, viewModel: LoginVM = viewModel()) {
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
 
@@ -58,20 +55,24 @@ fun SignUpContent(navController: NavController) {
             value = firstName,
             onValueChange = { firstName = it },
             label = { Text("First Name") },
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp)
         )
 
         OutlinedTextField(
             value = lastName,
             onValueChange = { lastName = it },
             label = { Text("Last Name") },
-            modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp)
         )
 
         Button(
             onClick = { 
                 if (firstName.isNotBlank() && lastName.isNotBlank()) {
-                    loginViewModel.signUp(firstName, lastName)
+                    viewModel.signUp(firstName, lastName)
                     navController.navigate(Screen.Home.route)
                 }
             },

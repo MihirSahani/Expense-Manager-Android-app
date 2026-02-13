@@ -3,6 +3,7 @@ package com.example.financemanager.database.localstorage.dao
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.example.financemanager.database.entity.Category
@@ -10,7 +11,7 @@ import com.example.financemanager.database.entity.Category
 @Dao
 abstract class CategoryDao {
     @Query("SELECT * FROM `categories`")
-    abstract suspend fun getAll(): List<Category>
+    abstract suspend fun getAll(): MutableList<Category>
 
     @Update
     abstract suspend fun update(category: Category)
@@ -18,6 +19,6 @@ abstract class CategoryDao {
     @Delete
     abstract suspend fun delete(category: Category)
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun create(category: Category)
 }

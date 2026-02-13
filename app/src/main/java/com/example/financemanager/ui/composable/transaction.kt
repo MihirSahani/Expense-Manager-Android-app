@@ -13,11 +13,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.financemanager.database.entity.Transaction
-import com.example.financemanager.viewmodel.TransactionViewModel
+import com.example.financemanager.viewmodel.TransactionVM
 
 @Composable
-fun TransactionHistoryScreen(viewModel: TransactionViewModel = viewModel()) {
+fun TransactionHistoryScreen(navController: NavController, viewModel: TransactionVM) {
     val transactions by viewModel.transactions.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {

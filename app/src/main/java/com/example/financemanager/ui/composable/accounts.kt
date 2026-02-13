@@ -12,37 +12,44 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.financemanager.database.entity.Account
-import com.example.financemanager.viewmodel.AccountViewModel
+import com.example.financemanager.viewmodel.AccountVM
 
 @Composable
-fun AccountsScreen(viewModel: AccountViewModel = viewModel()) {
+fun AccountsScreen(navController: NavController, viewModel: AccountVM) {
     val accounts by viewModel.accounts.collectAsState()
     val netWorth by viewModel.netWorth.collectAsState()
+    val areAccountsLoaded by viewModel.areAccountsLoaded.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        NetWorthCard(netWorth)
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Text(
-            text = "Your Accounts",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 16.dp)
+    if (!areAccountsLoaded) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+            CircularProgressIndicator()
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
         ) {
-            items(accounts) { account ->
-                AccountItem(account)
+            NetWorthCard(netWorth)
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Your Accounts",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
+                items(accounts) { account ->
+                    AccountItem(account)
+                }
             }
         }
     }
