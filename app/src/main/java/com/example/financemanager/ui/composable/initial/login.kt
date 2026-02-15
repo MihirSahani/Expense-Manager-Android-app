@@ -1,4 +1,4 @@
-package com.example.financemanager.ui.composable
+package com.example.financemanager.ui.composable.initial
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -10,25 +10,27 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.financemanager.ui.LOGIN_ROUTE
+import com.example.financemanager.ui.composable.Screen
 import com.example.financemanager.viewmodel.LoginVM
 
 @Composable
 fun LoginScreen(navController: NavController, viewModel: LoginVM) {
     val isUserLoaded by viewModel.isUserDetailsLoaded.collectAsState()
 
-    LaunchedEffect(isUserLoaded) {
-        if (isUserLoaded && viewModel.user != null) {
-            navController.navigate(Screen.Home.route) {
-                popUpTo(LOGIN_ROUTE) { inclusive = true }
+    when (isUserLoaded) {
+        true -> {
+            when (viewModel.user) {
+                null -> SignUpContent(navController, viewModel)
+                else -> {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
             }
         }
-    }
-
-    if (!isUserLoaded) {
-        LoadingScreen()
-    } else if (viewModel.user == null) {
-        SignUpContent(navController, viewModel)
+        false -> {
+            LoadingScreen()
+        }
     }
 }
 

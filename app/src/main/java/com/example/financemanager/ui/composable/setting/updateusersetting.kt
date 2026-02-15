@@ -1,4 +1,4 @@
-package com.example.financemanager.ui.composable
+package com.example.financemanager.ui.composable.setting
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -21,12 +21,11 @@ fun UpdateUserDetailsScreen(navController: NavController, viewModel: UserVM) {
 
     // Initialize fields when user data is loaded
     LaunchedEffect(viewModel.user) {
-        viewModel.user?.let {
+        viewModel.user.value?.let {
             firstName = it.firstName
             lastName = it.lastName
         }
     }
-
 
     Scaffold(
         topBar = {

@@ -8,7 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.room.Room
 import com.example.financemanager.database.localstorage.ExpenseManagementDatabase
 import com.example.financemanager.internal.ExpenseManagementInternal
-import com.example.financemanager.ui.composable.Navigate
+import com.example.financemanager.ui.composable.initial.Navigate
 import com.example.financemanager.viewmodel.ViewModelFactory
 
 object Graph {

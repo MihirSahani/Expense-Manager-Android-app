@@ -1,9 +1,11 @@
 package com.example.financemanager.internal
 
+import android.content.Context
 import androidx.room.Database
 import com.example.financemanager.Graph
 import com.example.financemanager.database.DummyData
 import com.example.financemanager.database.entity.Account
+import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.Transaction
 import com.example.financemanager.database.entity.User
 import com.example.financemanager.database.localstorage.ExpenseManagementDatabase
@@ -14,6 +16,7 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     val categoryManager: CategoryManager = CategoryManager(database.categoryDao())
     val transactionManager: TransactionManager = TransactionManager(database.transactionDao())
     val userManager: UserManager = UserManager(database.userDao())
+    val smsParser: SMSParser = SMSParser()
 
     suspend fun getUser(): User? {
         return userManager.getUser()
@@ -26,7 +29,10 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     suspend fun loadDummyData() {
         DummyData.accounts.forEach { accountManager.addAccount(it) }
         DummyData.categories.forEach { categoryManager.addCategory(it) }
-        DummyData.transactions.forEach { transactionManager.addTransaction(it) }
+    }
+
+    suspend fun parseMessagesToTransactions(context: Context) {
+        smsParser.parseMessagesToTransactions(context, transactionManager)
     }
 
     suspend fun createUser(firstName: String, lastName: String) {
@@ -40,5 +46,9 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
 
     suspend fun getAccounts(): MutableList<Account> {
         return accountManager.getAllAccounts()
+    }
+
+    suspend fun getCategories(): MutableList<Category> {
+        return categoryManager.getAllCategories()
     }
 }

@@ -6,9 +6,6 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "categories")
 data class Category(
-    @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = "id")
-    var id: Int,
     @ColumnInfo(name = "name")
     var name: String,
     @ColumnInfo(name = "description")
@@ -22,4 +19,7 @@ data class Category(
     @ColumnInfo(name = "updated_at")
     var updatedAt: String
 ) {
+    @PrimaryKey(autoGenerate = true)
+    @ColumnInfo(name = "id")
+    var id: Int = 0
 }

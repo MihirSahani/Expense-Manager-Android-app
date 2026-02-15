@@ -1,4 +1,4 @@
-package com.example.financemanager.ui.composable
+package com.example.financemanager.ui.composable.setting
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -9,8 +9,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.financemanager.ui.composable.Screen
 
 @Composable
 fun SettingsScreen(navController: NavController) {
@@ -38,7 +41,7 @@ fun SettingsScreen(navController: NavController) {
 @Composable
 fun SettingsItem(
     title: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     onClick: () -> Unit
 ) {
     Row(
@@ -65,7 +68,7 @@ fun SettingsItem(
         Icon(
             imageVector = Icons.Default.ChevronRight,
             contentDescription = null,
-            tint = androidx.compose.ui.graphics.Color.Gray
+            tint = Color.Gray
         )
     }
 }

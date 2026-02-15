@@ -15,7 +15,6 @@ import androidx.compose.material3.NavigationBar as MaterialNavigationBar
 fun NavigationBar(navController: NavController) {
     val items = listOf(
         Screen.Home,
-        Screen.Accounts,
         Screen.Analysis,
         Screen.TransactionHistory,
         Screen.Settings
