@@ -10,7 +10,7 @@ data class Transaction(
     @ColumnInfo(name = "id")
     val id: Int = 0,
     @ColumnInfo(name = "account_id")
-    var accountId: Int,
+    var accountId: Int? = null,
     @ColumnInfo(name = "category_id")
     var categoryId: Int? = null,
     @ColumnInfo(name = "type")
@@ -32,5 +32,7 @@ data class Transaction(
     @ColumnInfo(name = "created_at")
     var createdAt: String,
     @ColumnInfo(name = "updated_at")
-    var updatedAt: String
+    var updatedAt: String,
+    @ColumnInfo(name = "raw_account_id_name")
+    var rawAccountIdName: String,
 )

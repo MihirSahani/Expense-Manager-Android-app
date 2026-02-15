@@ -12,6 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.financemanager.viewmodel.AccountVM
 import com.example.financemanager.viewmodel.CategoryVM
 import com.example.financemanager.viewmodel.TransactionVM
 
@@ -20,12 +21,15 @@ import com.example.financemanager.viewmodel.TransactionVM
 fun ViewTransactionScreen(
     navController: NavController,
     transactionVM: TransactionVM,
-    categoryVM: CategoryVM
+    categoryVM: CategoryVM,
+    accountVM: AccountVM
 ) {
     val transaction by transactionVM.selectedTransaction.collectAsState()
     val categories by categoryVM.categories.collectAsState()
+    val accounts by accountVM.accounts.collectAsState()
 
     var showCategoryDialog by remember { mutableStateOf(false) }
+    var showAccountDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -64,7 +68,7 @@ fun ViewTransactionScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text("Category", fontSize = 14.sp, color = Color.Gray)
                         Text(
                             text = currentCategory?.name ?: "Not Assigned",
@@ -74,7 +78,28 @@ fun ViewTransactionScreen(
                         )
                     }
                     Button(onClick = { showCategoryDialog = true }) {
-                        Text(if (currentCategory == null) "Assign Category" else "Change Category")
+                        Text(if (currentCategory == null) "Assign" else "Change")
+                    }
+                }
+
+                val currentAccount = accounts.find { it.id == currentTransaction.accountId }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Account", fontSize = 14.sp, color = Color.Gray)
+                        Text(
+                            text = currentAccount?.name ?: "Not Assigned (${currentTransaction.rawAccountIdName})",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (currentAccount == null) Color.Red else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Button(onClick = { showAccountDialog = true }) {
+                        Text(if (currentAccount == null) "Assign" else "Change")
                     }
                 }
 
@@ -98,10 +123,11 @@ fun ViewTransactionScreen(
             title = { Text("Select Category") },
             text = {
                 Column {
-                    Row() {
-                        Text("Update Category for all transactions with this payee")
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Update all for this payee", modifier = Modifier.weight(1f))
                         Switch(checked = updateCategoryForAllTransactionsWithPayee, onCheckedChange = {updateCategoryForAllTransactionsWithPayee = it}, )
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
                     categories.forEach { category ->
                         TextButton(
                             onClick = {
@@ -118,6 +144,38 @@ fun ViewTransactionScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showCategoryDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showAccountDialog && transaction != null) {
+        val currentTransaction = transaction!!
+        var updateAccountForAllTransactions by remember { mutableStateOf(false) }
+
+        AlertDialog(
+            onDismissRequest = { showAccountDialog = false },
+            title = { Text("Select Account") },
+            text = {
+                Column {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    accounts.forEach { account ->
+                        TextButton(
+                            onClick = {
+                                val updatedTransaction = currentTransaction.copy(accountId = account.id)
+                                transactionVM.updateTransactionAccount(updatedTransaction)
+                                showAccountDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(account.name, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showAccountDialog = false }) {
                     Text("Cancel")
                 }
             }

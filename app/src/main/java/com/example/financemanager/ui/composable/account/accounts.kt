@@ -3,6 +3,8 @@ package com.example.financemanager.ui.composable.account
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -15,7 +17,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.financemanager.database.entity.Account
+import com.example.financemanager.ui.composable.Screen
 import com.example.financemanager.viewmodel.AccountVM
+import java.util.Locale
 
 @Composable
 fun AccountsScreen(navController: NavController, viewModel: AccountVM) {
@@ -23,33 +27,47 @@ fun AccountsScreen(navController: NavController, viewModel: AccountVM) {
     val netWorth by viewModel.netWorth.collectAsState()
     val areAccountsLoaded by viewModel.areAccountsLoaded.collectAsState()
 
-    if (!areAccountsLoaded) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = { navController.navigate(Screen.AddAccount.route) }) {
+                Icon(Icons.Default.Add, contentDescription = "Add Account")
+            }
         }
-    } else {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            NetWorthCard(netWorth)
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "Your Accounts",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 16.dp)
+    ) { innerPadding ->
+        if (!areAccountsLoaded) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentAlignment = Alignment.Center
             ) {
-                items(accounts) { account ->
-                    AccountItem(account)
+                CircularProgressIndicator()
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(16.dp)
+            ) {
+                NetWorthCard(netWorth)
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = "Your Accounts",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = 80.dp) // Space for FAB
+                ) {
+                    items(accounts) { account ->
+                        AccountItem(account)
+                    }
                 }
             }
         }
@@ -73,7 +91,7 @@ fun NetWorthCard(netWorth: Double) {
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
             Text(
-                text = "$${String.format("%.2f", netWorth)}",
+                text = "₹ " + String.format(Locale.getDefault(), "%.2f", netWorth),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -107,7 +125,7 @@ fun AccountItem(account: Account) {
                 )
             }
             Text(
-                text = "$${String.format("%.2f", account.currentBalance)}",
+                text = "₹ " + String.format(Locale.getDefault(), "%.2f", account.currentBalance),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.bodyLarge,
                 color = if (account.currentBalance >= 0) Color.Unspecified else Color.Red

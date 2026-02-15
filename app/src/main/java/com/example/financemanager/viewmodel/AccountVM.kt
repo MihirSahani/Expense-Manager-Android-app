@@ -34,10 +34,17 @@ class AccountVM(private val expenseManagementInternal: ExpenseManagementInternal
         loadAccounts()
     }
 
-    private fun loadAccounts() {
+    fun loadAccounts() {
         viewModelScope.launch {
             _accounts.value = expenseManagementInternal.getAccounts()
             _areAccountsLoaded.value = true
+        }
+    }
+
+    fun addAccount(account: Account) {
+        viewModelScope.launch {
+            expenseManagementInternal.addAccount(account)
+            loadAccounts()
         }
     }
 }

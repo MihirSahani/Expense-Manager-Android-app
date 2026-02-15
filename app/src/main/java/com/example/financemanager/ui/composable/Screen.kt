@@ -2,6 +2,7 @@ package com.example.financemanager.ui.composable
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
@@ -15,6 +16,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Permissions : Screen("permissions", "Permissions", Icons.Default.Security)
     object Home : Screen("home", "Home", Icons.Default.Home)
     object Accounts : Screen("accounts", "Accounts", Icons.Default.AccountBalanceWallet)
+    object AddAccount : Screen("add_account", "Add Account", Icons.Default.Add)
     object Analysis : Screen("analysis", "Analysis", Icons.Default.PieChart)
     object TransactionHistory : Screen("history", "History", Icons.Default.History)
     object Settings : Screen("settings", "Settings", Icons.Default.Settings)

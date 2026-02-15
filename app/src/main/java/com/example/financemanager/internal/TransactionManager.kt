@@ -25,4 +25,8 @@ class TransactionManager(val transactionDao: TransactionDao) {
     suspend fun updateCategoryForAllTransactionsWithPayee(payee: String, categoryId: Int) {
         transactionDao.updateCategoryForAllTransactionsWithPayee(payee, categoryId)
     }
+
+    suspend fun updateAccountForAllTransactionsWithAccount(accountName: String, accountId: Int) {
+        transactionDao.updateAccountForAllTransactionsWithAccount(accountName, accountId)
+    }
 }

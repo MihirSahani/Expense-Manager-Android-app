@@ -19,7 +19,9 @@ object Graph {
 
 
     fun provide(context: Context) {
-        database = Room.databaseBuilder(context, ExpenseManagementDatabase::class.java, "expense_management.db").fallbackToDestructiveMigration().build()
+        database = Room.databaseBuilder(context, ExpenseManagementDatabase::class.java, "expense_management.db")
+            .fallbackToDestructiveMigration()
+            .build()
         // Initialize ExpenseManagementInternal after the database is ready
         expenseManagementInternal = ExpenseManagementInternal(database)
         viewModelFactory = ViewModelFactory(expenseManagementInternal)

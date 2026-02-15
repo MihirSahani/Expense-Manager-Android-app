@@ -3,9 +3,7 @@ package com.example.financemanager.internal
 import android.content.Context
 import androidx.core.net.toUri
 import com.example.financemanager.database.entity.Transaction
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.coroutineScope
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -25,7 +23,7 @@ class SMSParser {
     // Updated Format: Update! INR 100.00 deposited in HDFC Bank A/c xx1234 on 30-DEC-24 for NEFT Cr-CITI00000006-DELOITTE-INDIA P LTD-Ajmal-Kasab-CITIN12355.
     private val hdfcSalaryRegex = """Update!\s+INR\s+([\d,.]+)\s+deposited in HDFC Bank A/c\s+xx(\d{4}).*?for.*?Cr-[^-]+-([^-]+(?:-[^-]+)?)""".toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
 
-    suspend fun parseMessagesToTransactions(context: Context, transactionManager: TransactionManager, payeeCategoryMapperManager: PayeeCategoryMapperManager) {
+    suspend fun parseMessagesToTransactions(context: Context, transactionManager: TransactionManager, payeeCategoryMapperManager: PayeeCategoryMapperManager, accountIdMapperManager: AccountIdMapperManager) {
         val cursor = context.contentResolver.query(
             "content://sms/inbox".toUri(),
             null, null, null, null
@@ -40,30 +38,33 @@ class SMSParser {
             while (it.moveToNext()) {
                 val body = it.getString(bodyIndex)
                 val sender = it.getString(addressIndex)
-                val smsId = it.getString(idIndex)
                 val smsDateLong = it.getLong(dateIndex)
 
                 if (sender in bankSenders) {
-                    processUpiMessage(body, smsId, smsDateLong, transactionManager, payeeCategoryMapperManager)
-                    processSalaryMessage(body, smsId, smsDateLong, transactionManager, payeeCategoryMapperManager)
+                    coroutineScope {
+                        processUpiMessage(body,
+                            smsDateLong, transactionManager, payeeCategoryMapperManager, accountIdMapperManager)
+                        processSalaryMessage(body,
+                            smsDateLong, transactionManager, payeeCategoryMapperManager, accountIdMapperManager)
+                    }
                 }
             }
         }
     }
 
-    private suspend fun processUpiMessage(body: String, smsId: String, smsDateLong: Long, transactionManager: TransactionManager, payeeCategoryMapperManager: PayeeCategoryMapperManager) {
+    private suspend fun processUpiMessage(body: String, smsDateLong: Long, transactionManager: TransactionManager, payeeCategoryMapperManager: PayeeCategoryMapperManager, accountIdMapperManager: AccountIdMapperManager) {
         val matchResult = hdfcUpiRegex.find(body)
         if (matchResult != null) {
             val (amountStr, accountNo, payee, _) = matchResult.destructured
-            createTransaction(amountStr, accountNo, payee, "Expense", body, smsDateLong, transactionManager, payeeCategoryMapperManager)
+            createTransaction(amountStr, accountNo, payee, "Expense", body, smsDateLong, transactionManager, payeeCategoryMapperManager, accountIdMapperManager)
         }
     }
 
-    private suspend fun processSalaryMessage(body: String, smsId: String, smsDateLong: Long, transactionManager: TransactionManager, payeeCategoryMapperManager: PayeeCategoryMapperManager) {
+    private suspend fun processSalaryMessage(body: String, smsDateLong: Long, transactionManager: TransactionManager, payeeCategoryMapperManager: PayeeCategoryMapperManager, accountIdMapperManager: AccountIdMapperManager) {
         val matchResult = hdfcSalaryRegex.find(body)
         if (matchResult != null) {
             val (amountStr, accountNo, companyName) = matchResult.destructured
-            createTransaction(amountStr, accountNo, companyName.trim(), "Income", body, smsDateLong, transactionManager, payeeCategoryMapperManager)
+            createTransaction(amountStr, accountNo, companyName.trim(), "Income", body, smsDateLong, transactionManager, payeeCategoryMapperManager, accountIdMapperManager)
         }
     }
 
@@ -75,30 +76,30 @@ class SMSParser {
         body: String,
         smsDateLong: Long,
         transactionManager: TransactionManager,
-        payeeCategoryMapperManager: PayeeCategoryMapperManager
+        payeeCategoryMapperManager: PayeeCategoryMapperManager,
+        accountIdMapperManager: AccountIdMapperManager
     ) {
         val amount = amountStr.replace(",", "").toDoubleOrNull() ?: 0.0
         val timestamp = getFormattedTimestamp(System.currentTimeMillis())
         val transactionDate = getFormattedTimestamp(smsDateLong)
 
-        CoroutineScope(Dispatchers.IO).launch {
-            transactionManager.addTransaction(
-                Transaction(
-                    accountId = 1, // Default account
-                    type = type,
-                    amount = amount,
-                    categoryId = payeeCategoryMapperManager.getCategoryId(payee),
-                    payee = payee,
-                    currency = "INR",
-                    transactionDate = transactionDate,
-                    description = body,
-                    receiptURL = "",
-                    location = "",
-                    createdAt = timestamp,
-                    updatedAt = timestamp,
-                )
+        transactionManager.addTransaction(
+            Transaction(
+                accountId = accountIdMapperManager.getAccountId(accountNo),
+                type = type,
+                amount = amount,
+                categoryId = payeeCategoryMapperManager.getCategoryId(payee),
+                payee = payee,
+                currency = "INR",
+                transactionDate = transactionDate,
+                description = body,
+                receiptURL = "",
+                location = "",
+                createdAt = timestamp,
+                updatedAt = timestamp,
+                rawAccountIdName = accountNo
             )
-        }
+        )
     }
 
     private fun getFormattedTimestamp(timeMillis: Long): String {

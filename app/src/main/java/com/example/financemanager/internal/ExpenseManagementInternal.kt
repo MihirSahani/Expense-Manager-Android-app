@@ -5,11 +5,14 @@ import androidx.room.Database
 import com.example.financemanager.Graph
 import com.example.financemanager.database.DummyData
 import com.example.financemanager.database.entity.Account
+import com.example.financemanager.database.entity.AccountIdMapper
 import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.Transaction
 import com.example.financemanager.database.entity.User
 import com.example.financemanager.database.localstorage.ExpenseManagementDatabase
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 
 class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     val accountManager: AccountManager = AccountManager(database.accountDao())
@@ -18,6 +21,7 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     val userManager: UserManager = UserManager(database.userDao())
     val appSettingManager: AppSettingManager = AppSettingManager(database.appSettingDao())
     val payeeCategoryMapperManager: PayeeCategoryMapperManager = PayeeCategoryMapperManager(database.PayeeCategoryMapperDao())
+    val accountIdMapperManager: AccountIdMapperManager = AccountIdMapperManager(database.accountIdMapperDao())
     val smsParser: SMSParser = SMSParser()
 
     suspend fun getUser(): User? {
@@ -40,13 +44,35 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
         }
     }
 
+    suspend fun updateTransactionAccount(transaction: Transaction) {
+        updateTransaction(transaction)
+        if (transaction.accountId != null) {
+            accountIdMapperManager.insert(AccountIdMapper(transaction.rawAccountIdName, transaction.accountId!!))
+            transactionManager.updateAccountForAllTransactionsWithAccount(transaction.rawAccountIdName, transaction.accountId!!)
+        }
+    }
+
     suspend fun loadDummyData() {
-        DummyData.accounts.forEach { accountManager.addAccount(it) }
-        DummyData.categories.forEach { categoryManager.addCategory(it) }
+        coroutineScope {
+            val accounts = accountManager.getAllAccounts()
+            if (accounts.isEmpty()) {
+                launch { DummyData.accounts.forEach { accountManager.addAccount(it) } }
+            }
+            val categories = categoryManager.getAllCategories()
+            if (categories.isEmpty()) {
+                launch { DummyData.categories.forEach { categoryManager.addCategory(it) } }
+            }
+        }
     }
 
     suspend fun parseMessagesToTransactions(context: Context) {
-        smsParser.parseMessagesToTransactions(context, transactionManager, payeeCategoryMapperManager)
+        if (transactionManager.getAllTransactions().isEmpty()) {
+            smsParser.parseMessagesToTransactions(context, transactionManager, payeeCategoryMapperManager, accountIdMapperManager)
+        }
+    }
+
+    suspend fun addAccount(account: Account) {
+        accountManager.addAccount(account)
     }
 
     suspend fun createUser(firstName: String, lastName: String) {
@@ -72,5 +98,13 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
 
     suspend fun updatePayeeCategory(payee: String, categoryId: Int) {
         payeeCategoryMapperManager.addMapping(payee, categoryId)
+    }
+
+    suspend fun mapAccountToId(accountIdMapper: AccountIdMapper) {
+        accountIdMapperManager.insert(accountIdMapper)
+    }
+
+    suspend fun getAccountIdMapping(accountName: String): Int? {
+        return accountIdMapperManager.getAccountId(accountName)
     }
 }

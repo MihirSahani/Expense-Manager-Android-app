@@ -38,6 +38,14 @@ class TransactionVM(private val expenseManagementInternal: ExpenseManagementInte
         }
     }
 
+    fun updateTransactionAccount(transaction: Transaction) {
+        viewModelScope.launch {
+            expenseManagementInternal.updateTransactionAccount(transaction)
+            _selectedTransaction.value = transaction
+            loadTransactions()
+        }
+    }
+
     fun getTransactionById(id: Int): Transaction? {
         return _transactions.value.find { it.id == id }
     }
