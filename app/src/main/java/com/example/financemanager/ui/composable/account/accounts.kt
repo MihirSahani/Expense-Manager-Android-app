@@ -1,5 +1,6 @@
 package com.example.financemanager.ui.composable.account
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,7 +30,10 @@ fun AccountsScreen(navController: NavController, viewModel: AccountVM) {
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = { navController.navigate(Screen.AddAccount.route) }) {
+            FloatingActionButton(onClick = {
+                viewModel.selectedAccountId = null
+                navController.navigate(Screen.AddEditAccount.route)
+            }) {
                 Icon(Icons.Default.Add, contentDescription = "Add Account")
             }
         }
@@ -66,7 +70,10 @@ fun AccountsScreen(navController: NavController, viewModel: AccountVM) {
                     contentPadding = PaddingValues(bottom = 80.dp) // Space for FAB
                 ) {
                     items(accounts) { account ->
-                        AccountItem(account)
+                        AccountItem(account) {
+                            viewModel.selectedAccountId = account.id
+                            navController.navigate(Screen.AddEditAccount.route)
+                        }
                     }
                 }
             }
@@ -101,9 +108,11 @@ fun NetWorthCard(netWorth: Double) {
 }
 
 @Composable
-fun AccountItem(account: Account) {
+fun AccountItem(account: Account, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(

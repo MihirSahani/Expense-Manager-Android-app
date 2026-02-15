@@ -15,7 +15,7 @@ import com.example.financemanager.ui.composable.Screen
 import com.example.financemanager.ui.composable.setting.SettingsScreen
 import com.example.financemanager.ui.composable.setting.UpdateUserDetailsScreen
 import com.example.financemanager.ui.composable.account.AccountsScreen
-import com.example.financemanager.ui.composable.account.AddAccountScreen
+import com.example.financemanager.ui.composable.account.AddEditAccountScreen
 import com.example.financemanager.ui.composable.analysis.AnalysisScreen
 import com.example.financemanager.ui.composable.category.AddEditCategoryScreen
 import com.example.financemanager.ui.composable.category.CategoryScreen
@@ -68,8 +68,8 @@ fun Navigate() {
                     Graph.viewModelFactory.getViewModel(ViewModelName.ACCOUNTS) as AccountVM
                 )
             }
-            composable(Screen.AddAccount.route) {
-                AddAccountScreen(
+            composable(Screen.AddEditAccount.route) {
+                AddEditAccountScreen(
                     navController,
                     Graph.viewModelFactory.getViewModel(ViewModelName.ACCOUNTS) as AccountVM
                 )

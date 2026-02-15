@@ -18,6 +18,8 @@ class AccountVM(private val expenseManagementInternal: ExpenseManagementInternal
     private val _areAccountsLoaded = MutableStateFlow(false)
     val areAccountsLoaded: StateFlow<Boolean> get() = _areAccountsLoaded
 
+    var selectedAccountId: Int? = null
+
     val netWorth: StateFlow<Double> = _accounts
         .map { accountList ->
             accountList
@@ -46,5 +48,17 @@ class AccountVM(private val expenseManagementInternal: ExpenseManagementInternal
             expenseManagementInternal.addAccount(account)
             loadAccounts()
         }
+    }
+
+    fun updateAccount(account: Account) {
+        viewModelScope.launch {
+            expenseManagementInternal.accountManager.updateAccount(account)
+            loadAccounts()
+        }
+    }
+
+    fun getAccountById(id: Int?): Account? {
+        if (id == null) return Account()
+        return _accounts.value.find { it.id == id }
     }
 }

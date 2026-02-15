@@ -17,24 +17,29 @@ import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddAccountScreen(
+fun AddEditAccountScreen(
     navController: NavController,
     accountVM: AccountVM
 ) {
-    var name by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf("Bank") }
-    var currency by remember { mutableStateOf("INR") }
-    var balance by remember { mutableStateOf("") }
-    var bankName by remember { mutableStateOf("") }
-    var accountNumber by remember { mutableStateOf("") }
-    var isIncludedInTotal by remember { mutableStateOf(true) }
+    var account by remember { mutableStateOf(accountVM.getAccountById(accountVM.selectedAccountId)) }
+    if (account == null) {
+        navController.popBackStack()
+    }
+
+    var name by remember { mutableStateOf(account!!.name)}
+    var type by remember { mutableStateOf(account!!.type) }
+    var currency by remember { mutableStateOf(account!!.currency) }
+    var balanceText by remember { mutableStateOf(account!!.currentBalance.toString()) }
+    var bankName by remember { mutableStateOf(account!!.bankName) }
+    var accountNumber by remember { mutableStateOf(account!!.accountNumber)}
+    var isIncludedInTotal by remember { mutableStateOf(account!!.isIncludedInTotal) }
 
     val accountTypes = listOf("Bank", "Credit", "Cash", "Investment")
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add Account") },
+                title = { Text(if (accountVM.selectedAccountId == null) "Add Account" else "Edit Account") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -88,8 +93,8 @@ fun AddAccountScreen(
             }
 
             OutlinedTextField(
-                value = balance,
-                onValueChange = { balance = it },
+                value = balanceText,
+                onValueChange = { balanceText = it },
                 label = { Text("Initial Balance") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
@@ -130,18 +135,25 @@ fun AddAccountScreen(
             Button(
                 onClick = {
                     val currentDateTime = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
-                    val newAccount = Account(
-                        name = name,
-                        type = type,
-                        currency = currency,
-                        currentBalance = balance.toDoubleOrNull() ?: 0.0,
-                        bankName = bankName,
-                        accountNumber = accountNumber,
-                        isIncludedInTotal = isIncludedInTotal,
-                        createdAt = currentDateTime,
-                        updatedAt = currentDateTime
-                    )
-                    accountVM.addAccount(newAccount)
+                    val accountToSave = account!!.apply {
+                        this.name = name
+                        this.type = type
+                        this.currency = currency
+                        this.currentBalance = balanceText.toDoubleOrNull() ?: 0.0
+                        this.bankName = bankName
+                        this.accountNumber = accountNumber
+                        this.isIncludedInTotal = isIncludedInTotal
+                        this.updatedAt = currentDateTime
+                        if (this.createdAt.isEmpty()) {
+                            this.createdAt = currentDateTime
+                        }
+                    }
+                    
+                    if (accountVM.selectedAccountId == null) {
+                        accountVM.addAccount(accountToSave)
+                    } else {
+                        accountVM.updateAccount(accountToSave)
+                    }
                     navController.popBackStack()
                 },
                 modifier = Modifier.fillMaxWidth(),

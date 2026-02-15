@@ -35,6 +35,7 @@ fun CategoryScreen(navController: NavController, viewModel: CategoryVM) {
         },
         floatingActionButton = {
             FloatingActionButton(onClick = {
+                viewModel.categoryId = null
                 navController.navigate(Screen.AddEditCategory.route)
             }) {
                 Icon(Icons.Default.Add, contentDescription = "Add Category")
@@ -155,7 +156,7 @@ fun AddEditCategoryScreen(navController: NavController, viewModel: CategoryVM) {
 
             Button(
                 onClick = {
-                    if (viewModel.categoryId == -1) {
+                    if (viewModel.categoryId == null) {
                         viewModel.addCategory(name, description, type, color)
                     } else {
                         category?.let {
