@@ -13,9 +13,32 @@ class TransactionVM(private val expenseManagementInternal: ExpenseManagementInte
     private val _transactions = MutableStateFlow<List<Transaction>>(emptyList())
     val transactions: StateFlow<List<Transaction>> = _transactions
 
+    private val _selectedTransaction = MutableStateFlow<Transaction?>(null)
+    val selectedTransaction: StateFlow<Transaction?> = _selectedTransaction
+
     init {
+        loadTransactions()
+    }
+
+    fun loadTransactions() {
         viewModelScope.launch {
             _transactions.value = expenseManagementInternal.getTransactions()
         }
+    }
+
+    fun selectTransaction(transaction: Transaction?) {
+        _selectedTransaction.value = transaction
+    }
+
+    fun updateTransactionCategory(transaction: Transaction, updateCategoryForAllTransactionsWithPayee: Boolean) {
+        viewModelScope.launch {
+            expenseManagementInternal.updateTransactionCategory(transaction, updateCategoryForAllTransactionsWithPayee)
+            _selectedTransaction.value = transaction
+            loadTransactions()
+        }
+    }
+
+    fun getTransactionById(id: Int): Transaction? {
+        return _transactions.value.find { it.id == id }
     }
 }

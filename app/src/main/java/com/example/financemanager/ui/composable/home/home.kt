@@ -19,10 +19,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.financemanager.ui.composable.Screen
-import com.example.financemanager.viewmodel.LoginVM
+import com.example.financemanager.viewmodel.InitialVM
 
 @Composable
-fun HomeScreen(navController: NavController, viewModel: LoginVM) {
+fun HomeScreen(navController: NavController, viewModel: InitialVM) {
     val userName by viewModel.userName.collectAsState()
     val context = LocalContext.current
 

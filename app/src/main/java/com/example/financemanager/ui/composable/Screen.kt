@@ -21,5 +21,6 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object UpdateUserDetails : Screen("update_user_details", "Update Details", Icons.Default.Person)
     object Login : Screen("login", "Login", Icons.Default.Person)
     object Categories : Screen("categories", "Categories", Icons.Default.Category)
-    object AddEditCategory : Screen("add_edit_category/{categoryId}", "Add/Edit Category", Icons.Default.Category)
+    object AddEditCategory : Screen("add_edit_category", "Add/Edit Category", Icons.Default.Category)
+    object ViewTransaction : Screen("view_transaction", "View Transaction", Icons.Default.History)
 }

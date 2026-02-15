@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class LoginVM(private val expenseManagementInternal: ExpenseManagementInternal): ViewModel() {
+class InitialVM(private val expenseManagementInternal: ExpenseManagementInternal): ViewModel() {
     private val _isUserDetailsLoaded = MutableStateFlow(false)
     val isUserDetailsLoaded: StateFlow<Boolean> = _isUserDetailsLoaded.asStateFlow()
 

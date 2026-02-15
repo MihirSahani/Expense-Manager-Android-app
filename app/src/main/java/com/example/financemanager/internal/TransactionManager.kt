@@ -21,4 +21,8 @@ class TransactionManager(val transactionDao: TransactionDao) {
     suspend fun removeTransaction(transaction: Transaction) {
         transactionDao.delete(transaction)
     }
+
+    suspend fun updateCategoryForAllTransactionsWithPayee(payee: String, categoryId: Int) {
+        transactionDao.updateCategoryForAllTransactionsWithPayee(payee, categoryId)
+    }
 }

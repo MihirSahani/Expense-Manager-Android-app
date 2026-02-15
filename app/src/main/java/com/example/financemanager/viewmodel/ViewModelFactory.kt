@@ -15,16 +15,16 @@ enum class ViewModelName {
 
 class ViewModelFactory(private val expenseManagementInternal: ExpenseManagementInternal) {
 
-    val loginVM: LoginVM by lazy { LoginVM(expenseManagementInternal) }
-    val homeVM: LoginVM by lazy { LoginVM(expenseManagementInternal) }
+    val initialVM: InitialVM by lazy { InitialVM(expenseManagementInternal) }
+    val homeVM: InitialVM by lazy { InitialVM(expenseManagementInternal) }
     val accountVM: AccountVM by lazy { AccountVM(expenseManagementInternal) }
     val transactionVM: TransactionVM by lazy { TransactionVM(expenseManagementInternal) }
-    val userVM: UserVM by lazy { UserVM(expenseManagementInternal, loginVM.user) }
+    val userVM: UserVM by lazy { UserVM(expenseManagementInternal, initialVM.user) }
     val categoryVM: CategoryVM by lazy { CategoryVM(expenseManagementInternal) }
 
     fun getViewModel(name: ViewModelName): ViewModel {
         return when (name) {
-            ViewModelName.LOGIN -> loginVM
+            ViewModelName.LOGIN -> initialVM
             ViewModelName.HOME -> homeVM
             ViewModelName.ACCOUNTS -> accountVM
             ViewModelName.TRANSACTION -> transactionVM

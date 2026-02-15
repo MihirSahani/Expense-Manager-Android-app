@@ -20,6 +20,7 @@ import com.example.financemanager.ui.composable.category.AddEditCategoryScreen
 import com.example.financemanager.ui.composable.category.CategoryScreen
 import com.example.financemanager.ui.composable.home.HomeScreen
 import com.example.financemanager.ui.composable.transaction.TransactionHistoryScreen
+import com.example.financemanager.ui.composable.transaction.ViewTransactionScreen
 import com.example.financemanager.viewmodel.*
 
 @Composable
@@ -45,19 +46,19 @@ fun Navigate() {
             composable(Screen.Permissions.route) {
                 Permission(
                     navController,
-                    Graph.viewModelFactory.getViewModel(ViewModelName.LOGIN) as LoginVM
+                    Graph.viewModelFactory.getViewModel(ViewModelName.LOGIN) as InitialVM
                 )
             }
             composable(Screen.Login.route) {
                 LoginScreen(
                     navController,
-                    Graph.viewModelFactory.getViewModel(ViewModelName.LOGIN) as LoginVM
+                    Graph.viewModelFactory.getViewModel(ViewModelName.LOGIN) as InitialVM
                 )
             }
             composable(Screen.Home.route) {
                 HomeScreen(
                     navController,
-                    Graph.viewModelFactory.getViewModel(ViewModelName.HOME) as LoginVM
+                    Graph.viewModelFactory.getViewModel(ViewModelName.HOME) as InitialVM
                 )
             }
             composable(Screen.Accounts.route) {
@@ -69,7 +70,7 @@ fun Navigate() {
             composable(Screen.Analysis.route) {
                 AnalysisScreen(
                     navController,
-                    Graph.viewModelFactory.getViewModel(ViewModelName.HOME) as LoginVM
+                    Graph.viewModelFactory.getViewModel(ViewModelName.HOME) as InitialVM
                 )
             }
             composable(Screen.TransactionHistory.route) {
@@ -94,9 +95,15 @@ fun Navigate() {
                 )
             }
             composable(Screen.AddEditCategory.route) {
-                val categoryId = it.arguments?.getString("categoryId")?.toIntOrNull() ?: -1
                 AddEditCategoryScreen(
                     navController,
+                    Graph.viewModelFactory.getViewModel(ViewModelName.CATEGORY) as CategoryVM
+                )
+            }
+            composable(Screen.ViewTransaction.route) {
+                ViewTransactionScreen(
+                    navController,
+                    Graph.viewModelFactory.getViewModel(ViewModelName.TRANSACTION) as TransactionVM,
                     Graph.viewModelFactory.getViewModel(ViewModelName.CATEGORY) as CategoryVM
                 )
             }

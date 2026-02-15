@@ -1,5 +1,6 @@
 package com.example.financemanager.viewmodel
 
+import androidx.compose.runtime.MutableState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.financemanager.database.entity.Category
@@ -60,5 +61,17 @@ class CategoryVM(private val expenseManagementInternal: ExpenseManagementInterna
 
     fun getCategoryById(id: Int): Category? {
         return _categories.value.find { it.id == id }
+    }
+
+    fun getPayeeCategory(payee: String, categoryId: MutableState<Int?>) {
+        viewModelScope.launch {
+            categoryId.value = expenseManagementInternal.getPayeeCategory(payee)
+        }
+    }
+
+    fun updatePayeeCategory(payee: String, categoryId: Int) {
+        viewModelScope.launch {
+            expenseManagementInternal.updatePayeeCategory(payee, categoryId)
+        }
     }
 }

@@ -15,10 +15,10 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.navigation.NavController
 import com.example.financemanager.ui.composable.Screen
-import com.example.financemanager.viewmodel.LoginVM
+import com.example.financemanager.viewmodel.InitialVM
 
 @Composable
-fun Permission(navController: NavController, viewModel: LoginVM) {
+fun Permission(navController: NavController, viewModel: InitialVM) {
     val context = LocalContext.current
     val activity = LocalActivity.current
 

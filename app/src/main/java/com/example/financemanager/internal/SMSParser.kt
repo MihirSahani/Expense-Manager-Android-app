@@ -25,7 +25,7 @@ class SMSParser {
     // Updated Format: Update! INR 100.00 deposited in HDFC Bank A/c xx1234 on 30-DEC-24 for NEFT Cr-CITI00000006-DELOITTE-INDIA P LTD-Ajmal-Kasab-CITIN12355.
     private val hdfcSalaryRegex = """Update!\s+INR\s+([\d,.]+)\s+deposited in HDFC Bank A/c\s+xx(\d{4}).*?for.*?Cr-[^-]+-([^-]+(?:-[^-]+)?)""".toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
 
-    fun parseMessagesToTransactions(context: Context, transactionManager: TransactionManager) {
+    suspend fun parseMessagesToTransactions(context: Context, transactionManager: TransactionManager, payeeCategoryMapperManager: PayeeCategoryMapperManager) {
         val cursor = context.contentResolver.query(
             "content://sms/inbox".toUri(),
             null, null, null, null
@@ -44,37 +44,38 @@ class SMSParser {
                 val smsDateLong = it.getLong(dateIndex)
 
                 if (sender in bankSenders) {
-                    processUpiMessage(body, smsId, smsDateLong, transactionManager)
-                    processSalaryMessage(body, smsId, smsDateLong, transactionManager)
+                    processUpiMessage(body, smsId, smsDateLong, transactionManager, payeeCategoryMapperManager)
+                    processSalaryMessage(body, smsId, smsDateLong, transactionManager, payeeCategoryMapperManager)
                 }
             }
         }
     }
 
-    private fun processUpiMessage(body: String, smsId: String, smsDateLong: Long, transactionManager: TransactionManager) {
+    private suspend fun processUpiMessage(body: String, smsId: String, smsDateLong: Long, transactionManager: TransactionManager, payeeCategoryMapperManager: PayeeCategoryMapperManager) {
         val matchResult = hdfcUpiRegex.find(body)
         if (matchResult != null) {
             val (amountStr, accountNo, payee, _) = matchResult.destructured
-            createTransaction(amountStr, accountNo, payee, "Expense", smsId, smsDateLong, transactionManager)
+            createTransaction(amountStr, accountNo, payee, "Expense", body, smsDateLong, transactionManager, payeeCategoryMapperManager)
         }
     }
 
-    private fun processSalaryMessage(body: String, smsId: String, smsDateLong: Long, transactionManager: TransactionManager) {
+    private suspend fun processSalaryMessage(body: String, smsId: String, smsDateLong: Long, transactionManager: TransactionManager, payeeCategoryMapperManager: PayeeCategoryMapperManager) {
         val matchResult = hdfcSalaryRegex.find(body)
         if (matchResult != null) {
             val (amountStr, accountNo, companyName) = matchResult.destructured
-            createTransaction(amountStr, accountNo, companyName.trim(), "Income", smsId, smsDateLong, transactionManager)
+            createTransaction(amountStr, accountNo, companyName.trim(), "Income", body, smsDateLong, transactionManager, payeeCategoryMapperManager)
         }
     }
 
-    private fun createTransaction(
+    private suspend fun createTransaction(
         amountStr: String,
         accountNo: String,
         payee: String,
         type: String,
-        smsId: String,
+        body: String,
         smsDateLong: Long,
-        transactionManager: TransactionManager
+        transactionManager: TransactionManager,
+        payeeCategoryMapperManager: PayeeCategoryMapperManager
     ) {
         val amount = amountStr.replace(",", "").toDoubleOrNull() ?: 0.0
         val timestamp = getFormattedTimestamp(System.currentTimeMillis())
@@ -84,13 +85,13 @@ class SMSParser {
             transactionManager.addTransaction(
                 Transaction(
                     accountId = 1, // Default account
-                    categoryId = if (type == "Income") 3 else 1, // Salary (3) or General Expense (1)
                     type = type,
                     amount = amount,
+                    categoryId = payeeCategoryMapperManager.getCategoryId(payee),
                     payee = payee,
                     currency = "INR",
                     transactionDate = transactionDate,
-                    description = "A/C: *$accountNo | SMS ID: $smsId",
+                    description = body,
                     receiptURL = "",
                     location = "",
                     createdAt = timestamp,

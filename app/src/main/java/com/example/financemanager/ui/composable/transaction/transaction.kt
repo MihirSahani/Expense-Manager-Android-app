@@ -1,5 +1,6 @@
 package com.example.financemanager.ui.composable.transaction
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.financemanager.database.entity.Transaction
+import com.example.financemanager.ui.composable.Screen
 import com.example.financemanager.viewmodel.TransactionVM
 
 @Composable
@@ -43,7 +45,10 @@ fun TransactionHistoryScreen(navController: NavController, viewModel: Transactio
                     DateHeader(date)
                 }
                 items(transactionsInDate) { transaction ->
-                    TransactionItem(transaction)
+                    TransactionItem(transaction) {
+                        viewModel.selectTransaction(transaction)
+                        navController.navigate(Screen.ViewTransaction.route)
+                    }
                 }
             }
         }
@@ -72,9 +77,11 @@ fun DateHeader(date: String) {
 }
 
 @Composable
-fun TransactionItem(transaction: Transaction) {
+fun TransactionItem(transaction: Transaction, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(

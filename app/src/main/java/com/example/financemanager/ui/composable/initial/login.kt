@@ -11,10 +11,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.financemanager.ui.composable.Screen
-import com.example.financemanager.viewmodel.LoginVM
+import com.example.financemanager.viewmodel.InitialVM
 
 @Composable
-fun LoginScreen(navController: NavController, viewModel: LoginVM) {
+fun LoginScreen(navController: NavController, viewModel: InitialVM) {
     val isUserLoaded by viewModel.isUserDetailsLoaded.collectAsState()
 
     when (isUserLoaded) {
@@ -35,7 +35,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginVM) {
 }
 
 @Composable
-fun SignUpContent(navController: NavController, viewModel: LoginVM = viewModel()) {
+fun SignUpContent(navController: NavController, viewModel: InitialVM = viewModel()) {
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
 

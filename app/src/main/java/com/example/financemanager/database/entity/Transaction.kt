@@ -6,10 +6,13 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "transactions")
 data class Transaction(
+    @PrimaryKey(autoGenerate = true)
+    @ColumnInfo(name = "id")
+    val id: Int = 0,
     @ColumnInfo(name = "account_id")
     var accountId: Int,
     @ColumnInfo(name = "category_id")
-    var categoryId: Int,
+    var categoryId: Int? = null,
     @ColumnInfo(name = "type")
     var type: String,
     @ColumnInfo(name = "amount")
@@ -30,8 +33,4 @@ data class Transaction(
     var createdAt: String,
     @ColumnInfo(name = "updated_at")
     var updatedAt: String
-) {
-    @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = "id")
-    var id: Int = 0
-}
+)

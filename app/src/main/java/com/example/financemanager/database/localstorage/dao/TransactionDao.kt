@@ -21,4 +21,7 @@ abstract class TransactionDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun create(transaction: Transaction)
+
+    @Query("UPDATE `transactions` SET `category_id` = :categoryId WHERE payee = :payee")
+    abstract suspend fun updateCategoryForAllTransactionsWithPayee(payee: String, categoryId: Int)
 }
