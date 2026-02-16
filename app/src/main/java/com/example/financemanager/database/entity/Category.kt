@@ -20,5 +20,7 @@ data class Category(
     @ColumnInfo(name = "created_at")
     var createdAt: String,
     @ColumnInfo(name = "updated_at")
-    var updatedAt: String
+    var updatedAt: String,
+    @ColumnInfo(name = "monthly_budget")
+    var monthlyBudget: Double? = null,
 )

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -105,6 +107,8 @@ fun AddEditCategoryScreen(navController: NavController, viewModel: CategoryVM) {
     var description by remember { mutableStateOf(category?.description ?: "") }
     var type by remember { mutableStateOf(category?.type ?: "Expense") }
     var color by remember { mutableStateOf(category?.color ?: "#FF0000") }
+    var monthlybudget by remember{ mutableStateOf(category?.monthlyBudget?.toString() ?: "") }
+    var enableMonthlyBudget by remember { mutableStateOf(category?.monthlyBudget != null) }
 
     Scaffold(
         topBar = {
@@ -137,6 +141,24 @@ fun AddEditCategoryScreen(navController: NavController, viewModel: CategoryVM) {
                 label = { Text("Description") },
                 modifier = Modifier.fillMaxWidth()
             )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Monthly Budget")
+                Spacer(modifier = Modifier.width(16.dp))
+                Switch(
+                    checked = enableMonthlyBudget,
+                    onCheckedChange = { enableMonthlyBudget = it },
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                if (enableMonthlyBudget) {
+                    OutlinedTextField(
+                        value = monthlybudget,
+                        onValueChange = { monthlybudget = it },
+                        label = { Text("Monthly Budget") },
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    )
+                }
+            }
 
             Text("Type", fontWeight = FontWeight.Bold)
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -164,6 +186,7 @@ fun AddEditCategoryScreen(navController: NavController, viewModel: CategoryVM) {
                             it.description = description
                             it.type = type
                             it.color = color
+                            it.monthlyBudget = monthlybudget.toDoubleOrNull()
                             viewModel.updateCategory(it)
                         }
                     }

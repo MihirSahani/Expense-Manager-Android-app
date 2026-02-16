@@ -122,7 +122,7 @@ fun ViewTransactionScreen(
     // -------------------------------- CATEGORY UPDATE
     if (showCategoryDialog && transaction != null) {
         val currentTransaction = transaction!!
-        var updateCategoryForAllTransactionsWithPayee by remember { mutableStateOf(false) }
+        var updateCategoryForAllTransactionsWithPayee by remember { mutableStateOf(true) }
 
         AlertDialog(
             onDismissRequest = { showCategoryDialog = false },
