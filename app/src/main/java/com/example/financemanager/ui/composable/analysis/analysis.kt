@@ -25,7 +25,7 @@ fun AnalysisScreen(navController: NavController, viewModel: AnalysisVM) {
     Scaffold(
         topBar = {
             Text(
-                text = "Analysis of Spending (Current Month)",
+                text = "Analysis of Spending",
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(16.dp)
             )
@@ -60,20 +60,20 @@ fun AnalysisScreen(navController: NavController, viewModel: AnalysisVM) {
                                 text = spending.category.name,
                                 style = MaterialTheme.typography.titleLarge
                             )
-                            if (spending.budget != null) {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = "Spent: ${
-                                            String.format(
-                                                Locale.getDefault(), "%.2f",
-                                                spending.totalSpending
-                                            )
-                                        }"
-                                    )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Spent: ${
+                                        String.format(
+                                            Locale.getDefault(), "%.2f",
+                                            spending.totalSpending
+                                        )
+                                    }"
+                                )
+                                if (spending.budget != null) {
                                     Text(
                                         text = "Budget: ${
                                             String.format(
@@ -83,6 +83,9 @@ fun AnalysisScreen(navController: NavController, viewModel: AnalysisVM) {
                                         }"
                                     )
                                 }
+                            }
+                            if (spending.budget != null) {
+
                                 Spacer(modifier = Modifier.height(8.dp))
                                 val progress = if (spending.budget > 0) {
                                     (spending.totalSpending / spending.budget)

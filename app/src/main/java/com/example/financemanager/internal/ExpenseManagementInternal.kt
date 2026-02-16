@@ -81,7 +81,9 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
         }.awaitAll()
 
         transactionManager.updateAccountForAllTransactionsWithRawAccount(
-            newTransaction.rawAccountIdName, newTransaction.accountId!!)
+            newTransaction.rawAccountIdName, newTransaction.accountId!!
+        )
+        accountIdMapperManager.insert(AccountIdMapper(newTransaction.rawAccountIdName, newTransaction.accountId!!))
     }
 
     suspend fun loadDummyData() {
