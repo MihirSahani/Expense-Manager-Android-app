@@ -25,4 +25,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Categories : Screen("categories", "Categories", Icons.Default.Category)
     object AddEditCategory : Screen("add_edit_category", "Add/Edit Category", Icons.Default.Category)
     object ViewTransaction : Screen("view_transaction", "View Transaction", Icons.Default.History)
+    object ViewTransactionByCategory : Screen("view_transaction_by_category/{categoryId}", "View Transaction By Category", Icons.Default.History) {
+        fun createRoute(categoryId: Int) = "view_transaction_by_category/$categoryId"
+    }
 }

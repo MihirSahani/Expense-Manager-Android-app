@@ -10,7 +10,9 @@ enum class ViewModelName {
     TRANSACTION,
     SETTINGS,
     USER_DETAILS_UPDATE,
-    CATEGORY
+    CATEGORY,
+    ANALYSIS,
+    CATEGORY_ANALYSIS
 }
 
 class ViewModelFactory(private val expenseManagementInternal: ExpenseManagementInternal) {
@@ -21,6 +23,7 @@ class ViewModelFactory(private val expenseManagementInternal: ExpenseManagementI
     val transactionVM: TransactionVM by lazy { TransactionVM(expenseManagementInternal) }
     val userVM: UserVM by lazy { UserVM(expenseManagementInternal, initialVM.user) }
     val categoryVM: CategoryVM by lazy { CategoryVM(expenseManagementInternal) }
+    val analysisVM: AnalysisVM by lazy { AnalysisVM(expenseManagementInternal) }
 
     fun getViewModel(name: ViewModelName): ViewModel {
         return when (name) {
@@ -30,7 +33,12 @@ class ViewModelFactory(private val expenseManagementInternal: ExpenseManagementI
             ViewModelName.TRANSACTION -> transactionVM
             ViewModelName.USER_DETAILS_UPDATE -> userVM
             ViewModelName.CATEGORY -> categoryVM
+            ViewModelName.ANALYSIS -> analysisVM
             else -> throw IllegalArgumentException("Unknown ViewModelName: $name")
         }
+    }
+
+    fun getCategoryAnalysisVM(categoryId: Int): CategoryAnalysisVM {
+        return CategoryAnalysisVM(expenseManagementInternal, categoryId)
     }
 }

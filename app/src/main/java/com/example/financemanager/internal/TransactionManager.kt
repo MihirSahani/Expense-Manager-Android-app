@@ -1,6 +1,7 @@
 package com.example.financemanager.internal
 
 import com.example.financemanager.database.entity.Transaction
+import com.example.financemanager.database.entity.TransactionSummary
 import com.example.financemanager.database.localstorage.dao.TransactionDao
 import kotlinx.coroutines.flow.Flow
 
@@ -43,5 +44,17 @@ class TransactionManager(val transactionDao: TransactionDao) {
 
     suspend fun getTransactionsWithRawAccountId(accountName: String): List<Transaction> {
         return transactionDao.getByRawAccountName(accountName)
+    }
+
+    suspend fun getTransactionsByCategory(categoryId: Int?, year: Int, month: Int): List<Transaction> {
+        return transactionDao.getTransactionsByCategory(categoryId, year, month)
+    }
+
+    suspend fun getTransactionByMonth(year: Int, month: Int): List<Transaction> {
+        return transactionDao.getTransactionsByMonth(year, month)
+    }
+
+    suspend fun getSumOfTransactionsByCategory(year: Int, month: Int): List<TransactionSummary> {
+        return transactionDao.getSumOfTransactionsByCategory(year, month)
     }
 }

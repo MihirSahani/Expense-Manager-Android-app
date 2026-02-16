@@ -5,10 +5,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.financemanager.Graph
 import com.example.financemanager.ui.composable.NavigationBar
 import com.example.financemanager.ui.composable.Screen
@@ -17,6 +19,7 @@ import com.example.financemanager.ui.composable.setting.UpdateUserDetailsScreen
 import com.example.financemanager.ui.composable.account.AccountsScreen
 import com.example.financemanager.ui.composable.account.AddEditAccountScreen
 import com.example.financemanager.ui.composable.analysis.AnalysisScreen
+import com.example.financemanager.ui.composable.analysis.ViewTransactionByCategoryScreen
 import com.example.financemanager.ui.composable.category.AddEditCategoryScreen
 import com.example.financemanager.ui.composable.category.CategoryScreen
 import com.example.financemanager.ui.composable.home.HomeScreen
@@ -47,43 +50,50 @@ fun Navigate() {
             composable(Screen.Permissions.route) {
                 Permission(
                     navController,
-                    Graph.viewModelFactory.getViewModel(ViewModelName.LOGIN) as InitialVM
+                    Graph.viewModelFactory.getViewModel(ViewModelName.LOGIN)
+                            as InitialVM
                 )
             }
             composable(Screen.Login.route) {
                 LoginScreen(
                     navController,
-                    Graph.viewModelFactory.getViewModel(ViewModelName.LOGIN) as InitialVM
+                    Graph.viewModelFactory.getViewModel(ViewModelName.LOGIN)
+                            as InitialVM
                 )
             }
             composable(Screen.Home.route) {
                 HomeScreen(
                     navController,
-                    Graph.viewModelFactory.getViewModel(ViewModelName.HOME) as InitialVM
+                    Graph.viewModelFactory.getViewModel(ViewModelName.HOME)
+                            as InitialVM
                 )
             }
             composable(Screen.Accounts.route) {
                 AccountsScreen(
                     navController,
-                    Graph.viewModelFactory.getViewModel(ViewModelName.ACCOUNTS) as AccountVM
+                    Graph.viewModelFactory.getViewModel(ViewModelName.ACCOUNTS)
+                            as AccountVM
                 )
             }
             composable(Screen.AddEditAccount.route) {
                 AddEditAccountScreen(
                     navController,
-                    Graph.viewModelFactory.getViewModel(ViewModelName.ACCOUNTS) as AccountVM
+                    Graph.viewModelFactory.getViewModel(ViewModelName.ACCOUNTS)
+                            as AccountVM
                 )
             }
             composable(Screen.Analysis.route) {
                 AnalysisScreen(
                     navController,
-                    Graph.viewModelFactory.getViewModel(ViewModelName.HOME) as InitialVM
+                    Graph.viewModelFactory.getViewModel(ViewModelName.ANALYSIS)
+                            as AnalysisVM
                 )
             }
             composable(Screen.TransactionHistory.route) {
                 TransactionHistoryScreen(
                     navController,
-                    Graph.viewModelFactory.getViewModel(ViewModelName.TRANSACTION) as TransactionVM
+                    Graph.viewModelFactory.getViewModel(ViewModelName.TRANSACTION)
+                            as TransactionVM
                 )
             }
             composable(Screen.Settings.route) {
@@ -92,27 +102,42 @@ fun Navigate() {
             composable(Screen.UpdateUserDetails.route) {
                 UpdateUserDetailsScreen(
                     navController,
-                    Graph.viewModelFactory.getViewModel(ViewModelName.USER_DETAILS_UPDATE) as UserVM
+                    Graph.viewModelFactory.getViewModel(ViewModelName.USER_DETAILS_UPDATE)
+                            as UserVM
                 )
             }
             composable(Screen.Categories.route) {
                 CategoryScreen(
                     navController,
-                    Graph.viewModelFactory.getViewModel(ViewModelName.CATEGORY) as CategoryVM
+                    Graph.viewModelFactory.getViewModel(ViewModelName.CATEGORY)
+                            as CategoryVM
                 )
             }
             composable(Screen.AddEditCategory.route) {
                 AddEditCategoryScreen(
                     navController,
-                    Graph.viewModelFactory.getViewModel(ViewModelName.CATEGORY) as CategoryVM
+                    Graph.viewModelFactory.getViewModel(ViewModelName.CATEGORY)
+                            as CategoryVM
                 )
             }
             composable(Screen.ViewTransaction.route) {
                 ViewTransactionScreen(
                     navController,
-                    Graph.viewModelFactory.getViewModel(ViewModelName.TRANSACTION) as TransactionVM,
+                    Graph.viewModelFactory.getViewModel(ViewModelName.TRANSACTION)
+                            as TransactionVM,
                     Graph.viewModelFactory.getViewModel(ViewModelName.CATEGORY) as CategoryVM,
                     Graph.viewModelFactory.getViewModel(ViewModelName.ACCOUNTS) as AccountVM
+                )
+            }
+
+            composable(
+                route = Screen.ViewTransactionByCategory.route,
+                arguments = listOf(navArgument("categoryId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val categoryId = backStackEntry.arguments?.getInt("categoryId") ?: 0
+                ViewTransactionByCategoryScreen(
+                    navController,
+                    Graph.viewModelFactory.getCategoryAnalysisVM(categoryId)
                 )
             }
         }

@@ -6,6 +6,7 @@ import com.example.financemanager.database.entity.Account
 import com.example.financemanager.database.entity.AccountIdMapper
 import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.Transaction
+import com.example.financemanager.database.entity.TransactionSummary
 import com.example.financemanager.database.entity.User
 import com.example.financemanager.database.localstorage.ExpenseManagementDatabase
 import kotlinx.coroutines.async
@@ -151,5 +152,13 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
 
     suspend fun getAccountIdMapping(accountName: String): Int? {
         return accountIdMapperManager.getAccountId(accountName)
+    }
+
+    suspend fun getTransactionsByCategory(categoryId: Int?, year: Int, month: Int): List<Transaction> {
+        return transactionManager.getTransactionsByCategory(categoryId, year, month)
+    }
+
+    suspend fun getTransactionSumByMonth(year: Int, month: Int): List<TransactionSummary> {
+        return transactionManager.getSumOfTransactionsByCategory(year, month)
     }
 }
