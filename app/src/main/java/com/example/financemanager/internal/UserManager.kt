@@ -7,8 +7,8 @@ class UserManager(
     private val userDao: UserDao
 ) {
 
-    suspend fun addUser(user: User) {
-        userDao.create(user)
+    suspend fun addUser(firstName: String, lastName: String, token: String = "") {
+        userDao.create(User(firstName=firstName, lastName = lastName, token = token))
     }
 
     suspend fun removeUser(user: User) {

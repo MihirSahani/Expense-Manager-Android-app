@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -17,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.financemanager.database.entity.Account
 import com.example.financemanager.ui.composable.Screen
 import com.example.financemanager.viewmodel.AccountVM
@@ -24,9 +26,11 @@ import java.util.Locale
 
 @Composable
 fun AccountsScreen(navController: NavController, viewModel: AccountVM) {
+    val areAccountsLoaded by viewModel.areAccountsLoaded.collectAsState()
     val accounts by viewModel.accounts.collectAsState()
     val netWorth by viewModel.netWorth.collectAsState()
-    val areAccountsLoaded by viewModel.areAccountsLoaded.collectAsState()
+
+    viewModel.loadAccounts()
 
     Scaffold(
         floatingActionButton = {
@@ -134,7 +138,9 @@ fun AccountItem(account: Account, onClick: () -> Unit) {
                 )
             }
             Text(
-                text = "₹ " + String.format(Locale.getDefault(), "%.2f", account.currentBalance),
+                text = "₹ " + String.format(
+                    Locale.getDefault(), "%.2f", account.currentBalance
+                ),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.bodyLarge,
                 color = if (account.currentBalance >= 0) Color.Unspecified else Color.Red

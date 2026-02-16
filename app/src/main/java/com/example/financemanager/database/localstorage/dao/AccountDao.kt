@@ -21,4 +21,16 @@ abstract class AccountDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun create(account: Account)
+
+    @Query("SELECT * FROM `accounts` WHERE id = :id")
+    abstract suspend fun get(id: Int): Account?
+
+    @Query("UPDATE `accounts` SET `balance` = `balance` + :diff WHERE id = :accountId")
+    abstract suspend fun updateBalance(accountId: Int, diff: Double)
+
+    @Query("UPDATE `accounts` SET `balance` = `balance` + :diff WHERE id = :newAccountId")
+    abstract suspend fun addBalanceToNewAccount(newAccountId: Int?, diff: Double)
+
+    @Query("UPDATE `accounts` SET `balance` = `balance` - :diff WHERE id = :oldAccountId")
+    abstract suspend fun removeBalanceFromOldAccount(oldAccountId: Int?, diff: Double)
 }

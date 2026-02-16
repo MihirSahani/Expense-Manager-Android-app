@@ -21,18 +21,19 @@ fun AddEditAccountScreen(
     navController: NavController,
     accountVM: AccountVM
 ) {
-    var account by remember { mutableStateOf(accountVM.getAccountById(accountVM.selectedAccountId)) }
-    if (account == null) {
+    val existingAccount = remember { accountVM.getAccountById(accountVM.selectedAccountId) }
+    if (existingAccount == null) {
         navController.popBackStack()
+        return
     }
 
-    var name by remember { mutableStateOf(account!!.name)}
-    var type by remember { mutableStateOf(account!!.type) }
-    var currency by remember { mutableStateOf(account!!.currency) }
-    var balanceText by remember { mutableStateOf(account!!.currentBalance.toString()) }
-    var bankName by remember { mutableStateOf(account!!.bankName) }
-    var accountNumber by remember { mutableStateOf(account!!.accountNumber)}
-    var isIncludedInTotal by remember { mutableStateOf(account!!.isIncludedInTotal) }
+    var name by remember { mutableStateOf(existingAccount.name)}
+    var type by remember { mutableStateOf(existingAccount.type) }
+    var currency by remember { mutableStateOf(existingAccount.currency) }
+    var balanceText by remember { mutableStateOf(existingAccount.currentBalance.toString()) }
+    var bankName by remember { mutableStateOf(existingAccount.bankName) }
+    var accountNumber by remember { mutableStateOf(existingAccount.accountNumber)}
+    var isIncludedInTotal by remember { mutableStateOf(existingAccount.isIncludedInTotal) }
 
     val accountTypes = listOf("Bank", "Credit", "Cash", "Investment")
 
@@ -135,19 +136,17 @@ fun AddEditAccountScreen(
             Button(
                 onClick = {
                     val currentDateTime = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
-                    val accountToSave = account!!.apply {
-                        this.name = name
-                        this.type = type
-                        this.currency = currency
-                        this.currentBalance = balanceText.toDoubleOrNull() ?: 0.0
-                        this.bankName = bankName
-                        this.accountNumber = accountNumber
-                        this.isIncludedInTotal = isIncludedInTotal
-                        this.updatedAt = currentDateTime
-                        if (this.createdAt.isEmpty()) {
-                            this.createdAt = currentDateTime
-                        }
-                    }
+                    val accountToSave = existingAccount.copy(
+                        name = name,
+                        type = type,
+                        currency = currency,
+                        currentBalance = balanceText.toDoubleOrNull() ?: 0.0,
+                        bankName = bankName,
+                        accountNumber = accountNumber,
+                        isIncludedInTotal = isIncludedInTotal,
+                        updatedAt = currentDateTime,
+                        createdAt = if (existingAccount.createdAt.isEmpty()) currentDateTime else existingAccount.createdAt
+                    )
                     
                     if (accountVM.selectedAccountId == null) {
                         accountVM.addAccount(accountToSave)

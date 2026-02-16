@@ -7,10 +7,11 @@ class PayeeCategoryMapperManager(
     private val payeeCategoryMapperDao: PayeeCategoryMapperDao
 ) {
     suspend fun addMapping(payee: String, categoryId: Int) {
-        payeeCategoryMapperDao.addMapping(PayeeCategoryMapper(payee, categoryId))
+        payeeCategoryMapperDao.addMapping(PayeeCategoryMapper(payee = payee,
+            categoryId = categoryId))
     }
 
-    suspend fun getCategoryId(payee: String): Int? {
+    suspend fun getMapping(payee: String): Int? {
         return payeeCategoryMapperDao.getCategoryId(payee)
     }
 }

@@ -30,9 +30,20 @@ class TransactionVM(private val expenseManagementInternal: ExpenseManagementInte
         _selectedTransaction.value = transaction
     }
 
-    fun updateTransactionCategory(transaction: Transaction, updateCategoryForAllTransactionsWithPayee: Boolean) {
+    fun addTransaction(transaction: Transaction) {
         viewModelScope.launch {
-            expenseManagementInternal.updateTransactionCategory(transaction, updateCategoryForAllTransactionsWithPayee)
+            expenseManagementInternal.addTransaction(transaction)
+            loadTransactions()
+        }
+    }
+
+    fun updateTransactionCategory(
+        transaction: Transaction, updateCategoryForAllTransactionsWithPayee: Boolean
+    ) {
+        viewModelScope.launch {
+            expenseManagementInternal.updateTransactionCategory(
+                transaction, updateCategoryForAllTransactionsWithPayee
+            )
             _selectedTransaction.value = transaction
             loadTransactions()
         }
@@ -46,7 +57,4 @@ class TransactionVM(private val expenseManagementInternal: ExpenseManagementInte
         }
     }
 
-    fun getTransactionById(id: Int): Transaction? {
-        return _transactions.value.find { it.id == id }
-    }
 }

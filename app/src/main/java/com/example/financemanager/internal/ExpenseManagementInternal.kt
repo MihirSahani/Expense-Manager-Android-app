@@ -1,8 +1,6 @@
 package com.example.financemanager.internal
 
 import android.content.Context
-import androidx.room.Database
-import com.example.financemanager.Graph
 import com.example.financemanager.database.DummyData
 import com.example.financemanager.database.entity.Account
 import com.example.financemanager.database.entity.AccountIdMapper
@@ -10,18 +8,27 @@ import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.Transaction
 import com.example.financemanager.database.entity.User
 import com.example.financemanager.database.localstorage.ExpenseManagementDatabase
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     val accountManager: AccountManager = AccountManager(database.accountDao())
     val categoryManager: CategoryManager = CategoryManager(database.categoryDao())
-    val transactionManager: TransactionManager = TransactionManager(database.transactionDao())
+    val transactionManager: TransactionManager = TransactionManager(
+        database.transactionDao()
+    )
     val userManager: UserManager = UserManager(database.userDao())
-    val appSettingManager: AppSettingManager = AppSettingManager(database.appSettingDao())
-    val payeeCategoryMapperManager: PayeeCategoryMapperManager = PayeeCategoryMapperManager(database.PayeeCategoryMapperDao())
-    val accountIdMapperManager: AccountIdMapperManager = AccountIdMapperManager(database.accountIdMapperDao())
+    val appSettingManager: AppSettingManager = AppSettingManager(
+        database.appSettingDao()
+    )
+    val payeeCategoryMapperManager: PayeeCategoryMapperManager = PayeeCategoryMapperManager(
+        database.PayeeCategoryMapperDao()
+    )
+    val accountIdMapperManager: AccountIdMapperManager = AccountIdMapperManager(
+        database.accountIdMapperDao()
+    )
     val smsParser: SMSParser = SMSParser()
 
     suspend fun getUser(): User? {
@@ -32,42 +39,81 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
         return transactionManager.getAllTransactions()
     }
 
+    suspend fun addTransaction(transaction: Transaction) {
+        transactionManager.addTransaction(transaction, accountManager)
+    }
+
     suspend fun updateTransaction(transaction: Transaction) {
         transactionManager.updateTransaction(transaction)
     }
 
-    suspend fun updateTransactionCategory(transaction: Transaction, updateCategoryForAllTransactionsWithPayee: Boolean) {
-        updateTransaction(transaction)
-        if (transaction.categoryId != null && (updateCategoryForAllTransactionsWithPayee || payeeCategoryMapperManager.getCategoryId(transaction.payee) == null)) {
-            payeeCategoryMapperManager.addMapping(transaction.payee, transaction.categoryId!!)
-            transactionManager.updateCategoryForAllTransactionsWithPayee(transaction.payee, transaction.categoryId!!)
+
+    suspend fun updateTransactionCategory(transaction: Transaction,
+                                          updateCategoryForAllTransactionsWithPayee: Boolean) {
+
+        if (transaction.categoryId != null && (updateCategoryForAllTransactionsWithPayee ||
+                    payeeCategoryMapperManager.getMapping(transaction.payee) == null)) {
+            payeeCategoryMapperManager.addMapping(transaction.payee,
+                transaction.categoryId!!
+            )
+            transactionManager.updateCategoryForAllTransactionsWithPayee(transaction.payee,
+                transaction.categoryId!!
+            )
         }
     }
 
-    suspend fun updateTransactionAccount(transaction: Transaction) {
-        updateTransaction(transaction)
-        if (transaction.accountId != null) {
-            accountIdMapperManager.insert(AccountIdMapper(transaction.rawAccountIdName, transaction.accountId!!))
-            transactionManager.updateAccountForAllTransactionsWithAccount(transaction.rawAccountIdName, transaction.accountId!!)
-        }
+    suspend fun updateTransactionAccount(newTransaction: Transaction) {
+
+        val transactions = transactionManager.getTransactionsWithRawAccountId(
+            newTransaction.rawAccountIdName
+        )
+
+        coroutineScope {
+            transactions.map { transaction ->
+                async {
+                    accountManager.updateAccountBalanceForTransactionAccountUpdate(
+                        transaction.accountId,
+                        newTransaction.accountId, transaction.amount
+                    )
+                }
+            }
+        }.awaitAll()
+
+        transactionManager.updateAccountForAllTransactionsWithRawAccount(
+            newTransaction.rawAccountIdName, newTransaction.accountId!!)
     }
 
     suspend fun loadDummyData() {
         coroutineScope {
-            val accounts = accountManager.getAllAccounts()
-            if (accounts.isEmpty()) {
-                launch { DummyData.accounts.forEach { accountManager.addAccount(it) } }
+            val accountsJob = async {
+                val accounts = accountManager.getAllAccounts()
+                if (accounts.isEmpty()) {
+                    DummyData.accounts.map { account ->
+                        async {
+                            accountManager.addAccount(account)
+                        }
+                    }.awaitAll()
+                }
             }
-            val categories = categoryManager.getAllCategories()
-            if (categories.isEmpty()) {
-                launch { DummyData.categories.forEach { categoryManager.addCategory(it) } }
+            val categoriesJob = async {
+                val categories = categoryManager.getAllCategories()
+                if (categories.isEmpty()) {
+                    DummyData.categories.map { category ->
+                        async {
+                            categoryManager.addCategory(category)
+                        }
+                    }.awaitAll()
+                }
             }
+            accountsJob.await()
+            categoriesJob.await()
         }
     }
 
     suspend fun parseMessagesToTransactions(context: Context) {
         if (transactionManager.getAllTransactions().isEmpty()) {
-            smsParser.parseMessagesToTransactions(context, transactionManager, payeeCategoryMapperManager, accountIdMapperManager)
+            smsParser.parseMessagesToTransactions(context, transactionManager,
+                payeeCategoryMapperManager, accountIdMapperManager, accountManager)
         }
     }
 
@@ -76,8 +122,7 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     }
 
     suspend fun createUser(firstName: String, lastName: String) {
-        val user = User(firstName = firstName, lastName = lastName, token = "dummy_token")
-        userManager.addUser(user)
+        userManager.addUser(firstName, lastName)
     }
 
     suspend fun updateUser(user: User) {
@@ -93,7 +138,7 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     }
 
     suspend fun getPayeeCategory(payee: String): Int? {
-        return payeeCategoryMapperManager.getCategoryId(payee)
+        return payeeCategoryMapperManager.getMapping(payee)
     }
 
     suspend fun updatePayeeCategory(payee: String, categoryId: Int) {

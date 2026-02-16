@@ -10,7 +10,18 @@ class TransactionManager(val transactionDao: TransactionDao) {
         return transactionDao.getAll()
     }
 
-    suspend fun addTransaction(transaction: Transaction) {
+    suspend fun addTransaction(transaction: Transaction, accountManager: AccountManager) {
+        if (transaction.type == "Expense") {
+            transaction.amount = -transaction.amount
+        }
+        if (transaction.accountId != null ) {
+            val account = accountManager.getAccount(transaction.accountId!!)
+            if (account != null) {
+                accountManager.updateAccount(account.copy(
+                    currentBalance = account.currentBalance + transaction.amount
+                ))
+            }
+        }
         transactionDao.create(transaction)
     }
 
@@ -26,7 +37,11 @@ class TransactionManager(val transactionDao: TransactionDao) {
         transactionDao.updateCategoryForAllTransactionsWithPayee(payee, categoryId)
     }
 
-    suspend fun updateAccountForAllTransactionsWithAccount(accountName: String, accountId: Int) {
-        transactionDao.updateAccountForAllTransactionsWithAccount(accountName, accountId)
+    suspend fun updateAccountForAllTransactionsWithRawAccount(accountName: String, accountId: Int) {
+        transactionDao.updateAccountForAllTransactionsWithRawAccount(accountName, accountId)
+    }
+
+    suspend fun getTransactionsWithRawAccountId(accountName: String): List<Transaction> {
+        return transactionDao.getByRawAccountName(accountName)
     }
 }

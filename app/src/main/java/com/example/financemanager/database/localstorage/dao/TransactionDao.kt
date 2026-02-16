@@ -10,6 +10,9 @@ import com.example.financemanager.database.entity.Transaction
 
 @Dao
 abstract class TransactionDao {
+    @Query("SELECT * FROM `transactions` WHERE id = :id")
+    abstract suspend fun get(id: Int): Transaction?
+
     @Query("SELECT * FROM `transactions`")
     abstract suspend fun getAll(): MutableList<Transaction>
 
@@ -26,5 +29,8 @@ abstract class TransactionDao {
     abstract suspend fun updateCategoryForAllTransactionsWithPayee(payee: String, categoryId: Int)
 
     @Query("UPDATE `transactions` SET `account_id` = :accountId WHERE `raw_account_id_name` = :accountName")
-    abstract suspend fun updateAccountForAllTransactionsWithAccount(accountName: String, accountId: Int)
+    abstract suspend fun updateAccountForAllTransactionsWithRawAccount(accountName: String, accountId: Int)
+
+    @Query("SELECT * FROM `transactions` WHERE `raw_account_id_name` = :accountName")
+    abstract suspend fun getByRawAccountName(accountName: String): List<Transaction>
 }

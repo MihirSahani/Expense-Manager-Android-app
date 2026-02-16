@@ -22,6 +22,7 @@ import com.example.financemanager.viewmodel.TransactionVM
 
 @Composable
 fun TransactionHistoryScreen(navController: NavController, viewModel: TransactionVM) {
+    viewModel.selectTransaction(null)
     val transactions by viewModel.transactions.collectAsState()
 
     // Group and sort transactions by date (latest first)
@@ -93,7 +94,7 @@ fun TransactionItem(transaction: Transaction, onClick: () -> Unit) {
                 Text(text = transaction.transactionDate, fontSize = 12.sp, color = Color.Gray)
             }
             Text(
-                text = "${if (transaction.type == "Expense") "-" else "+"}${transaction.amount} ${transaction.currency}",
+                text = "${transaction.amount} ${transaction.currency}",
                 color = if (transaction.type == "Expense") Color.Red else Color.Green,
                 fontWeight = FontWeight.Bold
             )

@@ -32,22 +32,18 @@ fun ViewTransactionScreen(
     var showAccountDialog by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Transaction Details") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
+        topBar = { AddEditTopBar(navController) }
     ) { innerPadding ->
         if (transaction == null) {
-            Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
+            // -------------------------------- NO TRANSACTION AVAILABLE
+            Box(
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                contentAlignment = Alignment.Center
+            ) {
                 Text("Transaction not found")
             }
         } else {
+            // -------------------------------- DETAILS OF TRANSACTION
             val currentTransaction = transaction!!
             Column(
                 modifier = Modifier
@@ -57,10 +53,14 @@ fun ViewTransactionScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 DetailItem("Payee", currentTransaction.payee)
-                DetailItem("Amount", "${currentTransaction.amount} ${currentTransaction.currency}")
+                DetailItem(
+                    "Amount",
+                    "${currentTransaction.amount} ${currentTransaction.currency}"
+                )
                 DetailItem("Date", currentTransaction.transactionDate)
                 DetailItem("Type", currentTransaction.type)
-                
+
+                // -------------------------------- CATEGORY HANDLER
                 val currentCategory = categories.find { it.id == currentTransaction.categoryId }
                 
                 Row(
@@ -74,7 +74,8 @@ fun ViewTransactionScreen(
                             text = currentCategory?.name ?: "Not Assigned",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Medium,
-                            color = if (currentCategory == null) Color.Red else MaterialTheme.colorScheme.onSurface
+                            color = if (currentCategory == null) Color.Red
+                                else MaterialTheme.colorScheme.onSurface
                         )
                     }
                     Button(onClick = { showCategoryDialog = true }) {
@@ -82,6 +83,7 @@ fun ViewTransactionScreen(
                     }
                 }
 
+                // -------------------------------- ACCOUNT HANDLER
                 val currentAccount = accounts.find { it.id == currentTransaction.accountId }
 
                 Row(
@@ -92,10 +94,12 @@ fun ViewTransactionScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Account", fontSize = 14.sp, color = Color.Gray)
                         Text(
-                            text = currentAccount?.name ?: "Not Assigned (${currentTransaction.rawAccountIdName})",
+                            text = currentAccount?.name ?:
+                                "Not Assigned (${currentTransaction.rawAccountIdName})",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Medium,
-                            color = if (currentAccount == null) Color.Red else MaterialTheme.colorScheme.onSurface
+                            color = if (currentAccount == null) Color.Red
+                                else MaterialTheme.colorScheme.onSurface
                         )
                     }
                     Button(onClick = { showAccountDialog = true }) {
@@ -103,6 +107,7 @@ fun ViewTransactionScreen(
                     }
                 }
 
+                // -------------------------------- DESCRIPTION AND LOCATION HANDLER
                 if (currentTransaction.description.isNotEmpty()) {
                     DetailItem("Description", currentTransaction.description)
                 }
@@ -114,6 +119,7 @@ fun ViewTransactionScreen(
         }
     }
 
+    // -------------------------------- CATEGORY UPDATE
     if (showCategoryDialog && transaction != null) {
         val currentTransaction = transaction!!
         var updateCategoryForAllTransactionsWithPayee by remember { mutableStateOf(false) }
@@ -124,20 +130,33 @@ fun ViewTransactionScreen(
             text = {
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Update all for this payee", modifier = Modifier.weight(1f))
-                        Switch(checked = updateCategoryForAllTransactionsWithPayee, onCheckedChange = {updateCategoryForAllTransactionsWithPayee = it}, )
+                        Text(
+                            "Update all for this payee",
+                            modifier = Modifier.weight(1f)
+                        )
+                        Switch(
+                            checked = updateCategoryForAllTransactionsWithPayee,
+                            onCheckedChange = {updateCategoryForAllTransactionsWithPayee = it}
+                        )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     categories.forEach { category ->
                         TextButton(
                             onClick = {
-                                val updatedTransaction = currentTransaction.copy(categoryId = category.id)
-                                transactionVM.updateTransactionCategory(updatedTransaction, updateCategoryForAllTransactionsWithPayee)
+                                val updatedTransaction = currentTransaction.copy(
+                                    categoryId = category.id
+                                )
+                                transactionVM.updateTransactionCategory(
+                                    updatedTransaction, updateCategoryForAllTransactionsWithPayee
+                                )
                                 showCategoryDialog = false
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(category.name, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                category.name, modifier = Modifier.fillMaxWidth(),
+                                style = MaterialTheme.typography.bodyLarge
+                            )
                         }
                     }
                 }
@@ -150,9 +169,9 @@ fun ViewTransactionScreen(
         )
     }
 
+    // -------------------------------- ACCOUNT UPDATE
     if (showAccountDialog && transaction != null) {
         val currentTransaction = transaction!!
-        var updateAccountForAllTransactions by remember { mutableStateOf(false) }
 
         AlertDialog(
             onDismissRequest = { showAccountDialog = false },
@@ -163,13 +182,18 @@ fun ViewTransactionScreen(
                     accounts.forEach { account ->
                         TextButton(
                             onClick = {
-                                val updatedTransaction = currentTransaction.copy(accountId = account.id)
+                                val updatedTransaction = currentTransaction.copy(
+                                    accountId = account.id
+                                )
                                 transactionVM.updateTransactionAccount(updatedTransaction)
                                 showAccountDialog = false
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(account.name, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                account.name, modifier = Modifier.fillMaxWidth(),
+                                style = MaterialTheme.typography.bodyLarge
+                            )
                         }
                     }
                 }
@@ -190,4 +214,20 @@ fun DetailItem(label: String, value: String) {
         Text(value, fontSize = 18.sp, fontWeight = FontWeight.Medium)
         HorizontalDivider(modifier = Modifier.padding(top = 4.dp), thickness = 0.5.dp)
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddEditTopBar(navController: NavController) {
+    TopAppBar(
+        title = { Text("Transaction Details") },
+        navigationIcon = {
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back"
+                )
+            }
+        }
+    )
 }
