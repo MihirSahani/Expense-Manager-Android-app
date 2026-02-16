@@ -7,28 +7,17 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 class SMSParser {
-    private val bankSenders = setOf(
-        "VD-HDFCBK-S", "VD-HDFCBK-T", "VM-HDFCBK-S", "VM-HDFCBK-T",
-        "JM-HDFCBK-S", "JM-HDFCBK-T", "JD-HDFCBK-S", "JD-HDFCBK-T",
-        "AX-HDFCBK-S", "AX-HDFCBK-T"
-    )
+    private val hdfcSenderRegex = """[A-Z]{2}-HDFCBK-[ST]""".toRegex()
 
-    // Regex to match HDFC UPI transaction messages
-    // Format: Sent Rs. 20 \nFrom HDFC Bank A/C *1234\nTo Apple\nOn dd/mm/yy
     private val hdfcUpiRegex =
         """Sent Rs\.\s*([\d,.]+).*?A/C\s*\*(\d{4}).*?To\s+(.*?)\s+On\s+(\d{2}/\d{2}/\d{2})"""
             .toRegex(RegexOption.DOT_MATCHES_ALL)
 
-    // Regex to match HDFC Salary Credit messages
-    // Updated Format:
-    //      Update! INR 100.00 deposited in HDFC Bank A/c xx1234 on 30-DEC-24 for
-    //      NEFT Cr-CITI00000006-DELOITTE-INDIA P LTD-Rob-Job-CITIN12355.
     private val hdfcSalaryRegex =
         """Update!\s+INR\s+([\d,.]+)\s+deposited in HDFC Bank A/c\s+xx(\d{4}).*?for.*?Cr-[^-]+-([^-]+(?:-[^-]+)?)"""
             .toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
@@ -38,7 +27,6 @@ class SMSParser {
         payeeCategoryMapperManager: PayeeCategoryMapperManager,
         accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager
     ) {
-
         coroutineScope {
             val cursor = context.contentResolver.query(
                 "content://sms/inbox".toUri(),
@@ -48,7 +36,6 @@ class SMSParser {
             cursor?.use {
                 val bodyIndex = it.getColumnIndexOrThrow("body")
                 val addressIndex = it.getColumnIndexOrThrow("address")
-                val idIndex = it.getColumnIndexOrThrow("_id")
                 val dateIndex = it.getColumnIndexOrThrow("date")
 
                 val tasks = mutableListOf<Deferred<Unit>>()
@@ -59,20 +46,26 @@ class SMSParser {
                         val sender = it.getString(addressIndex)
                         val smsDateLong = it.getLong(dateIndex)
 
-                        if (sender in bankSenders) {
-                            processUpiMessage(body,
-                                smsDateLong, transactionManager, payeeCategoryMapperManager,
-                                accountIdMapperManager, accountManager
-                            )
-                            processSalaryMessage(body,
-                                smsDateLong, transactionManager, payeeCategoryMapperManager,
-                                accountIdMapperManager, accountManager
-                            )
-                        }
+                        parseSingleMessage(body, sender, smsDateLong, transactionManager,
+                            payeeCategoryMapperManager, accountIdMapperManager, accountManager)
                     })
                 }
                 tasks.awaitAll()
             }
+        }
+    }
+
+    suspend fun parseSingleMessage(
+        body: String, sender: String, smsDateLong: Long,
+        transactionManager: TransactionManager,
+        payeeCategoryMapperManager: PayeeCategoryMapperManager,
+        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager
+    ) {
+        if (hdfcSenderRegex.matches(sender)) {
+            processUpiMessage(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
+                accountIdMapperManager, accountManager)
+            processSalaryMessage(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
+                accountIdMapperManager, accountManager)
         }
     }
 
@@ -81,12 +74,9 @@ class SMSParser {
         payeeCategoryMapperManager: PayeeCategoryMapperManager,
         accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager
     ) {
-
         val matchResult = hdfcUpiRegex.find(body)
-
         if (matchResult != null) {
             val (amountStr, accountNo, payee, _) = matchResult.destructured
-
             createTransaction(amountStr, accountNo, payee, "Expense", body, smsDateLong,
                 transactionManager, payeeCategoryMapperManager, accountIdMapperManager,
                 accountManager)
@@ -98,12 +88,9 @@ class SMSParser {
                                              payeeCategoryMapperManager: PayeeCategoryMapperManager,
                                              accountIdMapperManager: AccountIdMapperManager,
                                              accountManager: AccountManager) {
-
         val matchResult = hdfcSalaryRegex.find(body)
-
         if (matchResult != null) {
             val (amountStr, accountNo, companyName) = matchResult.destructured
-
             createTransaction(amountStr, accountNo, companyName.trim(), "Income",
                 body, smsDateLong, transactionManager, payeeCategoryMapperManager,
                 accountIdMapperManager, accountManager)
@@ -111,18 +98,11 @@ class SMSParser {
     }
 
     private suspend fun createTransaction(
-        amountStr: String,
-        accountNo: String,
-        payee: String,
-        type: String,
-        body: String,
-        smsDateLong: Long,
-        transactionManager: TransactionManager,
+        amountStr: String, accountNo: String, payee: String, type: String,
+        body: String, smsDateLong: Long, transactionManager: TransactionManager,
         payeeCategoryMapperManager: PayeeCategoryMapperManager,
-        accountIdMapperManager: AccountIdMapperManager,
-        accountManager: AccountManager
+        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager
     ) {
-
         val amount = amountStr.replace(",", "").toDoubleOrNull() ?: 0.0
         val timestamp = getFormattedTimestamp(System.currentTimeMillis())
         val transactionDate = getFormattedTimestamp(smsDateLong)

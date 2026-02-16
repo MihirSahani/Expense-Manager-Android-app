@@ -23,6 +23,7 @@ import com.example.financemanager.viewmodel.TransactionVM
 @Composable
 fun TransactionHistoryScreen(navController: NavController, viewModel: TransactionVM) {
     viewModel.selectTransaction(null)
+    viewModel.loadTransactions()
     val transactions by viewModel.transactions.collectAsState()
 
     // Group and sort transactions by date (latest first)

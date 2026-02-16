@@ -118,6 +118,11 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
         }
     }
 
+    suspend fun parseSingleMessage(body: String, sender: String, smsDateLong: Long) {
+        smsParser.parseSingleMessage(body, sender, smsDateLong, transactionManager,
+            payeeCategoryMapperManager, accountIdMapperManager, accountManager)
+    }
+
     suspend fun addAccount(account: Account) {
         accountManager.addAccount(account)
     }
