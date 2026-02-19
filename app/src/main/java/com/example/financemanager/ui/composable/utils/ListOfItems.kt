@@ -42,6 +42,7 @@ private fun <T> ListOfItemsBase(
 
     LazyColumn(
         modifier = modifier
+            .padding(16.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surface)
@@ -51,7 +52,7 @@ private fun <T> ListOfItemsBase(
                 HorizontalDivider(
                     thickness = 1.dp,
                     // color = LightGray,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier.padding(4.dp)
                 )
             }
             content(item)
