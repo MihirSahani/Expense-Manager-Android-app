@@ -2,8 +2,6 @@ package com.example.financemanager.ui.composable.account
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
@@ -17,8 +15,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.financemanager.ui.composable.utils.ListOfItems
 import com.example.financemanager.database.entity.Account
 import com.example.financemanager.ui.composable.Screen
+import com.example.financemanager.ui.composable.utils.MyText
 import com.example.financemanager.viewmodel.AccountVM
 import java.util.Locale
 
@@ -54,7 +54,8 @@ fun AccountsContent(
             FloatingActionButton(onClick = onAddAccountClick) {
                 Icon(Icons.Default.Add, contentDescription = "Add Account")
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -73,14 +74,9 @@ fun AccountsContent(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 80.dp) // Space for FAB
-            ) {
-                items(accounts) { account ->
-                    AccountItem(account) {
-                        onAccountClick(account)
-                    }
+            ListOfItems(accounts) { account ->
+                AccountItem(account) {
+                    onAccountClick(account)
                 }
             }
         }
@@ -115,39 +111,26 @@ fun NetWorthCard(netWorth: Double) {
 
 @Composable
 fun AccountItem(account: Account, onClick: () -> Unit) {
-    Card(
+    Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .padding(16.dp)
+            .clickable { onClick() }
+            .fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                Text(
-                    text = account.name,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Text(
-                    text = account.type,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
-                )
-            }
-            Text(
-                text = "₹ " + String.format(
-                    Locale.getDefault(), "%.2f", account.currentBalance
-                ),
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (account.currentBalance >= 0) Color.Unspecified else Color.Red
-            )
+        Column {
+            MyText.Header1(account.name)
+            MyText.Body(account.type)
+
         }
+        Text(
+            text = "₹ " + String.format(
+                Locale.getDefault(), "%.2f", account.currentBalance
+            ),
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (account.currentBalance >= 0) Color.Unspecified else Color.Red
+        )
     }
 }
 

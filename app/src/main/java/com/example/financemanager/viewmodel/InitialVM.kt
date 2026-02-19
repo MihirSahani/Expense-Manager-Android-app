@@ -3,6 +3,7 @@ package com.example.financemanager.viewmodel
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.financemanager.database.entity.User
@@ -32,7 +33,9 @@ class InitialVM(private val expenseManagementInternal: ExpenseManagementInternal
 
     fun parseSMS(context: Context) {
         viewModelScope.launch {
-            expenseManagementInternal.parseMessagesToTransactions(context)
+            if (expenseManagementInternal.getAppSetting(Keys.IS_INITIALIZATION_DONE) != 1L) {
+                expenseManagementInternal.parseMessagesToTransactions(context)
+            }
         }
     }
 

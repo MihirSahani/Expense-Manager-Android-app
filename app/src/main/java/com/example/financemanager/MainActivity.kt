@@ -5,10 +5,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
 import androidx.room.Room
 import com.example.financemanager.database.localstorage.ExpenseManagementDatabase
 import com.example.financemanager.internal.ExpenseManagementInternal
 import com.example.financemanager.ui.composable.initial.Navigate
+import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.ViewModelFactory
 
 object Graph {
@@ -33,9 +39,16 @@ class MainActivity : ComponentActivity() {
 
         Graph.provide(this)
 
-        enableEdgeToEdge()
         setContent {
-            Navigate()
+            FinanceManagerTheme {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background)
+                ) {
+                    Navigate()
+                }
+            }
         }
     }
 }

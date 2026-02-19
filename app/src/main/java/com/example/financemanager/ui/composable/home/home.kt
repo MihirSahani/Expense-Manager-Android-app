@@ -1,69 +1,76 @@
 package com.example.financemanager.ui.composable.home
 
+import android.graphics.drawable.shapes.Shape
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.financemanager.ui.composable.Screen
+import com.example.financemanager.ui.composable.utils.MyText
+import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.InitialVM
 
 @Composable
 fun HomeScreen(navController: NavController, viewModel: InitialVM) {
     val userName by viewModel.userName.collectAsState()
-    val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
-        viewModel.parseSMS(context)
-    }
+    viewModel.parseSMS(LocalContext.current)
 
+    HomeScreenContent(
+        userName = userName,
+        onAccountsClick = { navController.navigate(Screen.Accounts.route) },
+        onCategoriesClick = { navController.navigate(Screen.Categories.route) }
+    )
+}
+
+@Composable
+fun HomeScreenContent(
+    userName: String,
+    onAccountsClick: () -> Unit,
+    onCategoriesClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .padding(24.dp)
     ) {
-        Text(
-            text = "Hello, $userName!",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = "Welcome back to your Finance Manager.",
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        
+        MyText.ScreenHeader("Hello $userName")
+
         Spacer(modifier = Modifier.height(32.dp))
 
-        Row(
+        Column (
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             HomeWidget(
                 title = "Accounts",
                 icon = Icons.Default.AccountBalanceWallet,
-                modifier = Modifier.weight(1f),
-                onClick = { navController.navigate(Screen.Accounts.route) }
+                onClick = onAccountsClick
             )
             HomeWidget(
                 title = "Categories",
                 icon = Icons.Default.Category,
-                modifier = Modifier.weight(1f),
-                onClick = { navController.navigate(Screen.Categories.route) }
+                onClick = onCategoriesClick
             )
         }
     }
@@ -73,32 +80,41 @@ fun HomeScreen(navController: NavController, viewModel: InitialVM) {
 fun HomeWidget(
     title: String,
     icon: ImageVector,
-    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    Card(
-        modifier = modifier
-            .aspectRatio(1f)
-            .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable { onClick() }
+            .padding(16.dp)
+            .fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = title,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 16.sp
-            )
-        }
+        Icon(
+            imageVector = icon,
+            contentDescription = title,
+            modifier = Modifier.size(40.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = title,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 16.sp
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HomeScreenPreview() {
+    FinanceManagerTheme {
+        HomeScreenContent(
+            userName = "Munshi",
+            onAccountsClick = {},
+            onCategoriesClick = {}
+        )
     }
 }
