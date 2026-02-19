@@ -97,7 +97,10 @@ fun Navigate() {
                 )
             }
             composable(Screen.Settings.route) {
-                SettingsScreen(navController)
+                SettingsScreen(
+                    navController,
+                    Graph.viewModelFactory.getViewModel(ViewModelName.SETTINGS) as SettingsVM
+                )
             }
             composable(Screen.UpdateUserDetails.route) {
                 UpdateUserDetailsScreen(

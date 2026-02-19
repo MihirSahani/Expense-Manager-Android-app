@@ -12,8 +12,11 @@ import com.example.financemanager.database.localstorage.ExpenseManagementDatabas
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     val accountManager: AccountManager = AccountManager(database.accountDao())
@@ -43,10 +46,16 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
 
     suspend fun addTransaction(transaction: Transaction) {
         transactionManager.addTransaction(transaction, accountManager)
+        if (transaction.type.equals("income", ignoreCase = true)) {
+            updateSalaryCreditTime()
+        }
     }
 
     suspend fun updateTransaction(transaction: Transaction) {
         transactionManager.updateTransaction(transaction)
+        if (transaction.type.equals("income", ignoreCase = true)) {
+            updateSalaryCreditTime()
+        }
     }
 
     suspend fun updateTransactionCategory(
@@ -73,6 +82,9 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
 
         } else {
             transactionManager.updateTransaction(transaction)
+        }
+        if (transaction.type.equals("income", ignoreCase = true)) {
+            updateSalaryCreditTime()
         }
     }
 
@@ -144,15 +156,18 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     }
 
     suspend fun parseMessagesToTransactions(context: Context) {
+        val lastTimestamp = appSettingManager.getAppSetting(Keys.LAST_SMS_TIMESTAMP) ?: 0L
         val timestamp = smsParser.parseMessages(
             context, transactionManager, payeeCategoryMapperManager, accountIdMapperManager,
-            accountManager, appSettingManager.getAppSetting(Keys.LAST_SMS_TIMESTAMP) ?: 0L)
+            accountManager, lastTimestamp)
         appSettingManager.updateAppSetting(Keys.LAST_SMS_TIMESTAMP, timestamp)
+        updateSalaryCreditTime()
     }
 
     suspend fun parseSingleMessage(body: String, sender: String, smsDateLong: Long) {
         smsParser.parseSingleMessage(body, sender, smsDateLong, transactionManager,
             payeeCategoryMapperManager, accountIdMapperManager, accountManager)
+        updateSalaryCreditTime()
     }
 
     suspend fun addAccount(account: Account) {
@@ -207,5 +222,40 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
 
     fun getTransactionSumByMonthFlow(year: Int, month: Int): Flow<List<TransactionSummary>> {
         return transactionManager.getSumOfTransactionsByCategoryFlow(year, month)
+    }
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    fun getTransactionSumBySalaryDateFlow(): Flow<List<TransactionSummary>> {
+        return appSettingManager.getAppSettingFlow(Keys.SALARY_CREDIT_TIME)
+            .flatMapLatest { timestamp ->
+                transactionManager.getSumOfTransactionsBySalaryDateFlow(timestamp ?: 0L)
+            }
+    }
+
+    fun getSettingFlow(key: Keys): Flow<Long?> {
+        return appSettingManager.getAppSettingFlow(key)
+    }
+    
+    suspend fun getAppSetting(key: Keys): Long? {
+        return appSettingManager.getAppSetting(key)
+    }
+
+    suspend fun updateSetting(key: Keys, value: Long?) {
+        appSettingManager.updateAppSetting(key, value)
+    }
+
+    suspend fun updateSalaryCreditTime() {
+        val transaction = transactionManager.getTransactionWithIncomeCategory()
+        if (transaction != null) {
+            val format = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+            try {
+                val date = format.parse(transaction.transactionDate)
+                updateSetting(Keys.SALARY_CREDIT_TIME, date?.time)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        } else {
+            updateSetting(Keys.SALARY_CREDIT_TIME, 0L)
+        }
     }
 }

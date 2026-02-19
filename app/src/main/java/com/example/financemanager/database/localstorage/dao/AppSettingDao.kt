@@ -5,7 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.financemanager.database.entity.AppSetting
-import com.example.financemanager.internal.Keys
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 abstract class AppSettingDao {
@@ -14,4 +14,7 @@ abstract class AppSettingDao {
 
     @Query("SELECT `value` FROM `app-settings` WHERE `key` = :key")
     abstract suspend fun getByKey(key: Int?): Long?
+
+    @Query("SELECT `value` FROM `app-settings` WHERE `key` = :key")
+    abstract fun getByKeyFlow(key: Int?): Flow<Long?>
 }

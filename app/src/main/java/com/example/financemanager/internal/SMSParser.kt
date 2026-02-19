@@ -134,7 +134,7 @@ class SMSParser {
             coroutineScope {
                 val waitGroup = mutableListOf<Job>()
 
-                waitGroup.add(launch{
+                waitGroup.add(launch {
                     processSbiUpiMessage(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
                         accountIdMapperManager, accountManager)
                 })

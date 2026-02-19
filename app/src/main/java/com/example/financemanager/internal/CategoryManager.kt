@@ -26,4 +26,8 @@ class CategoryManager(
     suspend fun getCategories(): List<Category> {
         return categoryDao.getAll()
     }
+
+    suspend fun getCategory(id: Int): Category? {
+        return categoryDao.getById(id)
+    }
 }

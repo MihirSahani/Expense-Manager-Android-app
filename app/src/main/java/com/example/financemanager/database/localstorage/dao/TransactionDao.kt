@@ -66,4 +66,16 @@ abstract class TransactionDao {
         year: Int,
         month: Int
     ): Flow<List<TransactionSummary>>
+
+    @Query("SELECT SUM(CASE WHEN type = 'Expense' THEN -ABS(`amount`) ELSE ABS(`amount`) END)" +
+            " AS `totalAmount` FROM `transactions` " +
+            "WHERE transaction_date >= :timeMills")
+    abstract fun getSumOfTransactionsBySalaryDateFlow(
+        timeMills: Long
+    ): Flow<List<TransactionSummary>>
+
+    @Query("SELECT * FROM `transactions` " +
+            "LEFT JOIN `categories` ON `transactions`.`category_id` = `categories`.`id` " +
+            "WHERE `categories`.`type` = 'Income' ORDER BY `transactions`.`transaction_date` DESC")
+    abstract suspend fun getTransactionWithIncomeCategory(): Transaction?
 }

@@ -3,7 +3,9 @@ package com.example.financemanager.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.financemanager.database.entity.Category
+import com.example.financemanager.database.entity.TransactionSummary
 import com.example.financemanager.internal.ExpenseManagementInternal
+import com.example.financemanager.internal.Keys
 import kotlinx.coroutines.flow.*
 import java.time.LocalDate
 import kotlin.math.abs
@@ -14,14 +16,31 @@ data class CategorySpending(
     val budget: Double?
 )
 
-class AnalysisVM(private var expenseManagementInternal: ExpenseManagementInternal): ViewModel() {
+class AnalysisVM(private var em: ExpenseManagementInternal): ViewModel() {
 
     private val now = LocalDate.now()
 
-    val categorySpendingList: StateFlow<List<CategorySpending>> = combine(
-        expenseManagementInternal.getCategoriesFlow(),
-        expenseManagementInternal.getTransactionSumByMonthFlow(now.year, now.monthValue)
-    ) { categories, transactionSum ->
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val categorySpendingList: StateFlow<List<CategorySpending>> = em.getSettingFlow(Keys.BUDGET_TIMEFRAME)
+        .flatMapLatest { budgetTimeframe ->
+            val transactionSumFlow = if (budgetTimeframe == 1L) {
+                em.getTransactionSumBySalaryDateFlow()
+            } else {
+                em.getTransactionSumByMonthFlow(now.year, now.monthValue)
+            }
+            combine(
+                em.getCategoriesFlow(),
+                transactionSumFlow
+            ) { categories, transactionSum ->
+                transformToSpendingList(categories, transactionSum)
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    private fun transformToSpendingList(categories: List<Category>, transactionSum: List<TransactionSummary>): List<CategorySpending> {
         val spendingList = categories
             .filter { it.type == "Expense" }
             .map { category ->
@@ -53,11 +72,14 @@ class AnalysisVM(private var expenseManagementInternal: ExpenseManagementInterna
             )
         }
 
-        spendingList.sortedByDescending { it.totalSpending }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
+        return spendingList.sortedByDescending { it.totalSpending }
+    }
 
+    val isCategoryTransactionLoaded: StateFlow<Boolean> = categorySpendingList
+        .map { true }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
 }

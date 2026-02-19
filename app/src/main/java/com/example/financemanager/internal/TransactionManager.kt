@@ -67,4 +67,12 @@ class TransactionManager(val transactionDao: TransactionDao) {
     fun getSumOfTransactionsByCategoryFlow(year: Int, month: Int): Flow<List<TransactionSummary>> {
         return transactionDao.getSumOfTransactionsByCategoryFlow(year, month)
     }
+
+    fun getSumOfTransactionsBySalaryDateFlow(timeMills: Long): Flow<List<TransactionSummary>> {
+        return transactionDao.getSumOfTransactionsBySalaryDateFlow(timeMills)
+    }
+
+    suspend fun getTransactionWithIncomeCategory(): Transaction? {
+        return transactionDao.getTransactionWithIncomeCategory()
+    }
 }

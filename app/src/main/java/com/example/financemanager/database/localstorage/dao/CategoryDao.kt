@@ -26,4 +26,8 @@ abstract class CategoryDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun create(category: Category)
+
+    @Query("SELECT * FROM `categories` WHERE `id` = :id")
+    abstract suspend fun getById(id: Int): Category?
+
 }

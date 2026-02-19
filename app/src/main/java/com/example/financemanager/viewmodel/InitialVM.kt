@@ -40,11 +40,13 @@ class InitialVM(private val expenseManagementInternal: ExpenseManagementInternal
         viewModelScope.launch {
             if (expenseManagementInternal.appSettingManager.getAppSetting(
                 Keys.IS_INITIALIZATION_DONE
-            ) == null) {
-                expenseManagementInternal.appSettingManager.updateAppSetting(
-                    Keys.IS_INITIALIZATION_DONE, 0
-                )
+            ) != 1L) {
                 expenseManagementInternal.loadDummyData()
+                expenseManagementInternal.updateSetting(Keys.BUDGET_TIMEFRAME, 0L)
+                expenseManagementInternal.updateSetting(Keys.SALARY_CREDIT_TIME, 0L)
+                expenseManagementInternal.updateSetting(Keys.LAST_SMS_TIMESTAMP, 0L)
+                // expenseManagementInternal.updateSetting(Keys.LAST_SMS_TIMESTAMP, System.currentTimeMillis())
+                expenseManagementInternal.updateSetting(Keys.IS_INITIALIZATION_DONE, 1L)
             }
         }
     }
