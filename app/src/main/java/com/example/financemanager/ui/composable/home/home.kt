@@ -18,10 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.financemanager.ui.composable.Screen
 import com.example.financemanager.ui.composable.utils.MyText
@@ -99,11 +97,7 @@ fun HomeWidget(
             tint = MaterialTheme.colorScheme.primary
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = title,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 16.sp
-        )
+        MyText.Header1(title)
     }
 }
 
