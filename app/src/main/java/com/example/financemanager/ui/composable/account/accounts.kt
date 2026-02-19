@@ -122,8 +122,6 @@ fun AccountItem(account: Account, onClick: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun AccountsScreenPreview() {
-    // Fixed: Using a stateless version of the screen for preview to avoid UninitializedPropertyAccessException
-    // of Graph.viewModelFactory which is not initialized in the preview environment.
     val mockAccounts = listOf(
         Account(id = 1, name = "Savings Account", type = "Bank", currentBalance = 12500.0),
         Account(id = 2, name = "Wallet", type = "Cash", currentBalance = 1500.0),

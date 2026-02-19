@@ -3,12 +3,12 @@ package com.example.financemanager.viewmodel
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.financemanager.database.entity.User
 import com.example.financemanager.internal.ExpenseManagementInternal
 import com.example.financemanager.internal.Keys
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -16,14 +16,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 
-class InitialVM(private val expenseManagementInternal: ExpenseManagementInternal): ViewModel() {
+class InitialVM(private val em: ExpenseManagementInternal): ViewModel() {
 
     private val _isUserLoaded = MutableStateFlow(false)
     val isUserLoaded: StateFlow<Boolean> = _isUserLoaded.asStateFlow()
 
-    private val _user = expenseManagementInternal.getUser()
+    private val _user = em.getUser()
         .onEach { _isUserLoaded.value = true }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
     val user: StateFlow<User?> = _user
@@ -31,23 +32,31 @@ class InitialVM(private val expenseManagementInternal: ExpenseManagementInternal
     val userName: StateFlow<String> = _user.map { it?.firstName ?: "Guest" }
         .stateIn(viewModelScope, SharingStarted.Eagerly, "Guest")
 
-    fun parseSMS(context: Context) {
+    fun initialize(context: Context) {
         viewModelScope.launch {
-            expenseManagementInternal.parseMessagesToTransactions(context)
-        }
-    }
+            if (em.appSettingManager.getAppSetting(Keys.IS_INITIALIZATION_DONE) == null) {
+                val waitGroup = mutableListOf<Job>()
 
-    init {
-        viewModelScope.launch {
-            if (expenseManagementInternal.appSettingManager.getAppSetting(
-                Keys.IS_INITIALIZATION_DONE
-            ) != 1L) {
-                expenseManagementInternal.loadDummyData()
-                expenseManagementInternal.updateSetting(Keys.BUDGET_TIMEFRAME, 0L)
-                expenseManagementInternal.updateSetting(Keys.SALARY_CREDIT_TIME, 0L)
-                expenseManagementInternal.updateSetting(Keys.LAST_SMS_TIMESTAMP, 0L)
-                // expenseManagementInternal.updateSetting(Keys.LAST_SMS_TIMESTAMP, System.currentTimeMillis())
-                expenseManagementInternal.updateSetting(Keys.IS_INITIALIZATION_DONE, 1L)
+                waitGroup.add(launch {
+                    em.loadDummyData()
+                })
+                waitGroup.add(launch {
+                    em.parseMessagesToTransactions(context)
+                })
+                waitGroup.add(launch {
+                    em.updateSetting(Keys.BUDGET_TIMEFRAME, 0L)
+                })
+                waitGroup.add(launch {
+                    em.updateSetting(Keys.SALARY_CREDIT_TIME, 0L)
+                })
+                waitGroup.add(launch {
+                    em.updateSetting(Keys.LAST_SMS_TIMESTAMP, 0L)
+                    // expenseManagementInternal.updateSetting(Keys.LAST_SMS_TIMESTAMP, System.currentTimeMillis())
+                })
+                waitGroup.add(launch {
+                    em.updateSetting(Keys.IS_INITIALIZATION_DONE, 1L)
+                })
+                waitGroup.joinAll()
             }
         }
     }
@@ -55,7 +64,7 @@ class InitialVM(private val expenseManagementInternal: ExpenseManagementInternal
 
     fun signUp(firstName: String, lastName: String) {
         viewModelScope.launch {
-            expenseManagementInternal.createUser(firstName, lastName)
+            em.createUser(firstName, lastName)
         }
     }
 

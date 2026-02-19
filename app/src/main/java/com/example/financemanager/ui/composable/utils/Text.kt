@@ -5,11 +5,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.financemanager.database.entity.Transaction
 import java.util.Locale
-import kotlin.math.abs
 
 object MyText {
 
@@ -44,11 +45,11 @@ object MyText {
     }
 
     @Composable
-    fun Body(text: String) {
+    fun Body(text: String, color: Color = MaterialTheme.colorScheme.onSurfaceVariant) {
         Text(
             text = text,
             fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = color
         )
     }
 
@@ -62,16 +63,14 @@ object MyText {
     }
 
     @Composable
-    fun TransactionAmount(amount: Double, modifier: Modifier = Modifier) {
+    fun TransactionAmount(t: Transaction, modifier: Modifier = Modifier) {
         Text(
-            text = String.format(Locale.getDefault(), "%.2f", abs(amount)),
+            text = String.format(Locale.getDefault(), "%.2f", t.amount),
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
-            color = if (amount < 0)
-                MaterialTheme.colorScheme.error
-            else MaterialTheme.colorScheme.primary,
+            color = if (t.type.equals("expense", ignoreCase = true)) Color(0xFF9B2600)
+                else Color(0xFF02AF34),
             modifier = modifier
         )
     }
-
 }

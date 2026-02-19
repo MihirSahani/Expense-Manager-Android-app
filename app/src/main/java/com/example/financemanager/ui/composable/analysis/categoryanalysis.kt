@@ -48,7 +48,7 @@ fun CategoryAnalysisScreenContent(
                     MyText.Header1(text = transaction.payee)
                     MyText.Body(text = transaction.transactionDate)
                 }
-                MyText.TransactionAmount(transaction.amount)
+                MyText.TransactionAmount(transaction)
             }
         }
     }

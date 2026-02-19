@@ -3,8 +3,6 @@ package com.example.financemanager.ui.composable.transaction
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
@@ -18,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -25,7 +24,12 @@ import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.Transaction
 import com.example.financemanager.ui.composable.Screen
 import com.example.financemanager.ui.composable.category.parseColor
+import com.example.financemanager.ui.composable.utils.ListOfItems
+import com.example.financemanager.ui.composable.utils.MyText
+import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.TransactionVM
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun TransactionHistoryScreen(navController: NavController, viewModel: TransactionVM) {
@@ -33,35 +37,53 @@ fun TransactionHistoryScreen(navController: NavController, viewModel: Transactio
     val transactions by viewModel.transactions.collectAsState()
     val categories by viewModel.categories.collectAsState()
 
-    // Group and sort transactions by date (latest first)
+    TransactionHistoryContent(
+        transactions = transactions,
+        categories = categories,
+        onTransactionClick = { transaction ->
+            viewModel.selectTransaction(transaction)
+            navController.navigate(Screen.ViewTransaction.route)
+        }
+    )
+}
+
+@Composable
+fun TransactionHistoryContent(
+    transactions: List<Transaction>,
+    categories: List<Category>,
+    onTransactionClick: (Transaction) -> Unit
+) {
+    val dateFormat = remember { SimpleDateFormat("dd-MMM-yyyy HH:mm", Locale.getDefault()) }
+
     val groupedTransactions = remember(transactions) {
         transactions
-            .sortedByDescending { it.transactionDate }
+            .sortedByDescending { transaction ->
+                try {
+                    dateFormat.parse(transaction.transactionDate)?.time ?: 0L
+                } catch (e: Exception) {
+                    0L
+                }
+            }
             .groupBy { it.transactionDate.split(" ")[0] }
     }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text(
-            text = "Transaction History",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+        MyText.ScreenHeader("My Transactions")
+        
+        Spacer(modifier = Modifier.height(16.dp))
 
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            groupedTransactions.forEach { (date, transactionsInDate) ->
-                item {
-                    DateHeader(date)
-                }
-                items(transactionsInDate) { transaction ->
-                    val category = categories.find { it.id == transaction.categoryId }
-                    TransactionItem(transaction, category) {
-                        viewModel.selectTransaction(transaction)
-                        navController.navigate(Screen.ViewTransaction.route)
-                    }
+        ListOfItems(
+            items = groupedTransactions,
+            headerContent = { date ->
+                DateHeader(date)
+            },
+            itemContent = { transaction ->
+                val category = categories.find { it.id == transaction.categoryId }
+                TransactionItem(transaction, category) {
+                    onTransactionClick(transaction)
                 }
             }
-        }
+        )
     }
 }
 
@@ -71,76 +93,82 @@ fun DateHeader(date: String) {
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = date,
-            modifier = Modifier.padding(end = 8.dp),
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        MyText.Body(text = date)
+
         HorizontalDivider(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).padding(start = 8.dp),
             thickness = 1.dp,
-            color = MaterialTheme.colorScheme.outlineVariant
         )
     }
 }
 
 @Composable
 fun TransactionItem(transaction: Transaction, category: Category?, onClick: () -> Unit) {
-    Card(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .clickable { onClick() }
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (category != null) {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(parseColor(category.color))
+        if (category != null) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(parseColor(category.color))
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.errorContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.Warning,
+                    contentDescription = "Uncategorized",
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.error
                 )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.errorContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Default.Warning,
-                        contentDescription = "Uncategorized",
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                }
-            }
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = transaction.payee, fontWeight = FontWeight.Bold)
-                Text(
-                    text = category?.name ?: "Uncategorized", 
-                    fontSize = 12.sp, 
-                    color = if (category == null) MaterialTheme.colorScheme.error else Color.Gray
-                )
-            }
-            
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = "${transaction.amount} ${transaction.currency}",
-                    color = if (transaction.type.equals("expense", ignoreCase = true)) Color.Red else Color.Green,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(text = transaction.transactionDate.split(" ").last(), fontSize = 10.sp, color = Color.Gray)
             }
         }
+        
+        Spacer(modifier = Modifier.width(16.dp))
+        
+        Column(modifier = Modifier.weight(1f)) {
+            MyText.Header1(text = transaction.payee)
+            MyText.Body(
+                text = category?.name ?: "Uncategorized", 
+                color = if (category == null) MaterialTheme.colorScheme.error else Color.Gray
+            )
+        }
+        
+        Column(horizontalAlignment = Alignment.End) {
+            MyText.TransactionAmount(transaction)
+            MyText.Body(transaction.transactionDate.split(" ").last())
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun TransactionHistoryPreview() {
+    val sampleCategories = listOf(
+        Category(id = 1, name = "Food", description = "Groceries", type = "Expense", color = "#FF5733", createdAt = "", updatedAt = ""),
+        Category(id = 2, name = "Salary", description = "Monthly Income", type = "Income", color = "#33FF57", createdAt = "", updatedAt = "")
+    )
+    val sampleTransactions = listOf(
+        Transaction(id = 1, payee = "Starbucks", amount = 15.5, currency = "USD", type = "Expense", transactionDate = "27-Oct-2023 08:30", categoryId = 1, description = "", receiptURL = "", location = "", createdAt = "", updatedAt = "", rawAccountIdName = ""),
+        Transaction(id = 2, payee = "Employer", amount = 5000.0, currency = "USD", type = "Income", transactionDate = "26-Oct-2023 10:00", categoryId = 2, description = "", receiptURL = "", location = "", createdAt = "", updatedAt = "", rawAccountIdName = ""),
+        Transaction(id = 3, payee = "Unknown", amount = 20.0, currency = "USD", type = "Expense", transactionDate = "26-Oct-2023 15:45", categoryId = null, description = "", receiptURL = "", location = "", createdAt = "", updatedAt = "", rawAccountIdName = "")
+    )
+    FinanceManagerTheme {
+        TransactionHistoryContent(
+            transactions = sampleTransactions,
+            categories = sampleCategories,
+            onTransactionClick = {}
+        )
     }
 }

@@ -1,9 +1,9 @@
 package com.example.financemanager.ui.composable.utils
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
@@ -11,17 +11,44 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-
 
 @Composable
 fun <K, V> ListOfItems(
-    items: Map<K, V>,
+    items: Map<K, List<V>>,
     modifier: Modifier = Modifier,
-    content: @Composable (Pair<K, V>) -> Unit
+    headerContent: @Composable (K) -> Unit,
+    itemContent: @Composable (V) -> Unit
 ) {
-    ListOfItemsBase(items.toList(), modifier, content)
+    LazyColumn(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items.forEach { (header, subItems) ->
+            item {
+                headerContent(header)
+            }
+            item {
+                // Wrap each group in a styled Column (Card-like look)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                ) {
+                    subItems.forEachIndexed { index, subItem ->
+                        if (index != 0) {
+                            HorizontalDivider(
+                                thickness = 1.dp,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                        }
+                        itemContent(subItem)
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -39,10 +66,8 @@ private fun <T> ListOfItemsBase(
     modifier: Modifier = Modifier,
     content: @Composable (T) -> Unit
 ) {
-
     LazyColumn(
         modifier = modifier
-            // .padding(16.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surface)
@@ -51,8 +76,7 @@ private fun <T> ListOfItemsBase(
             if (idx != 0) {
                 HorizontalDivider(
                     thickness = 1.dp,
-                    // color = LightGray,
-                    modifier = Modifier.padding(4.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }
             content(item)

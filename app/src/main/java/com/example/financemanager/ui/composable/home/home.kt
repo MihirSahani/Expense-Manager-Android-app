@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -28,8 +29,9 @@ import com.example.financemanager.viewmodel.InitialVM
 @Composable
 fun HomeScreen(navController: NavController, viewModel: InitialVM) {
     val userName by viewModel.userName.collectAsState()
+    val context = LocalContext.current
 
-    viewModel.parseSMS(LocalContext.current)
+    LaunchedEffect(Unit) { viewModel.initialize(context) }
 
     HomeScreenContent(
         userName = userName,

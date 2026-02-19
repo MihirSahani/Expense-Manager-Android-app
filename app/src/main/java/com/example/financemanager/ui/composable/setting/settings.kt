@@ -14,15 +14,32 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.financemanager.ui.composable.Screen
+import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.SettingsVM
 
 @Composable
 fun SettingsScreen(navController: NavController, viewModel: SettingsVM) {
     val budgetTimeframe by viewModel.budgetTimeframe.collectAsState()
 
+    SettingsScreenContent(
+        budgetTimeframe = budgetTimeframe ?: 0L,
+        onUpdateUserDetailsClick = { navController.navigate(Screen.UpdateUserDetails.route) },
+        onBudgetTimeframeChange = { isChecked ->
+            viewModel.updateBudgetTimeframe(if (isChecked) 1L else 0L)
+        }
+    )
+}
+
+@Composable
+fun SettingsScreenContent(
+    budgetTimeframe: Long,
+    onUpdateUserDetailsClick: () -> Unit,
+    onBudgetTimeframeChange: (Boolean) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -37,7 +54,7 @@ fun SettingsScreen(navController: NavController, viewModel: SettingsVM) {
         SettingsItem(
             title = "Update User Details",
             icon = Icons.Default.Person,
-            onClick = { navController.navigate(Screen.UpdateUserDetails.route) }
+            onClick = onUpdateUserDetailsClick
         )
         
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -71,9 +88,7 @@ fun SettingsScreen(navController: NavController, viewModel: SettingsVM) {
             }
             Switch(
                 checked = budgetTimeframe == 1L,
-                onCheckedChange = { isChecked ->
-                    viewModel.updateBudgetTimeframe(if (isChecked) 1L else 0L)
-                }
+                onCheckedChange = onBudgetTimeframeChange
             )
         }
 
@@ -92,7 +107,7 @@ fun SettingsItem(
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(vertical = 16.dp, horizontal = 8.dp),
-        verticalAlignment =Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -112,6 +127,18 @@ fun SettingsItem(
             imageVector = Icons.Default.ChevronRight,
             contentDescription = null,
             tint = Color.Gray
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SettingsScreenPreview() {
+    FinanceManagerTheme {
+        SettingsScreenContent(
+            budgetTimeframe = 1L,
+            onUpdateUserDetailsClick = {},
+            onBudgetTimeframeChange = {}
         )
     }
 }

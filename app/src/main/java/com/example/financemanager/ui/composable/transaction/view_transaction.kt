@@ -9,14 +9,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.financemanager.database.entity.Account
+import com.example.financemanager.database.entity.Category
+import com.example.financemanager.database.entity.Transaction
+import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.AccountVM
 import com.example.financemanager.viewmodel.CategoryVM
 import com.example.financemanager.viewmodel.TransactionVM
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ViewTransactionScreen(
     navController: NavController,
@@ -28,14 +32,37 @@ fun ViewTransactionScreen(
     val categories by categoryVM.categories.collectAsState()
     val accounts by accountVM.accounts.collectAsState()
 
+    ViewTransactionContent(
+        transaction = transaction,
+        categories = categories,
+        accounts = accounts,
+        onBackClick = { navController.popBackStack() },
+        onUpdateCategory = { updatedTransaction, updateAll ->
+            transactionVM.updateTransactionCategory(updatedTransaction, updateAll)
+        },
+        onUpdateAccount = { updatedTransaction ->
+            transactionVM.updateTransactionAccount(updatedTransaction)
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ViewTransactionContent(
+    transaction: Transaction?,
+    categories: List<Category>,
+    accounts: List<Account>,
+    onBackClick: () -> Unit,
+    onUpdateCategory: (Transaction, Boolean) -> Unit,
+    onUpdateAccount: (Transaction) -> Unit
+) {
     var showCategoryDialog by remember { mutableStateOf(false) }
     var showAccountDialog by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { AddEditTopBar(navController) }
+        topBar = { AddEditTopBar(onBackClick) }
     ) { innerPadding ->
         if (transaction == null) {
-            // -------------------------------- NO TRANSACTION AVAILABLE
             Box(
                 modifier = Modifier.fillMaxSize().padding(innerPadding),
                 contentAlignment = Alignment.Center
@@ -43,8 +70,7 @@ fun ViewTransactionScreen(
                 Text("Transaction not found")
             }
         } else {
-            // -------------------------------- DETAILS OF TRANSACTION
-            val currentTransaction = transaction!!
+            val currentTransaction = transaction
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -60,7 +86,6 @@ fun ViewTransactionScreen(
                 DetailItem("Date", currentTransaction.transactionDate)
                 DetailItem("Type", currentTransaction.type)
 
-                // -------------------------------- CATEGORY HANDLER
                 val currentCategory = categories.find { it.id == currentTransaction.categoryId }
                 
                 Row(
@@ -83,7 +108,6 @@ fun ViewTransactionScreen(
                     }
                 }
 
-                // -------------------------------- ACCOUNT HANDLER
                 val currentAccount = accounts.find { it.id == currentTransaction.accountId }
 
                 Row(
@@ -107,7 +131,6 @@ fun ViewTransactionScreen(
                     }
                 }
 
-                // -------------------------------- DESCRIPTION AND LOCATION HANDLER
                 if (currentTransaction.description.isNotEmpty()) {
                     DetailItem("Description", currentTransaction.description)
                 }
@@ -119,9 +142,8 @@ fun ViewTransactionScreen(
         }
     }
 
-    // -------------------------------- CATEGORY UPDATE
     if (showCategoryDialog && transaction != null) {
-        val currentTransaction = transaction!!
+        val currentTransaction = transaction
         var updateCategoryForAllTransactionsWithPayee by remember { mutableStateOf(true) }
 
         AlertDialog(
@@ -146,9 +168,7 @@ fun ViewTransactionScreen(
                                 val updatedTransaction = currentTransaction.copy(
                                     categoryId = category.id
                                 )
-                                transactionVM.updateTransactionCategory(
-                                    updatedTransaction, updateCategoryForAllTransactionsWithPayee
-                                )
+                                onUpdateCategory(updatedTransaction, updateCategoryForAllTransactionsWithPayee)
                                 showCategoryDialog = false
                             },
                             modifier = Modifier.fillMaxWidth()
@@ -169,9 +189,8 @@ fun ViewTransactionScreen(
         )
     }
 
-    // -------------------------------- ACCOUNT UPDATE
     if (showAccountDialog && transaction != null) {
-        val currentTransaction = transaction!!
+        val currentTransaction = transaction
 
         AlertDialog(
             onDismissRequest = { showAccountDialog = false },
@@ -185,7 +204,7 @@ fun ViewTransactionScreen(
                                 val updatedTransaction = currentTransaction.copy(
                                     accountId = account.id
                                 )
-                                transactionVM.updateTransactionAccount(updatedTransaction)
+                                onUpdateAccount(updatedTransaction)
                                 showAccountDialog = false
                             },
                             modifier = Modifier.fillMaxWidth()
@@ -218,11 +237,11 @@ fun DetailItem(label: String, value: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddEditTopBar(navController: NavController) {
+fun AddEditTopBar(onBackClick: () -> Unit) {
     TopAppBar(
         title = { Text("Transaction Details") },
         navigationIcon = {
-            IconButton(onClick = { navController.popBackStack() }) {
+            IconButton(onClick = onBackClick) {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back"
@@ -230,4 +249,41 @@ fun AddEditTopBar(navController: NavController) {
             }
         }
     )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ViewTransactionPreview() {
+    val sampleTransaction = Transaction(
+        id = 1,
+        payee = "Starbucks",
+        amount = 15.5,
+        currency = "USD",
+        type = "Expense",
+        transactionDate = "2023-10-27 08:30",
+        categoryId = 1,
+        accountId = 1,
+        description = "Morning coffee",
+        receiptURL = "",
+        location = "Seattle, WA",
+        createdAt = "",
+        updatedAt = "",
+        rawAccountIdName = "Visa 1234"
+    )
+    val sampleCategories = listOf(
+        Category(id = 1, name = "Food", description = "Groceries", type = "Expense", color = "#FF5733", createdAt = "", updatedAt = "")
+    )
+    val sampleAccounts = listOf(
+        Account(id = 1, name = "Debit Card", type = "Bank", currency = "USD", currentBalance = 1000.0, bankName = "Chase", accountNumber = "1234", isIncludedInTotal = true, createdAt = "", updatedAt = "")
+    )
+    FinanceManagerTheme {
+        ViewTransactionContent(
+            transaction = sampleTransaction,
+            categories = sampleCategories,
+            accounts = sampleAccounts,
+            onBackClick = {},
+            onUpdateCategory = { _, _ -> },
+            onUpdateAccount = {}
+        )
+    }
 }

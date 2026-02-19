@@ -2,6 +2,7 @@ package com.example.financemanager.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.financemanager.database.entity.Account
 import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.Transaction
 import com.example.financemanager.internal.ExpenseManagementInternal
@@ -21,6 +22,10 @@ class TransactionVM(private val expenseManagementInternal: ExpenseManagementInte
     private val _categories = expenseManagementInternal.getCategoriesFlow()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     val categories: StateFlow<List<Category>> = _categories
+
+    private val _accounts = expenseManagementInternal.getAccountsFlow()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val accounts: StateFlow<List<Account>> = _accounts
 
     private val _selectedTransaction = MutableStateFlow<Transaction?>(null)
     val selectedTransaction: StateFlow<Transaction?> = _selectedTransaction
