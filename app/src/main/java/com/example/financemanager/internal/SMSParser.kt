@@ -127,11 +127,6 @@ class SMSParser {
                 })
                 waitGroup.joinAll()
             }
-        } else if (sbiSenderRegex.matches(sender)) {
-            coroutineScope {
-                val waitGroup = mutableListOf<Job>()
-
-            }
         } else if (amexSenderRegex.matches(sender)) {
             processAmexDebitMessage(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
                 accountIdMapperManager, accountManager)
@@ -147,7 +142,6 @@ class SMSParser {
                     processSbiCreditMessage(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
                         accountIdMapperManager, accountManager)
                 })
-
                 waitGroup.add(launch {
                     processBobCredit1Message(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
                         accountIdMapperManager, accountManager)
