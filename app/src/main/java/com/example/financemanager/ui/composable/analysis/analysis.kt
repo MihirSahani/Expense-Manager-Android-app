@@ -17,10 +17,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.financemanager.database.entity.Category
 import com.example.financemanager.ui.composable.Screen
 import com.example.financemanager.ui.composable.category.parseColor
+import com.example.financemanager.ui.composable.utils.ListOfItems
+import com.example.financemanager.ui.composable.utils.MyText
+import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.AnalysisVM
 import com.example.financemanager.viewmodel.CategorySpending
 import java.util.Locale
@@ -29,44 +34,37 @@ import java.util.Locale
 fun AnalysisScreen(navController: NavController, viewModel: AnalysisVM) {
     val categorySpendingList by viewModel.categorySpendingList.collectAsState()
 
-    Scaffold(
-        topBar = {
-            Text(
-                text = "Analysis of Spending",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(16.dp)
+    AnalysisScreenContent(
+        categorySpendingList = categorySpendingList,
+        onCategoryClick = { categoryId ->
+            navController.navigate(
+                Screen.ViewTransactionByCategory.createRoute(categoryId)
             )
         }
-    ) { innerPadding ->
-        LazyColumn(
-           modifier = Modifier
-               .fillMaxSize()
-               .padding(innerPadding)
-               .padding(16.dp),
-           verticalArrangement = Arrangement.spacedBy(8.dp)
-       ) {
-           items(categorySpendingList) { spending ->
-               CategoryAnalysisItem(spending, navController)
-           }
-       }
-    }
+    )
 }
 
 @Composable
-fun CategoryAnalysisItem(spending: CategorySpending, navController: NavController) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                navController.navigate(
-                    Screen.ViewTransactionByCategory
-                        .createRoute(spending.category.id)
-                )
-            },
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+fun AnalysisScreenContent(
+    categorySpendingList: List<CategorySpending>,
+    onCategoryClick: (Int) -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxSize()
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+        MyText.ScreenHeader("Category")
+        ListOfItems(categorySpendingList, Modifier.padding(16.dp)) { spending ->
+            CategoryAnalysisItem(spending, onCategoryClick)
+        }
+    }
+}
+@Composable
+fun CategoryAnalysisItem(spending: CategorySpending, onCategoryClick: (Int) -> Unit) {
+       Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onCategoryClick(spending.category.id) }
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -98,17 +96,15 @@ fun CategoryAnalysisItem(spending: CategorySpending, navController: NavControlle
             Spacer(modifier = Modifier.width(12.dp))
 
             // ----------------------------------------------------- Name,desc of card
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = spending.category.name,
-                    style = MaterialTheme.typography.titleLarge
-                )
-                if (spending.category.description.isNotBlank()) {
-                    Text(
-                        text = spending.category.description,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    MyText.Header1(spending.category.name)
+                    if (spending.category.description.isNotBlank()) {
+                        MyText.Body(text = spending.category.description)
+                    }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -117,17 +113,14 @@ fun CategoryAnalysisItem(spending: CategorySpending, navController: NavControlle
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = "Spent: ${
-                            String.format(
-                                Locale.getDefault(), "%.2f",
-                                spending.totalSpending
-                            )
-                        }",
-                        style = MaterialTheme.typography.bodyMedium
+                    MyText.Subtitle(text ="Spent: ${
+                        String.format(
+                            Locale.getDefault(), "%.2f",
+                            spending.totalSpending
+                        )}"
                     )
                     if (spending.budget != null) {
-                        Text(
+                        MyText.Subtitle(
                             text = "Budget: ${
                                 String.format(
                                     Locale.getDefault(), "%.2f",
@@ -140,6 +133,7 @@ fun CategoryAnalysisItem(spending: CategorySpending, navController: NavControlle
                 if (spending.budget != null) {
 
                     Spacer(modifier = Modifier.height(8.dp))
+
                     val progress = if (spending.budget > 0) {
                         (spending.totalSpending / spending.budget)
                             .coerceAtMost(1.0).toFloat()
@@ -154,14 +148,37 @@ fun CategoryAnalysisItem(spending: CategorySpending, navController: NavControlle
                         else MaterialTheme.colorScheme.primary
                     )
                     if (spending.totalSpending > spending.budget && spending.budget > 0) {
-                        Text(
-                            text = "Over Budget!",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                        MyText.Body(text = "Over Budget!")
                     }
                 }
             }
         }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AnalysisScreenPreview() {
+    val sampleSpending = listOf(
+        CategorySpending(
+            category = Category(id = 1, name = "Food", description = "Groceries", type = "Expense", color = "#FF5733", createdAt = "", updatedAt = "", monthlyBudget = 5000.0),
+            totalSpending = 3500.0,
+            budget = 5000.0
+        ),
+        CategorySpending(
+            category = Category(id = 2, name = "Rent", description = "Monthly rent", type = "Expense", color = "#3357FF", createdAt = "", updatedAt = "", monthlyBudget = 15000.0),
+            totalSpending = 15000.0,
+            budget = 15000.0
+        ),
+        CategorySpending(
+            category = Category(id = 3, name = "Entertainment", description = "Movies, etc", type = "Expense", color = "#F033FF", createdAt = "", updatedAt = "", monthlyBudget = 2000.0),
+            totalSpending = 2500.0,
+            budget = 2000.0
+        )
+    )
+    FinanceManagerTheme {
+        AnalysisScreenContent(
+            categorySpendingList = sampleSpending,
+            onCategoryClick = {}
+        )
     }
 }

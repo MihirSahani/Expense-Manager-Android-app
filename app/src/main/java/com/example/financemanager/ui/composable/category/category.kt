@@ -52,23 +52,24 @@ fun CategoryScreenContent(
     onCategoryClick: (Category) -> Unit
 ) {
     Scaffold(
-        topBar = {
-            TopAppBar(title = { MyText.ScreenHeader("Categories") })
-        },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddCategoryClick) {
                 Icon(Icons.Default.Add, contentDescription = "Add Category")
             }
         }
     ) { padding ->
-        ListOfItems(
-            categories,
-            modifier = Modifier.padding(padding)
-        ) { category ->
-            CategoryItem(category) {
-                onCategoryClick(category)
+        Column {
+            MyText.ScreenHeader("Categories")
+            ListOfItems(
+                categories,
+                modifier = Modifier.padding(16.dp)
+            ) { category ->
+                CategoryItem(category) {
+                    onCategoryClick(category)
+                }
             }
         }
+
     }
 }
 

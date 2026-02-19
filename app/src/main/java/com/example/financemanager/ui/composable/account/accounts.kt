@@ -27,7 +27,6 @@ fun AccountsScreen(navController: NavController, viewModel: AccountVM) {
     val accounts by viewModel.accounts.collectAsState(emptyList())
     val netWorth by viewModel.netWorth.collectAsState(0.0)
 
-    // Separate UI from logic to fix render issues in Previews
     AccountsContent(
         accounts = accounts,
         netWorth = netWorth,
@@ -60,21 +59,16 @@ fun AccountsContent(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp)
         ) {
+            MyText.ScreenHeader("Accounts")
+
             NetWorthCard(netWorth)
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = "Your Accounts",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+            MyText.Header1("Your Accounts", Modifier.padding(start=32.dp))
 
-            ListOfItems(accounts) { account ->
+            ListOfItems(accounts, Modifier.padding(16.dp)) { account ->
                 AccountItem(account) {
                     onAccountClick(account)
                 }
@@ -86,7 +80,7 @@ fun AccountsContent(
 @Composable
 fun NetWorthCard(netWorth: Double) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         )

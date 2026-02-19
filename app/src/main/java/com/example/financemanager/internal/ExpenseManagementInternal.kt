@@ -9,13 +9,16 @@ import com.example.financemanager.database.entity.Transaction
 import com.example.financemanager.database.entity.TransactionSummary
 import com.example.financemanager.database.entity.User
 import com.example.financemanager.database.localstorage.ExpenseManagementDatabase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+import java.time.LocalDate
 import java.util.Locale
 
 class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
@@ -216,15 +219,15 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
         payeeCategoryMapperManager.addMapping(payee, categoryId)
     }
 
-    fun getTransactionsByCategoryFlow(categoryId: Int?, year: Int, month: Int): Flow<List<Transaction>> {
-        return transactionManager.getTransactionsByCategoryFlow(categoryId, year, month)
+    fun getTransactionsByCategoryFlow(categoryId: MutableStateFlow<Int?>, year: Int, month: Int): Flow<List<Transaction>> {
+        return transactionManager.getTransactionsByCategoryFlow(categoryId.value, year, month)
     }
 
     fun getTransactionSumByMonthFlow(year: Int, month: Int): Flow<List<TransactionSummary>> {
         return transactionManager.getSumOfTransactionsByCategoryFlow(year, month)
     }
 
-    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun getTransactionSumBySalaryDateFlow(): Flow<List<TransactionSummary>> {
         return appSettingManager.getAppSettingFlow(Keys.SALARY_CREDIT_TIME)
             .flatMapLatest { timestamp ->
@@ -247,7 +250,7 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     suspend fun updateSalaryCreditTime() {
         val transaction = transactionManager.getTransactionWithIncomeCategory()
         if (transaction != null) {
-            val format = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+            val format = SimpleDateFormat("dd-MMM-yyyy HH:mm", Locale.getDefault())
             try {
                 val date = format.parse(transaction.transactionDate)
                 updateSetting(Keys.SALARY_CREDIT_TIME, date?.time)
@@ -257,5 +260,21 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
         } else {
             updateSetting(Keys.SALARY_CREDIT_TIME, 0L)
         }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getTransactionsByCategoryCurrentTimeframe(categoryId: Int?): Flow<List<Transaction>> {
+        return appSettingManager.getAppSettingFlow(Keys.BUDGET_TIMEFRAME)
+            .flatMapLatest { timeframe ->
+                if (timeframe == 1L) {
+                    appSettingManager.getAppSettingFlow(Keys.SALARY_CREDIT_TIME)
+                        .flatMapLatest { timestamp ->
+                            transactionManager.getTransactionsByCategoryAndSalaryFlow(categoryId, timestamp)
+                        }
+                } else {
+                    val now = LocalDate.now()
+                    transactionManager.getTransactionsByCategoryFlow(categoryId, now.year, now.monthValue)
+                }
+            }
     }
 }

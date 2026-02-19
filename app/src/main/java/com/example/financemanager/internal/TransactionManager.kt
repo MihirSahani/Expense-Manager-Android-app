@@ -57,7 +57,7 @@ class TransactionManager(val transactionDao: TransactionDao) {
     }
 
     fun getTransactionsByCategoryFlow(categoryId: Int?, year: Int, month: Int): Flow<List<Transaction>> {
-        return transactionDao.getTransactionsByCategoryFlow(categoryId, year, month)
+        return transactionDao.getTransactionsByCategoryAndMonthFlow(categoryId, year, month)
     }
 
     fun getTransactionByMonth(year: Int, month: Int): Flow<List<Transaction>> {
@@ -74,5 +74,13 @@ class TransactionManager(val transactionDao: TransactionDao) {
 
     suspend fun getTransactionWithIncomeCategory(): Transaction? {
         return transactionDao.getTransactionWithIncomeCategory()
+    }
+
+    fun getTransactionsByCategoryAndSalaryFlow(categoryId: Int?, timeMills: Long?): Flow<List<Transaction>> {
+        return transactionDao.getTransactionsByCategoryAndSalaryFlow(categoryId, timeMills)
+    }
+
+    fun getTransactionsByCategoryAndMonthFlow(categoryId: Int?, year: Int, month: Int): Flow<List<Transaction>> {
+        return transactionDao.getTransactionsByCategoryAndMonthFlow(categoryId, year, month)
     }
 }

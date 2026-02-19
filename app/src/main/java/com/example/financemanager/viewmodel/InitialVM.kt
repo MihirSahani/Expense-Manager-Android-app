@@ -33,9 +33,7 @@ class InitialVM(private val expenseManagementInternal: ExpenseManagementInternal
 
     fun parseSMS(context: Context) {
         viewModelScope.launch {
-            if (expenseManagementInternal.getAppSetting(Keys.IS_INITIALIZATION_DONE) != 1L) {
-                expenseManagementInternal.parseMessagesToTransactions(context)
-            }
+            expenseManagementInternal.parseMessagesToTransactions(context)
         }
     }
 

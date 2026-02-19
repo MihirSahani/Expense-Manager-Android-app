@@ -337,7 +337,7 @@ class SMSParser {
     }
 
     private fun getFormattedTimestamp(timeMillis: Long): String {
-        return SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+        return SimpleDateFormat("dd-MMM-yyyy HH:mm", Locale.getDefault())
             .format(Date(timeMillis))
     }
 }

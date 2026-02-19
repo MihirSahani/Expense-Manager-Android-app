@@ -42,7 +42,7 @@ private fun <T> ListOfItemsBase(
 
     LazyColumn(
         modifier = modifier
-            .padding(16.dp)
+            // .padding(16.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surface)

@@ -124,14 +124,6 @@ fun AddEditCategoryScreenContent(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { MyText.ScreenHeader(if (!isEditing) "Add Category" else "Edit Category") },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
         }
     ) { padding ->
         Column(
