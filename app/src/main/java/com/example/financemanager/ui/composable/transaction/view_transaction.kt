@@ -1,21 +1,27 @@
 package com.example.financemanager.ui.composable.transaction
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.financemanager.database.entity.Account
 import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.Transaction
+import com.example.financemanager.ui.composable.utils.ListOfItems
+import com.example.financemanager.ui.composable.utils.MyInput
+import com.example.financemanager.ui.composable.utils.MyText
 import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.AccountVM
 import com.example.financemanager.viewmodel.CategoryVM
@@ -36,7 +42,6 @@ fun ViewTransactionScreen(
         transaction = transaction,
         categories = categories,
         accounts = accounts,
-        onBackClick = { navController.popBackStack() },
         onUpdateCategory = { updatedTransaction, updateAll ->
             transactionVM.updateTransactionCategory(updatedTransaction, updateAll)
         },
@@ -52,156 +57,193 @@ fun ViewTransactionContent(
     transaction: Transaction?,
     categories: List<Category>,
     accounts: List<Account>,
-    onBackClick: () -> Unit,
     onUpdateCategory: (Transaction, Boolean) -> Unit,
     onUpdateAccount: (Transaction) -> Unit
 ) {
     var showCategoryDialog by remember { mutableStateOf(false) }
     var showAccountDialog by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = { AddEditTopBar(onBackClick) }
-    ) { innerPadding ->
-        if (transaction == null) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(innerPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Transaction not found")
-            }
-        } else {
-            val currentTransaction = transaction
+
+    if (transaction == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            MyText.Header1("Transaction not found")
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.background)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Top
+        ) {
+            MyText.ScreenHeader("Transaction Details")
+
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surface),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                DetailItem("Payee", currentTransaction.payee)
-                DetailItem(
-                    "Amount",
-                    "${currentTransaction.amount} ${currentTransaction.currency}"
-                )
-                DetailItem("Date", currentTransaction.transactionDate)
-                DetailItem("Type", currentTransaction.type)
+                DetailItem("Payee", transaction.payee)
+                HorizontalDivider(thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
+                DetailItem("Amount", "${transaction.amount} ${transaction.currency}")
+                HorizontalDivider(thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
+                DetailItem("Date", transaction.transactionDate)
+                HorizontalDivider(thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
+                DetailItem("Type", transaction.type)
+                HorizontalDivider(thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
 
-                val currentCategory = categories.find { it.id == currentTransaction.categoryId }
-                
+
+                if (transaction.location.isNotEmpty()) {
+                    DetailItem("Location", transaction.location)
+                }
+
+            }
+
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surface),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                val currentCategory = categories.find { it.id == transaction.categoryId }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Category", fontSize = 14.sp, color = Color.Gray)
-                        Text(
-                            text = currentCategory?.name ?: "Not Assigned",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Medium,
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showCategoryDialog = true }
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        MyText.Body("Category")
+                        MyText.Header1(
+                            currentCategory?.name ?: "Not Assigned",
+                            modifier = Modifier,
                             color = if (currentCategory == null) Color.Red
-                                else MaterialTheme.colorScheme.onSurface
+                            else MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    Button(onClick = { showCategoryDialog = true }) {
-                        Text(if (currentCategory == null) "Assign" else "Change")
-                    }
                 }
-
-                val currentAccount = accounts.find { it.id == currentTransaction.accountId }
+                HorizontalDivider(thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
+                val currentAccount = accounts.find { it.id == transaction.accountId }
 
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showAccountDialog = true }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Account", fontSize = 14.sp, color = Color.Gray)
-                        Text(
-                            text = currentAccount?.name ?:
-                                "Not Assigned (${currentTransaction.rawAccountIdName})",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = if (currentAccount == null) Color.Red
-                                else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    Button(onClick = { showAccountDialog = true }) {
-                        Text(if (currentAccount == null) "Assign" else "Change")
-                    }
+                    MyText.Body("Account")
+                    MyText.Header1(
+                        text = currentAccount?.name ?:
+                        "Not Assigned (${transaction.rawAccountIdName})",
+                        color = if (currentAccount == null) Color.Red
+                        else MaterialTheme.colorScheme.onSurface
+                    )
                 }
+            }
 
-                if (currentTransaction.description.isNotEmpty()) {
-                    DetailItem("Description", currentTransaction.description)
-                }
-                
-                if (currentTransaction.location.isNotEmpty()) {
-                    DetailItem("Location", currentTransaction.location)
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surface),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                if (transaction.description.isNotEmpty()) {
+                    Column(
+                        Modifier.fillMaxWidth().padding(16.dp)
+                    ) {
+                        MyText.Body("Description")
+                        MyText.Header1(text = transaction.description)
+                    }
                 }
             }
         }
     }
 
     if (showCategoryDialog && transaction != null) {
-        val currentTransaction = transaction
         var updateCategoryForAllTransactionsWithPayee by remember { mutableStateOf(true) }
 
         AlertDialog(
             onDismissRequest = { showCategoryDialog = false },
-            title = { Text("Select Category") },
+            title = { MyText.Header1("Select Category") },
             text = {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
+                Column(
+                    Modifier
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.Bottom
+                ) {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(horizontal = 16.dp)
+                        ,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        MyText.Header1(
                             "Update all for this payee",
                             modifier = Modifier.weight(1f)
                         )
-                        Switch(
+                        MyInput.Switch(
                             checked = updateCategoryForAllTransactionsWithPayee,
                             onCheckedChange = {updateCategoryForAllTransactionsWithPayee = it}
                         )
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    categories.forEach { category ->
+
+                    Spacer(Modifier.padding(8.dp))
+
+                    ListOfItems(categories) { category ->
                         TextButton(
                             onClick = {
-                                val updatedTransaction = currentTransaction.copy(
+                                val updatedTransaction = transaction.copy(
                                     categoryId = category.id
                                 )
                                 onUpdateCategory(updatedTransaction, updateCategoryForAllTransactionsWithPayee)
                                 showCategoryDialog = false
                             },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth().padding( horizontal = 8.dp)
                         ) {
-                            Text(
-                                category.name, modifier = Modifier.fillMaxWidth(),
-                                style = MaterialTheme.typography.bodyLarge
-                            )
+                            MyText.Header1(category.name, modifier = Modifier.fillMaxWidth())
                         }
                     }
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showCategoryDialog = false }) {
-                    Text("Cancel")
+                    MyText.Header1("Cancel")
                 }
             }
         )
     }
 
     if (showAccountDialog && transaction != null) {
-        val currentTransaction = transaction
 
         AlertDialog(
             onDismissRequest = { showAccountDialog = false },
-            title = { Text("Select Account") },
+            title = { MyText.Header1("Select Account") },
             text = {
                 Column {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    accounts.forEach { account ->
+                    ListOfItems(accounts) { account ->
                         TextButton(
                             onClick = {
-                                val updatedTransaction = currentTransaction.copy(
+                                val updatedTransaction = transaction.copy(
                                     accountId = account.id
                                 )
                                 onUpdateAccount(updatedTransaction)
@@ -209,17 +251,14 @@ fun ViewTransactionContent(
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                account.name, modifier = Modifier.fillMaxWidth(),
-                                style = MaterialTheme.typography.bodyLarge
-                            )
+                            MyText.Header1(account.name, modifier = Modifier.fillMaxWidth())
                         }
                     }
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showAccountDialog = false }) {
-                    Text("Cancel")
+                    MyText.Header1("Cancel")
                 }
             }
         )
@@ -228,10 +267,15 @@ fun ViewTransactionContent(
 
 @Composable
 fun DetailItem(label: String, value: String) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(label, fontSize = 14.sp, color = Color.Gray)
-        Text(value, fontSize = 18.sp, fontWeight = FontWeight.Medium)
-        HorizontalDivider(modifier = Modifier.padding(top = 4.dp), thickness = 0.5.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        MyText.Body(label)
+        MyText.Header1(value)
     }
 }
 
@@ -281,7 +325,6 @@ fun ViewTransactionPreview() {
             transaction = sampleTransaction,
             categories = sampleCategories,
             accounts = sampleAccounts,
-            onBackClick = {},
             onUpdateCategory = { _, _ -> },
             onUpdateAccount = {}
         )

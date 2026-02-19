@@ -35,12 +35,13 @@ object MyText {
     }
 
     @Composable
-    fun Header1(text: String, modifier: Modifier = Modifier) {
+    fun Header1(text: String, modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.onSurface) {
         Text(
             text = text,
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
-            modifier = modifier
+            modifier = modifier,
+            color = color
         )
     }
 
