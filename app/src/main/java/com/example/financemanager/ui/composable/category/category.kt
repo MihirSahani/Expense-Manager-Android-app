@@ -6,10 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -92,111 +89,6 @@ fun CategoryItem(category: Category, onClick: () -> Unit) {
                 Text(text = category.type, fontSize = 12.sp, color = Color.Gray)
             }
 
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AddEditCategoryScreen(navController: NavController, viewModel: CategoryVM) {
-    val category = remember(viewModel.categoryId) {
-        if (viewModel.categoryId != null) viewModel.getCategoryById(viewModel.categoryId!!) else null
-    }
-
-    var name by remember { mutableStateOf(category?.name ?: "") }
-    var description by remember { mutableStateOf(category?.description ?: "") }
-    var type by remember { mutableStateOf(category?.type ?: "Expense") }
-    var color by remember { mutableStateOf(category?.color ?: "#FF0000") }
-    var monthlybudget by remember{ mutableStateOf(category?.monthlyBudget?.toString() ?: "") }
-    var enableMonthlyBudget by remember { mutableStateOf(category?.monthlyBudget != null) }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(if (viewModel.categoryId == null) "Add Category" else "Edit Category") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Name") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = description,
-                onValueChange = { description = it },
-                label = { Text("Description") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Monthly Budget")
-                Spacer(modifier = Modifier.width(16.dp))
-                Switch(
-                    checked = enableMonthlyBudget,
-                    onCheckedChange = { enableMonthlyBudget = it },
-                    modifier = Modifier.padding(end = 8.dp)
-                )
-                if (enableMonthlyBudget) {
-                    OutlinedTextField(
-                        value = monthlybudget,
-                        onValueChange = { monthlybudget = it },
-                        label = { Text("Monthly Budget") },
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                    )
-                }
-            }
-
-            Text("Type", fontWeight = FontWeight.Bold)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RadioButton(selected = type == "Expense", onClick = { type = "Expense" })
-                Text("Expense")
-                Spacer(modifier = Modifier.width(16.dp))
-                RadioButton(selected = type == "Income", onClick = { type = "Income" })
-                Text("Income")
-            }
-
-            OutlinedTextField(
-                value = color,
-                onValueChange = { color = it },
-                label = { Text("Color (Hex)") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Button(
-                onClick = {
-                    if (viewModel.categoryId == null) {
-                        viewModel.addCategory(name, description, type, color)
-                    } else {
-                        category?.let {
-                            it.name = name
-                            it.description = description
-                            it.type = type
-                            it.color = color
-                            it.monthlyBudget = monthlybudget.toDoubleOrNull()
-                            viewModel.updateCategory(it)
-                        }
-                    }
-                    navController.popBackStack()
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = name.isNotBlank()
-            ) {
-                Text("Save")
-            }
         }
     }
 }

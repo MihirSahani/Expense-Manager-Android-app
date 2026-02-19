@@ -3,27 +3,37 @@ package com.example.financemanager.internal
 import com.example.financemanager.database.entity.Transaction
 import com.example.financemanager.database.entity.TransactionSummary
 import com.example.financemanager.database.localstorage.dao.TransactionDao
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 
 class TransactionManager(val transactionDao: TransactionDao) {
 
-    suspend fun getAllTransactions(): MutableList<Transaction> {
-        return transactionDao.getAll()
+    fun getAllTransactionsFlow(): Flow<List<Transaction>> {
+        return transactionDao.getAllFlow()
     }
 
+    @androidx.room.Transaction
     suspend fun addTransaction(transaction: Transaction, accountManager: AccountManager) {
-        if (transaction.type == "Expense") {
-            transaction.amount = -transaction.amount
-        }
-        if (transaction.accountId != null ) {
-            val account = accountManager.getAccount(transaction.accountId!!)
-            if (account != null) {
-                accountManager.updateAccount(account.copy(
-                    currentBalance = account.currentBalance + transaction.amount
-                ))
+        coroutineScope {
+            launch {
+                if (transaction.accountId != null) {
+                    val account = accountManager.getAccount(transaction.accountId!!)
+                    val adjustedAmount = if (transaction.type.equals("expense", ignoreCase = true)) {
+                        -transaction.amount
+                    } else {
+                        transaction.amount
+                    }
+
+                    account?.let {
+                        accountManager.updateAccountBalance(transaction.accountId!!, adjustedAmount)
+                    }
+                }
+            }
+            launch {
+                transactionDao.create(transaction)
             }
         }
-        transactionDao.create(transaction)
     }
 
     suspend fun updateTransaction(transaction: Transaction) {
@@ -34,27 +44,27 @@ class TransactionManager(val transactionDao: TransactionDao) {
         transactionDao.delete(transaction)
     }
 
-    suspend fun updateCategoryForAllTransactionsWithPayee(payee: String, categoryId: Int) {
-        transactionDao.updateCategoryForAllTransactionsWithPayee(payee, categoryId)
+    suspend fun updateCategoryForTransactionsWithPayee(payee: String, categoryId: Int) {
+        transactionDao.updateCategoryForTransactionsWithPayee(payee, categoryId)
     }
 
-    suspend fun updateAccountForAllTransactionsWithRawAccount(accountName: String, accountId: Int) {
-        transactionDao.updateAccountForAllTransactionsWithRawAccount(accountName, accountId)
+    suspend fun updateAccountForTransactionsWithRawAccount(accountName: String, accountId: Int) {
+        transactionDao.updateAccountForTransactionsWithRawAccount(accountName, accountId)
     }
 
     suspend fun getTransactionsWithRawAccountId(accountName: String): List<Transaction> {
         return transactionDao.getByRawAccountName(accountName)
     }
 
-    suspend fun getTransactionsByCategory(categoryId: Int?, year: Int, month: Int): List<Transaction> {
-        return transactionDao.getTransactionsByCategory(categoryId, year, month)
+    fun getTransactionsByCategoryFlow(categoryId: Int?, year: Int, month: Int): Flow<List<Transaction>> {
+        return transactionDao.getTransactionsByCategoryFlow(categoryId, year, month)
     }
 
-    suspend fun getTransactionByMonth(year: Int, month: Int): List<Transaction> {
-        return transactionDao.getTransactionsByMonth(year, month)
+    fun getTransactionByMonth(year: Int, month: Int): Flow<List<Transaction>> {
+        return transactionDao.getTransactionsByMonthFlow(year, month)
     }
 
-    suspend fun getSumOfTransactionsByCategory(year: Int, month: Int): List<TransactionSummary> {
-        return transactionDao.getSumOfTransactionsByCategory(year, month)
+    fun getSumOfTransactionsByCategoryFlow(year: Int, month: Int): Flow<List<TransactionSummary>> {
+        return transactionDao.getSumOfTransactionsByCategoryFlow(year, month)
     }
 }

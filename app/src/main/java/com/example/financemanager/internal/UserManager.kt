@@ -2,6 +2,7 @@ package com.example.financemanager.internal
 
 import com.example.financemanager.database.entity.User
 import com.example.financemanager.database.localstorage.dao.UserDao
+import kotlinx.coroutines.flow.Flow
 
 class UserManager(
     private val userDao: UserDao
@@ -19,7 +20,7 @@ class UserManager(
         userDao.update(user)
     }
 
-    suspend fun getUser(): User? {
+    fun getUser(): Flow<User?> {
         return userDao.get()
     }
 }

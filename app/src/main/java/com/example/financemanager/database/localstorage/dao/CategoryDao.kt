@@ -7,11 +7,16 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.example.financemanager.database.entity.Category
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 abstract class CategoryDao {
+
     @Query("SELECT * FROM `categories`")
-    abstract suspend fun getAll(): MutableList<Category>
+    abstract fun getAllFlow(): Flow<List<Category>>
+
+    @Query("SELECT * FROM `categories`")
+    abstract suspend fun getAll(): List<Category>
 
     @Update
     abstract suspend fun update(category: Category)

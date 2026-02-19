@@ -7,11 +7,15 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.example.financemanager.database.entity.Account
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 abstract class AccountDao {
     @Query("SELECT * FROM `accounts`")
-    abstract suspend fun getAll(): MutableList<Account>
+    abstract fun getAllFlow(): Flow<List<Account>>
+
+    @Query("SELECT * FROM `accounts`")
+    abstract suspend fun getAll(): List<Account>
     
     @Update
     abstract suspend fun update(account: Account)
@@ -21,6 +25,9 @@ abstract class AccountDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun create(account: Account)
+
+    @Query("SELECT * FROM `accounts` WHERE id = :id")
+    abstract fun getFlow(id: Int): Flow<Account?>
 
     @Query("SELECT * FROM `accounts` WHERE id = :id")
     abstract suspend fun get(id: Int): Account?

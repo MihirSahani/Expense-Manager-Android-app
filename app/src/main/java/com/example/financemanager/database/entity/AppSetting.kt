@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey
 class AppSetting(
     @PrimaryKey
     @ColumnInfo(name = "key")
-    var key: String = "",
+    var key: Int?,
     @ColumnInfo(name = "value")
-    var value: Int = 0
+    var value: Long? = 0
 )

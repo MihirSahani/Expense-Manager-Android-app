@@ -3,6 +3,7 @@ package com.example.financemanager.internal
 import com.example.financemanager.database.entity.Account
 import com.example.financemanager.database.entity.Transaction
 import com.example.financemanager.database.localstorage.dao.AccountDao
+import kotlinx.coroutines.flow.Flow
 
 class AccountManager(
     private val accountDao: AccountDao
@@ -20,7 +21,10 @@ class AccountManager(
         accountDao.update(account)
     }
 
-    suspend fun getAllAccounts(): MutableList<Account> {
+    fun getAllAccountsFlow(): Flow<List<Account>> {
+        return accountDao.getAllFlow()
+    }
+    suspend fun getAllAccounts(): List<Account> {
         return accountDao.getAll()
     }
 
@@ -28,10 +32,15 @@ class AccountManager(
         return accountDao.get(id)
     }
 
+    fun getAccountFlow(id: Int): Flow<Account?> {
+        return accountDao.getFlow(id)
+    }
+
     suspend fun updateAccountBalance(accountId: Int, diff: Double) {
         return accountDao.updateBalance(accountId, diff)
     }
 
+    @androidx.room.Transaction
     suspend fun updateAccountBalanceForTransactionAccountUpdate(oldAccountId: Int?,
                                                                 newAccountId: Int?, diff: Double) {
         accountDao.removeBalanceFromOldAccount(oldAccountId, diff)

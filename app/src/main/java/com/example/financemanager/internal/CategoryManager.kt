@@ -2,6 +2,7 @@ package com.example.financemanager.internal
 
 import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.localstorage.dao.CategoryDao
+import kotlinx.coroutines.flow.Flow
 
 class CategoryManager(
     private val categoryDao: CategoryDao
@@ -19,7 +20,10 @@ class CategoryManager(
         categoryDao.update(category)
     }
 
-    suspend fun getAllCategories(): MutableList<Category> {
+    fun getCategoriesFlow(): Flow<List<Category>> {
+        return categoryDao.getAllFlow()
+    }
+    suspend fun getCategories(): List<Category> {
         return categoryDao.getAll()
     }
 }

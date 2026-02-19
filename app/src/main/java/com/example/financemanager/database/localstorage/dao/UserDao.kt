@@ -7,11 +7,12 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.example.financemanager.database.entity.User
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 abstract class UserDao {
     @Query("SELECT * FROM `user`")
-    abstract suspend fun get(): User?
+    abstract fun get(): Flow<User?>
 
     @Update
     abstract suspend fun update(user: User)

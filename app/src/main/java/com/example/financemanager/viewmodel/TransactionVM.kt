@@ -2,29 +2,28 @@ package com.example.financemanager.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.Transaction
 import com.example.financemanager.internal.ExpenseManagementInternal
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.collections.emptyList
 
 class TransactionVM(private val expenseManagementInternal: ExpenseManagementInternal) : ViewModel() {
 
-    private val _transactions = MutableStateFlow<List<Transaction>>(emptyList())
+    private val _transactions = expenseManagementInternal.getTransactionsFlow()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     val transactions: StateFlow<List<Transaction>> = _transactions
+
+    private val _categories = expenseManagementInternal.getCategoriesFlow()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    val categories: StateFlow<List<Category>> = _categories
 
     private val _selectedTransaction = MutableStateFlow<Transaction?>(null)
     val selectedTransaction: StateFlow<Transaction?> = _selectedTransaction
-
-    init {
-        loadTransactions()
-    }
-
-    fun loadTransactions() {
-        viewModelScope.launch {
-            _transactions.value = expenseManagementInternal.getTransactions()
-        }
-    }
 
     fun selectTransaction(transaction: Transaction?) {
         _selectedTransaction.value = transaction
@@ -33,7 +32,6 @@ class TransactionVM(private val expenseManagementInternal: ExpenseManagementInte
     fun addTransaction(transaction: Transaction) {
         viewModelScope.launch {
             expenseManagementInternal.addTransaction(transaction)
-            loadTransactions()
         }
     }
 
@@ -45,7 +43,6 @@ class TransactionVM(private val expenseManagementInternal: ExpenseManagementInte
                 transaction, updateCategoryForAllTransactionsWithPayee
             )
             _selectedTransaction.value = transaction
-            loadTransactions()
         }
     }
 
@@ -53,7 +50,6 @@ class TransactionVM(private val expenseManagementInternal: ExpenseManagementInte
         viewModelScope.launch {
             expenseManagementInternal.updateTransactionAccount(transaction)
             _selectedTransaction.value = transaction
-            loadTransactions()
         }
     }
 

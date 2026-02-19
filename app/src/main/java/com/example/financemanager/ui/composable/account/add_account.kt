@@ -15,32 +15,41 @@ import com.example.financemanager.viewmodel.AccountVM
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 fun AddEditAccountScreen(
     navController: NavController,
     accountVM: AccountVM
 ) {
-    val existingAccount = remember { accountVM.getAccountById(accountVM.selectedAccountId) }
-    if (existingAccount == null) {
-        navController.popBackStack()
-        return
-    }
+    val existingAccount by accountVM.account.collectAsState()
+    val isEditing = accountVM.selectedAccountId.collectAsState().value != null
 
-    var name by remember { mutableStateOf(existingAccount.name)}
-    var type by remember { mutableStateOf(existingAccount.type) }
-    var currency by remember { mutableStateOf(existingAccount.currency) }
-    var balanceText by remember { mutableStateOf(existingAccount.currentBalance.toString()) }
-    var bankName by remember { mutableStateOf(existingAccount.bankName) }
-    var accountNumber by remember { mutableStateOf(existingAccount.accountNumber)}
-    var isIncludedInTotal by remember { mutableStateOf(existingAccount.isIncludedInTotal) }
+    var name by remember { mutableStateOf("") }
+    var type by remember { mutableStateOf("Bank") }
+    var currency by remember { mutableStateOf("INR") }
+    var balanceText by remember { mutableStateOf("0.0") }
+    var bankName by remember { mutableStateOf("") }
+    var accountNumber by remember { mutableStateOf("") }
+    var isIncludedInTotal by remember { mutableStateOf(true) }
+
+    LaunchedEffect(existingAccount) {
+        existingAccount?.let {
+            name = it.name
+            type = it.type
+            currency = it.currency
+            balanceText = it.currentBalance.toString()
+            bankName = it.bankName
+            accountNumber = it.accountNumber
+            isIncludedInTotal = it.isIncludedInTotal
+        }
+    }
 
     val accountTypes = listOf("Bank", "Credit", "Cash", "Investment")
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (accountVM.selectedAccountId == null) "Add Account" else "Edit Account") },
+                title = { Text(if (!isEditing) "Add Account" else "Edit Account") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -136,7 +145,7 @@ fun AddEditAccountScreen(
             Button(
                 onClick = {
                     val currentDateTime = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
-                    val accountToSave = existingAccount.copy(
+                    val accountToSave = existingAccount?.copy(
                         name = name,
                         type = type,
                         currency = currency,
@@ -144,11 +153,20 @@ fun AddEditAccountScreen(
                         bankName = bankName,
                         accountNumber = accountNumber,
                         isIncludedInTotal = isIncludedInTotal,
-                        updatedAt = currentDateTime,
-                        createdAt = if (existingAccount.createdAt.isEmpty()) currentDateTime else existingAccount.createdAt
+                        updatedAt = currentDateTime
+                    ) ?: Account(
+                        name = name,
+                        type = type,
+                        currency = currency,
+                        currentBalance = balanceText.toDoubleOrNull() ?: 0.0,
+                        bankName = bankName,
+                        accountNumber = accountNumber,
+                        isIncludedInTotal = isIncludedInTotal,
+                        createdAt = currentDateTime,
+                        updatedAt = currentDateTime
                     )
                     
-                    if (accountVM.selectedAccountId == null) {
+                    if (!isEditing) {
                         accountVM.addAccount(accountToSave)
                     } else {
                         accountVM.updateAccount(accountToSave)

@@ -6,26 +6,21 @@ import androidx.lifecycle.viewModelScope
 import com.example.financemanager.database.entity.Category
 import com.example.financemanager.internal.ExpenseManagementInternal
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 class CategoryVM(private val expenseManagementInternal: ExpenseManagementInternal): ViewModel() {
-    private val _categories = MutableStateFlow<List<Category>>(emptyList())
-    val categories: StateFlow<List<Category>> get() = _categories
+    private val _categories = MutableStateFlow(expenseManagementInternal.getCategoriesFlow()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList()))
+    val categories: StateFlow<List<Category>> = _categories.value
     var categoryId: Int? = null
-
-    init {
-        loadCategories()
-    }
-
-    private fun loadCategories() {
-        viewModelScope.launch {
-            _categories.value = expenseManagementInternal.getCategories()
-        }
-    }
 
     fun addCategory(name: String, description: String, type: String, color: String) {
         viewModelScope.launch {
@@ -39,7 +34,6 @@ class CategoryVM(private val expenseManagementInternal: ExpenseManagementInterna
                 updatedAt = timestamp
             )
             expenseManagementInternal.categoryManager.addCategory(category)
-            loadCategories()
         }
     }
 
@@ -48,19 +42,13 @@ class CategoryVM(private val expenseManagementInternal: ExpenseManagementInterna
             val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
             category.updatedAt = timestamp
             expenseManagementInternal.categoryManager.updateCategory(category)
-            loadCategories()
         }
     }
 
     fun deleteCategory(category: Category) {
         viewModelScope.launch {
             expenseManagementInternal.categoryManager.removeCategory(category)
-            loadCategories()
         }
-    }
-
-    fun getCategoryById(id: Int): Category? {
-        return _categories.value.find { it.id == id }
     }
 
     fun getPayeeCategory(payee: String, categoryId: MutableState<Int?>) {

@@ -9,9 +9,10 @@ import com.example.financemanager.database.entity.Transaction
 import com.example.financemanager.database.entity.TransactionSummary
 import com.example.financemanager.database.entity.User
 import com.example.financemanager.database.localstorage.ExpenseManagementDatabase
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 
 class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
@@ -32,12 +33,12 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     )
     val smsParser: SMSParser = SMSParser()
 
-    suspend fun getUser(): User? {
+    fun getUser(): Flow<User?> {
         return userManager.getUser()
     }
 
-    suspend fun getTransactions(): MutableList<Transaction> {
-        return transactionManager.getAllTransactions()
+    fun getTransactionsFlow(): Flow<List<Transaction>> {
+        return transactionManager.getAllTransactionsFlow()
     }
 
     suspend fun addTransaction(transaction: Transaction) {
@@ -48,18 +49,30 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
         transactionManager.updateTransaction(transaction)
     }
 
-
-    suspend fun updateTransactionCategory(transaction: Transaction,
-                                          updateCategoryForAllTransactionsWithPayee: Boolean) {
+    suspend fun updateTransactionCategory(
+        transaction: Transaction, updateCategoryForAllTransactionsWithPayee: Boolean
+    ) {
 
         if (transaction.categoryId != null && (updateCategoryForAllTransactionsWithPayee ||
                     payeeCategoryMapperManager.getMapping(transaction.payee) == null)) {
-            payeeCategoryMapperManager.addMapping(transaction.payee,
-                transaction.categoryId!!
-            )
-            transactionManager.updateCategoryForAllTransactionsWithPayee(transaction.payee,
-                transaction.categoryId!!
-            )
+            coroutineScope {
+                val waitGroup = mutableListOf<Job>()
+
+                waitGroup.add(launch {
+                    payeeCategoryMapperManager.addMapping(transaction.payee,
+                        transaction.categoryId!!
+                    )
+                })
+                waitGroup.add(launch {
+                    transactionManager.updateCategoryForTransactionsWithPayee(transaction.payee,
+                        transaction.categoryId!!
+                    )
+                })
+                waitGroup.joinAll()
+            }
+
+        } else {
+            transactionManager.updateTransaction(transaction)
         }
     }
 
@@ -70,54 +83,71 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
         )
 
         coroutineScope {
+            val waitGroup = mutableListOf<Job>()
             transactions.map { transaction ->
-                async {
-                    accountManager.updateAccountBalanceForTransactionAccountUpdate(
-                        transaction.accountId,
-                        newTransaction.accountId, transaction.amount
-                    )
+                launch {
+                    // Normalize the type comparison to handle "Expense" vs "expense"
+                    val isExpense = transaction.type.equals("expense", ignoreCase = true)
+                    val signedAmount = if (isExpense) -transaction.amount else transaction.amount
+                    
+                    try {
+                        accountManager.updateAccountBalanceForTransactionAccountUpdate(
+                            transaction.accountId,
+                            newTransaction.accountId,
+                            signedAmount
+                        )
+                    }
+                    catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
-            }
-        }.awaitAll()
+            }.joinAll()
 
-        transactionManager.updateAccountForAllTransactionsWithRawAccount(
-            newTransaction.rawAccountIdName, newTransaction.accountId!!
-        )
-        accountIdMapperManager.insert(AccountIdMapper(newTransaction.rawAccountIdName, newTransaction.accountId!!))
+            waitGroup.add(launch {
+                accountIdMapperManager.insert(AccountIdMapper(newTransaction.rawAccountIdName, newTransaction.accountId!!))
+            })
+            waitGroup.add(launch {
+                transactionManager.updateAccountForTransactionsWithRawAccount(
+                    newTransaction.rawAccountIdName, newTransaction.accountId!!
+                )
+            })
+            waitGroup.joinAll()
+        }
     }
 
     suspend fun loadDummyData() {
         coroutineScope {
-            val accountsJob = async {
+            val waitGroup = mutableListOf<Job>()
+
+            waitGroup.add( launch {
                 val accounts = accountManager.getAllAccounts()
                 if (accounts.isEmpty()) {
                     DummyData.accounts.map { account ->
-                        async {
+                        launch {
                             accountManager.addAccount(account)
                         }
-                    }.awaitAll()
+                    }.joinAll()
                 }
-            }
-            val categoriesJob = async {
-                val categories = categoryManager.getAllCategories()
+            })
+            waitGroup.add( launch {
+                val categories = categoryManager.getCategories()
                 if (categories.isEmpty()) {
                     DummyData.categories.map { category ->
-                        async {
+                        launch {
                             categoryManager.addCategory(category)
                         }
-                    }.awaitAll()
+                    }.joinAll()
                 }
-            }
-            accountsJob.await()
-            categoriesJob.await()
+            })
+            waitGroup.joinAll()
         }
     }
 
     suspend fun parseMessagesToTransactions(context: Context) {
-        if (transactionManager.getAllTransactions().isEmpty()) {
-            smsParser.parseMessagesToTransactions(context, transactionManager,
-                payeeCategoryMapperManager, accountIdMapperManager, accountManager)
-        }
+        val timestamp = smsParser.parseMessages(
+            context, transactionManager, payeeCategoryMapperManager, accountIdMapperManager,
+            accountManager, appSettingManager.getAppSetting(Keys.LAST_SMS_TIMESTAMP) ?: 0L)
+        appSettingManager.updateAppSetting(Keys.LAST_SMS_TIMESTAMP, timestamp)
     }
 
     suspend fun parseSingleMessage(body: String, sender: String, smsDateLong: Long) {
@@ -128,7 +158,17 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     suspend fun addAccount(account: Account) {
         accountManager.addAccount(account)
     }
+    suspend fun updateAccount(account: Account) {
+        accountManager.updateAccount(account)
+    }
 
+    suspend fun getAccount(id: Int): Account? {
+        return accountManager.getAccount(id)
+    }
+
+    suspend fun getAccountFlow(id: Int): Flow<Account?> {
+        return accountManager.getAccountFlow(id)
+    }
     suspend fun createUser(firstName: String, lastName: String) {
         userManager.addUser(firstName, lastName)
     }
@@ -137,12 +177,20 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
         userManager.updateUser(user)
     }
 
-    suspend fun getAccounts(): MutableList<Account> {
+    fun getAccountsFlow(): Flow<List<Account>> {
+        return accountManager.getAllAccountsFlow()
+    }
+
+    suspend fun getAccounts(): List<Account> {
         return accountManager.getAllAccounts()
     }
 
-    suspend fun getCategories(): MutableList<Category> {
-        return categoryManager.getAllCategories()
+    fun getCategoriesFlow(): Flow<List<Category>> {
+        return categoryManager.getCategoriesFlow()
+    }
+
+    suspend fun getCategories(): List<Category> {
+        return categoryManager.getCategories()
     }
 
     suspend fun getPayeeCategory(payee: String): Int? {
@@ -153,19 +201,11 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
         payeeCategoryMapperManager.addMapping(payee, categoryId)
     }
 
-    suspend fun mapAccountToId(accountIdMapper: AccountIdMapper) {
-        accountIdMapperManager.insert(accountIdMapper)
+    fun getTransactionsByCategoryFlow(categoryId: Int?, year: Int, month: Int): Flow<List<Transaction>> {
+        return transactionManager.getTransactionsByCategoryFlow(categoryId, year, month)
     }
 
-    suspend fun getAccountIdMapping(accountName: String): Int? {
-        return accountIdMapperManager.getAccountId(accountName)
-    }
-
-    suspend fun getTransactionsByCategory(categoryId: Int?, year: Int, month: Int): List<Transaction> {
-        return transactionManager.getTransactionsByCategory(categoryId, year, month)
-    }
-
-    suspend fun getTransactionSumByMonth(year: Int, month: Int): List<TransactionSummary> {
-        return transactionManager.getSumOfTransactionsByCategory(year, month)
+    fun getTransactionSumByMonthFlow(year: Int, month: Int): Flow<List<TransactionSummary>> {
+        return transactionManager.getSumOfTransactionsByCategoryFlow(year, month)
     }
 }

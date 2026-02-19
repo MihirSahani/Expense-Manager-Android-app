@@ -20,10 +20,7 @@ import kotlin.math.abs
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ViewTransactionByCategoryScreen(navController: NavController, viewModel: CategoryAnalysisVM) {
-    viewModel.loadTransaction()
-
     val transactions by viewModel.transactionForMonth.collectAsState()
-    val isLoaded by viewModel.isTransactionLoaded.collectAsState()
 
     Scaffold(
         topBar = {
@@ -37,48 +34,42 @@ fun ViewTransactionByCategoryScreen(navController: NavController, viewModel: Cat
             )
         }
     ) { innerPadding ->
-        if (!isLoaded) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(transactions) { transaction ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(transactions) { transaction ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .padding(16.dp)
-                                .fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    text = transaction.payee,
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Text(
-                                    text = transaction.transactionDate,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
+                        Column {
                             Text(
-                                text = String.format(Locale.getDefault(), "%.2f", abs(transaction.amount)),
-                                style = MaterialTheme.typography.titleLarge,
-                                color = if (transaction.amount < 0) 
-                                    MaterialTheme.colorScheme.error 
-                                else MaterialTheme.colorScheme.primary
+                                text = transaction.payee,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = transaction.transactionDate,
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
+                        Text(
+                            text = String.format(Locale.getDefault(), "%.2f", abs(transaction.amount)),
+                            style = MaterialTheme.typography.titleLarge,
+                            color = if (transaction.amount < 0)
+                                MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             }

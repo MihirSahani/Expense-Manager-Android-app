@@ -15,22 +15,21 @@ import com.example.financemanager.viewmodel.InitialVM
 
 @Composable
 fun LoginScreen(navController: NavController, viewModel: InitialVM) {
-    val isUserLoaded by viewModel.isUserDetailsLoaded.collectAsState()
+    val isUserLoaded by viewModel.isUserLoaded.collectAsState()
+    val user by viewModel.user.collectAsState()
 
-    when (isUserLoaded) {
-        true -> {
-            when (viewModel.user) {
-                null -> SignUpContent(navController, viewModel)
-                else -> {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
-                    }
+    if (isUserLoaded) {
+        if (user == null) {
+            SignUpContent(navController, viewModel)
+        } else {
+            LaunchedEffect(Unit) {
+                navController.navigate(Screen.Home.route) {
+                    popUpTo(Screen.Login.route) { inclusive = true }
                 }
             }
         }
-        false -> {
-            LoadingScreen()
-        }
+    } else {
+        LoadingScreen()
     }
 }
 
@@ -75,7 +74,7 @@ fun SignUpContent(navController: NavController, viewModel: InitialVM = viewModel
             onClick = { 
                 if (firstName.isNotBlank() && lastName.isNotBlank()) {
                     viewModel.signUp(firstName, lastName)
-                    navController.navigate(Screen.Home.route)
+                    // Navigation will be handled automatically by the collectAsState in LoginScreen
                 }
             },
             modifier = Modifier.fillMaxWidth(),

@@ -26,58 +26,45 @@ import java.util.Locale
 
 @Composable
 fun AccountsScreen(navController: NavController, viewModel: AccountVM) {
-    val areAccountsLoaded by viewModel.areAccountsLoaded.collectAsState()
-    val accounts by viewModel.accounts.collectAsState()
-    val netWorth by viewModel.netWorth.collectAsState()
+    val accounts by viewModel.accounts.collectAsState(emptyList())
+    val netWorth by viewModel.netWorth.collectAsState(0.0)
 
-    viewModel.loadAccounts()
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                viewModel.selectedAccountId = null
+                viewModel.selectedAccountId.value = null
                 navController.navigate(Screen.AddEditAccount.route)
             }) {
                 Icon(Icons.Default.Add, contentDescription = "Add Account")
             }
         }
     ) { innerPadding ->
-        if (!areAccountsLoaded) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.Center
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp)
+        ) {
+            NetWorthCard(netWorth)
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Your Accounts",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 80.dp) // Space for FAB
             ) {
-                CircularProgressIndicator()
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(16.dp)
-            ) {
-                NetWorthCard(netWorth)
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Text(
-                    text = "Your Accounts",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 80.dp) // Space for FAB
-                ) {
-                    items(accounts) { account ->
-                        AccountItem(account) {
-                            viewModel.selectedAccountId = account.id
-                            navController.navigate(Screen.AddEditAccount.route)
-                        }
+                items(accounts) { account ->
+                    AccountItem(account) {
+                        viewModel.selectedAccountId.value = account.id
+                        navController.navigate(Screen.AddEditAccount.route)
                     }
                 }
             }
