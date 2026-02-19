@@ -19,6 +19,15 @@ object MyText {
     }
 
     @Composable
+    fun ScreenTitle(text: String) {
+        Text(
+            text = text,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.ExtraBold
+        )
+    }
+
+    @Composable
     fun Header1(text: String) {
         Text(
             text = text,

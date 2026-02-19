@@ -94,17 +94,8 @@ fun NetWorthCard(netWorth: Double) {
         Column(
             modifier = Modifier.padding(24.dp)
         ) {
-            Text(
-                text = "Net Worth",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Text(
-                text = "₹ " + String.format(Locale.getDefault(), "%.2f", netWorth),
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
+            MyText.Header1("Net Worth")
+            MyText.ScreenTitle("₹ " + String.format(Locale.getDefault(), "%.2f", netWorth))
         }
     }
 }
@@ -113,8 +104,8 @@ fun NetWorthCard(netWorth: Double) {
 fun AccountItem(account: Account, onClick: () -> Unit) {
     Row(
         modifier = Modifier
-            .padding(16.dp)
             .clickable { onClick() }
+            .padding(16.dp)
             .fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {

@@ -1,16 +1,24 @@
 package com.example.financemanager.ui.composable.account
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.financemanager.database.entity.Account
+import com.example.financemanager.ui.composable.utils.MyInput
+import com.example.financemanager.ui.composable.utils.MyText
+import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.AccountVM
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -44,14 +52,85 @@ fun AddEditAccountScreen(
         }
     }
 
+    AddEditAccountScreenContent(
+        isEditing = isEditing,
+        name = name,
+        onNameChange = { name = it },
+        type = type,
+        onTypeChange = { type = it },
+        currency = currency,
+        onCurrencyChange = { currency = it },
+        balanceText = balanceText,
+        onBalanceTextChange = { balanceText = it },
+        bankName = bankName,
+        onBankNameChange = { bankName = it },
+        accountNumber = accountNumber,
+        onAccountNumberChange = { accountNumber = it },
+        isIncludedInTotal = isIncludedInTotal,
+        onIsIncludedInTotalChange = { isIncludedInTotal = it },
+        onSaveClick = {
+            val currentDateTime = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
+            val accountToSave = existingAccount?.copy(
+                name = name,
+                type = type,
+                currency = currency,
+                currentBalance = balanceText.toDoubleOrNull() ?: 0.0,
+                bankName = bankName,
+                accountNumber = accountNumber,
+                isIncludedInTotal = isIncludedInTotal,
+                updatedAt = currentDateTime
+            ) ?: Account(
+                name = name,
+                type = type,
+                currency = currency,
+                currentBalance = balanceText.toDoubleOrNull() ?: 0.0,
+                bankName = bankName,
+                accountNumber = accountNumber,
+                isIncludedInTotal = isIncludedInTotal,
+                createdAt = currentDateTime,
+                updatedAt = currentDateTime
+            )
+            
+            if (!isEditing) {
+                accountVM.addAccount(accountToSave)
+            } else {
+                accountVM.updateAccount(accountToSave)
+            }
+            navController.popBackStack()
+        },
+        onBackClick = { navController.popBackStack() }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddEditAccountScreenContent(
+    isEditing: Boolean,
+    name: String,
+    onNameChange: (String) -> Unit,
+    type: String,
+    onTypeChange: (String) -> Unit,
+    currency: String,
+    onCurrencyChange: (String) -> Unit,
+    balanceText: String,
+    onBalanceTextChange: (String) -> Unit,
+    bankName: String,
+    onBankNameChange: (String) -> Unit,
+    accountNumber: String,
+    onAccountNumberChange: (String) -> Unit,
+    isIncludedInTotal: Boolean,
+    onIsIncludedInTotalChange: (Boolean) -> Unit,
+    onSaveClick: () -> Unit,
+    onBackClick: () -> Unit
+) {
     val accountTypes = listOf("Bank", "Credit", "Cash", "Investment")
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (!isEditing) "Add Account" else "Edit Account") },
+                title = { MyText.ScreenHeader(if (!isEditing) "Add Account" else "Edit Account") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -65,36 +144,27 @@ fun AddEditAccountScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Account Name") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            MyInput.TextField(name, onNameChange, "Account Name")
 
             var expanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
                 expanded = expanded,
-                onExpandedChange = { expanded = !expanded },
+                onExpandedChange = { expanded = it },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                OutlinedTextField(
-                    value = type,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Account Type") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                MyInput.TextField(type, {}, "Account Type",
+                    trailingIcon = null, readOnly = true, modifier = Modifier.menuAnchor()
                 )
                 ExposedDropdownMenu(
+                    modifier = Modifier.clip(RoundedCornerShape(16.dp)),
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
                     accountTypes.forEach { selectionOption ->
                         DropdownMenuItem(
-                            text = { Text(selectionOption) },
+                            text = { MyText.Body(selectionOption) },
                             onClick = {
-                                type = selectionOption
+                                onTypeChange(selectionOption)
                                 expanded = false
                             }
                         )
@@ -102,82 +172,109 @@ fun AddEditAccountScreen(
                 }
             }
 
-            OutlinedTextField(
-                value = balanceText,
-                onValueChange = { balanceText = it },
-                label = { Text("Initial Balance") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
+            MyInput.TextField(
+                balanceText,
+                onBalanceTextChange,
+                "Initial Balance",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             )
 
-            OutlinedTextField(
+            MyInput.TextField(
                 value = currency,
-                onValueChange = { currency = it },
-                label = { Text("Currency") },
+                onValueChange = onCurrencyChange,
+                label = "Currency",
                 modifier = Modifier.fillMaxWidth()
             )
 
-            OutlinedTextField(
+            MyInput.TextField(
                 value = bankName,
-                onValueChange = { bankName = it },
-                label = { Text("Bank Name") },
+                onValueChange = onBankNameChange,
+                label = "Bank Name",
                 modifier = Modifier.fillMaxWidth()
             )
 
-            OutlinedTextField(
+            MyInput.TextField(
                 value = accountNumber,
-                onValueChange = { accountNumber = it },
-                label = { Text("Account Number (Last 4 digits)") },
+                onValueChange = onAccountNumberChange,
+                label = "Account Number (Last 4 digits)",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
             )
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Include in Total Net Worth")
-                Switch(checked = isIncludedInTotal, onCheckedChange = { isIncludedInTotal = it })
+                MyText.Body("Include in Total Net Worth")
+                MyInput.Switch(checked = isIncludedInTotal, onCheckedChange = onIsIncludedInTotalChange)
             }
 
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
-                onClick = {
-                    val currentDateTime = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
-                    val accountToSave = existingAccount?.copy(
-                        name = name,
-                        type = type,
-                        currency = currency,
-                        currentBalance = balanceText.toDoubleOrNull() ?: 0.0,
-                        bankName = bankName,
-                        accountNumber = accountNumber,
-                        isIncludedInTotal = isIncludedInTotal,
-                        updatedAt = currentDateTime
-                    ) ?: Account(
-                        name = name,
-                        type = type,
-                        currency = currency,
-                        currentBalance = balanceText.toDoubleOrNull() ?: 0.0,
-                        bankName = bankName,
-                        accountNumber = accountNumber,
-                        isIncludedInTotal = isIncludedInTotal,
-                        createdAt = currentDateTime,
-                        updatedAt = currentDateTime
-                    )
-                    
-                    if (!isEditing) {
-                        accountVM.addAccount(accountToSave)
-                    } else {
-                        accountVM.updateAccount(accountToSave)
-                    }
-                    navController.popBackStack()
-                },
+                onClick = onSaveClick,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = name.isNotBlank()
             ) {
                 Text("Save Account")
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "Add Account")
+@Composable
+fun AddAccountScreenPreview() {
+    FinanceManagerTheme {
+        AddEditAccountScreenContent(
+            isEditing = false,
+            name = "",
+            onNameChange = {},
+            type = "Bank",
+            onTypeChange = {},
+            currency = "INR",
+            onCurrencyChange = {},
+            balanceText = "0.0",
+            onBalanceTextChange = {},
+            bankName = "",
+            onBankNameChange = {},
+            accountNumber = "",
+            onAccountNumberChange = {},
+            isIncludedInTotal = true,
+            onIsIncludedInTotalChange = {},
+            onSaveClick = {},
+            onBackClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Edit Account")
+@Composable
+fun EditAccountScreenPreview() {
+    FinanceManagerTheme {
+        AddEditAccountScreenContent(
+            isEditing = true,
+            name = "Salary Account",
+            onNameChange = {},
+            type = "Bank",
+            onTypeChange = {},
+            currency = "INR",
+            onCurrencyChange = {},
+            balanceText = "25000.0",
+            onBalanceTextChange = {},
+            bankName = "HDFC Bank",
+            onBankNameChange = {},
+            accountNumber = "5678",
+            onAccountNumberChange = {},
+            isIncludedInTotal = true,
+            onIsIncludedInTotalChange = {},
+            onSaveClick = {},
+            onBackClick = {}
+        )
     }
 }
