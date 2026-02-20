@@ -1,6 +1,7 @@
 package com.example.financemanager.ui.composable.setting
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -67,7 +68,8 @@ fun UpdateUserDetailsContent(
         Button(
             onClick = { onSaveClick(firstName, lastName) },
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            enabled = firstName.isNotBlank() && lastName.isNotBlank()
+            enabled = firstName.isNotBlank() && lastName.isNotBlank(),
+            shape = RoundedCornerShape(16.dp)
         ) {
             Text("Save Changes")
         }

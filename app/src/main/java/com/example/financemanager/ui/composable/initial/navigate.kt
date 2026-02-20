@@ -1,6 +1,10 @@
 package com.example.financemanager.ui.composable.initial
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,6 +27,7 @@ import com.example.financemanager.ui.composable.analysis.ViewTransactionByCatego
 import com.example.financemanager.ui.composable.category.AddEditCategoryScreen
 import com.example.financemanager.ui.composable.category.CategoryScreen
 import com.example.financemanager.ui.composable.home.HomeScreen
+import com.example.financemanager.ui.composable.transaction.AddTransactionScreen
 import com.example.financemanager.ui.composable.transaction.TransactionHistoryScreen
 import com.example.financemanager.ui.composable.transaction.ViewTransactionScreen
 import com.example.financemanager.viewmodel.*
@@ -41,6 +46,17 @@ fun Navigate() {
                 currentRoute == Screen.Settings.route
             ) {
                 NavigationBar(navController)
+            }
+        },
+        floatingActionButton = {
+            if (currentRoute == Screen.Home.route ||
+                currentRoute == Screen.TransactionHistory.route
+            ) {
+                FloatingActionButton(onClick = {
+                    navController.navigate(Screen.AddTransaction.route)
+                }) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Transaction")
+                }
             }
         }
     ) { innerPadding ->
@@ -142,6 +158,14 @@ fun Navigate() {
                     navController,
                     Graph.viewModelFactory.getViewModel(ViewModelName.CATEGORY_ANALYSIS)
                             as CategoryAnalysisVM,
+                    Graph.viewModelFactory.getViewModel(ViewModelName.TRANSACTION)
+                            as TransactionVM
+                )
+            }
+
+            composable(Screen.AddTransaction.route) {
+                AddTransactionScreen(
+                    navController,
                     Graph.viewModelFactory.getViewModel(ViewModelName.TRANSACTION)
                             as TransactionVM
                 )

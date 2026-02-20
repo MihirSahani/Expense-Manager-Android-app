@@ -198,7 +198,8 @@ fun AddEditCategoryScreenContent(
             Button(
                 onClick = onSaveClick,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = name.isNotBlank()
+                enabled = name.isNotBlank(),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Text("Save")
             }
