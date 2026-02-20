@@ -46,7 +46,7 @@ object MyInput {
                         modifier = Modifier.graphicsLayer {
                             scaleX = 0.7f
                             scaleY = 0.7f
-                            transformOrigin = TransformOrigin(0f, 0f)
+                            transformOrigin = TransformOrigin(0.3f, 0.3f)
                         }
                     )
                 },
