@@ -9,9 +9,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.financemanager.ui.composable.Screen
+import com.example.financemanager.ui.composable.utils.MyInput
+import com.example.financemanager.ui.composable.utils.MyText
 import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.InitialVM
 
@@ -47,26 +48,21 @@ fun SignUpContent(onSignUp: (String, String) -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Welcome to Finance Manager",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 32.dp)
-        )
+        MyText.ScreenHeader(text = "Finance Manager")
 
-        OutlinedTextField(
+        MyInput.TextField(
             value = firstName,
             onValueChange = { firstName = it },
-            label = { Text("First Name") },
+            label = "First Name",
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp)
         )
 
-        OutlinedTextField(
+        MyInput.TextField(
             value = lastName,
             onValueChange = { lastName = it },
-            label = { Text("Last Name") },
+            label = "Last Name",
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
