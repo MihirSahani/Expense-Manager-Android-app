@@ -17,10 +17,8 @@ object DummyData {
         Category(name = "Salary", description = "Monthly pay", type = "Income", color = "#66BB6A", createdAt = "", updatedAt = ""),
         Category(name = "Groceries", description = "Groceries", type = "Expense", color = "#FF7043", createdAt = "", updatedAt = ""),
         Category(name = "Utilities", description = "Electricity, water, gas", type = "Expense", color = "#29B6F6", createdAt = "", updatedAt = ""),
-        Category(name = "Entertainment", description = "Movies, music, hobbies", type = "Expense", color = "#AB47BC", createdAt = "", updatedAt = ""),
-        Category(name = "Health", description = "Health and wellness", type = "Expense", color = "#EC407A", createdAt = "", updatedAt = ""),
-        Category(name = "Education", description = "Tuition, books, courses", type = "Expense", color = "#8D6E63", createdAt = "", updatedAt = ""),
-        Category(name = "Family", description = "Gifts, vacations", type = "Expense", color = "#FFCA28", createdAt = "", updatedAt = ""),
+        Category(name = "Family and Friends", description = "Gifts, vacations", type = "Expense", color = "#FFCA28", createdAt = "", updatedAt = ""),
+        Category(name = "Shopping", description = "Clothing, shoes, accessories", type = "Expense", color = "#66BB6A", createdAt = "", updatedAt = "")
     )
 
 }

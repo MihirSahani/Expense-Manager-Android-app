@@ -1,40 +1,36 @@
 package com.example.financemanager.ui.composable.analysis
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.financemanager.database.entity.Transaction
 import com.example.financemanager.ui.composable.Screen
+import com.example.financemanager.ui.composable.transaction.DateHeader
+import com.example.financemanager.ui.composable.transaction.TransactionItem
 import com.example.financemanager.ui.composable.utils.ListOfItems
 import com.example.financemanager.ui.composable.utils.MyText
 import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.CategoryAnalysisVM
 import com.example.financemanager.viewmodel.TransactionVM
-import java.util.Calendar
+import java.util.*
 
 @Composable
 fun ViewTransactionByCategoryScreen(navController: NavController, viewModel: CategoryAnalysisVM, transactionVM: TransactionVM) {
     val transactions by viewModel.transactionForCategoryCurrentTimeframe.collectAsState()
+    val categories by transactionVM.categories.collectAsState()
 
     CategoryAnalysisScreenContent(
         transactions = transactions,
+        categories = categories,
         onClick = { transaction ->
             transactionVM.selectTransaction(transaction)
             navController.navigate(Screen.ViewTransaction.route)
-        }
+        },
+        dateToString = transactionVM::dateToString
     )
 }
 
@@ -42,30 +38,34 @@ fun ViewTransactionByCategoryScreen(navController: NavController, viewModel: Cat
 @Composable
 fun CategoryAnalysisScreenContent(
     transactions: List<Transaction>,
-    onClick: (Transaction) -> Unit = {}
+    categories: List<com.example.financemanager.database.entity.Category>,
+    onClick: (Transaction) -> Unit = {},
+    dateToString: (Long) -> String = { it.toString() }
 ) {
+    val groupedTransactions = remember(transactions) {
+        transactions
+            .sortedByDescending { it.transactionDate }
+            .groupBy { dateToString(it.transactionDate).substring(0, 10) }
+    }
+
     Column(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
         MyText.ScreenHeader("Transactions")
 
-        ListOfItems(transactions, Modifier.padding(16.dp)) { transaction ->
-            Row(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .clickable { onClick(transaction) }
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    MyText.Header1(text = transaction.payee)
-                    MyText.Date(transaction.transactionDate)
+        ListOfItems(
+            items = groupedTransactions,
+            headerContent = { date ->
+                DateHeader(date)
+            },
+            itemContent = { transaction ->
+                val category = categories.find { it.id == transaction.categoryId }
+                TransactionItem(transaction, category) {
+                    onClick(transaction)
                 }
-                MyText.TransactionAmount(transaction)
-            }
-        }
+            },
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }
 
@@ -81,6 +81,7 @@ fun CategoryAnalysisScreenPreview() {
     FinanceManagerTheme {
         CategoryAnalysisScreenContent(
             transactions = sampleTransactions,
+            categories = emptyList()
         )
     }
 }
