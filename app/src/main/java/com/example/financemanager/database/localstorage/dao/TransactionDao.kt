@@ -70,9 +70,9 @@ abstract class TransactionDao {
     @Query(
         "SELECT * FROM `transactions` " +
                 "LEFT JOIN `categories` ON `transactions`.`category_id` = `categories`.`id` " +
-                "WHERE `categories`.`type` = 'Income' ORDER BY `transactions`.`transaction_date` DESC"
+                "WHERE `categories`.`type` = 'Income' ORDER BY `transactions`.`transaction_date` DESC LIMIT 2"
     )
-    abstract suspend fun getTransactionWithIncomeCategory(): Transaction?
+    abstract suspend fun getTransactionWithIncomeCategory(): List<Transaction?>
 
     @Query(
         "SELECT * FROM `transactions` WHERE " +
@@ -100,4 +100,14 @@ abstract class TransactionDao {
                 "WHERE transaction_date >= :startTime AND transaction_date <= :endTime"
     )
     abstract fun getTransactionsByMonthFlow(startTime: Long, endTime: Long): Flow<List<Transaction>>
+
+    @Query(
+        "SELECT SUM(CASE WHEN type = 'Expense' THEN -ABS(`amount`) ELSE ABS(`amount`) END) " +
+                "AS `totalAmount` FROM `transactions` " +
+                "WHERE transaction_date >= :from AND transaction_date < :to"
+    )
+    abstract fun getSumOfTransactionsBetweenTime(
+        from: Long, to: Long
+
+    ): Flow<Double>
 }

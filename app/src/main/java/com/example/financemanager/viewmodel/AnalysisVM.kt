@@ -5,9 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.TransactionSummary
 import com.example.financemanager.internal.ExpenseManagementInternal
-import com.example.financemanager.internal.Keys
 import kotlinx.coroutines.flow.*
-import java.time.LocalDate
 import kotlin.math.abs
 
 data class CategorySpending(
@@ -17,6 +15,12 @@ data class CategorySpending(
 )
 
 class AnalysisVM(private var em: ExpenseManagementInternal): ViewModel() {
+
+    val _amountSavedLastTimeframe: StateFlow<Double> = em.getSumOfTransactionsBetweenTime()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+    val amountSavedLastTimeFrame: StateFlow<Double> = _amountSavedLastTimeframe
+
+
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     val categorySpendingList: StateFlow<List<CategorySpending>> =

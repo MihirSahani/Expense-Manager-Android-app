@@ -3,11 +3,15 @@ package com.example.financemanager.internal
 import com.example.financemanager.database.entity.Transaction
 import com.example.financemanager.database.entity.TransactionSummary
 import com.example.financemanager.database.localstorage.dao.TransactionDao
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
+import java.time.YearMonth
 import java.time.ZoneId
+import java.time.ZoneOffset
 
 class TransactionManager(val transactionDao: TransactionDao) {
 
@@ -58,15 +62,6 @@ class TransactionManager(val transactionDao: TransactionDao) {
         return transactionDao.getByRawAccountName(accountName)
     }
 
-    fun getTransactionsByCategoryFlow(categoryId: Int?, year: Int, month: Int): Flow<List<Transaction>> {
-        val (start, end) = getMonthRange(year, month)
-        return transactionDao.getTransactionsByCategoryAndMonthFlow(categoryId, start, end)
-    }
-
-    fun getTransactionByMonth(year: Int, month: Int): Flow<List<Transaction>> {
-        val (start, end) = getMonthRange(year, month)
-        return transactionDao.getTransactionsByMonthFlow(start, end)
-    }
 
     fun getSumOfTransactionsByCategoryAndMonthFlow(year: Int, month: Int): Flow<List<TransactionSummary>> {
         val (start, end) = getMonthRange(year, month)
@@ -77,7 +72,7 @@ class TransactionManager(val transactionDao: TransactionDao) {
         return transactionDao.getSumOfTransactionsByCategoryAndSalaryDateFlow(timeMills)
     }
 
-    suspend fun getTransactionWithIncomeCategory(): Transaction? {
+    suspend fun getTransactionWithIncomeCategory(): List<Transaction?> {
         return transactionDao.getTransactionWithIncomeCategory()
     }
 
@@ -102,5 +97,25 @@ class TransactionManager(val transactionDao: TransactionDao) {
             .toInstant()
             .toEpochMilli()
         return Pair(start, end)
+    }
+    fun getAmountSavedMonth(month: Int, year: Int): Flow<Double> {
+        val first = YearMonth.of(year, month).atDay(1).atStartOfDay(ZoneOffset.systemDefault())
+        val end = YearMonth.of(year, month).atEndOfMonth().atTime(23, 59, 59, 999).atZone(ZoneOffset.systemDefault())
+
+        val startTime = first.toInstant().toEpochMilli()
+        val endTime = end.toInstant().toEpochMilli()
+
+        return transactionDao.getSumOfTransactionsBetweenTime(startTime, endTime)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getAmountSavedSalary(appSettingManager: AppSettingManager): Flow<Double> {
+        return appSettingManager.getAppSettingFlow(Keys.SALARY_CREDIT_TIME)
+            .flatMapLatest { salaryDate ->
+                appSettingManager.getAppSettingFlow(Keys.PREVIOUS_SALARY_CREDIT_TIME)
+                    .flatMapLatest { previousSalaryDate ->
+                        transactionDao.getSumOfTransactionsBetweenTime(previousSalaryDate!!, salaryDate!!)
+                }
+            }
     }
 }

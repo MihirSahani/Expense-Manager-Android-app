@@ -1,5 +1,6 @@
 package com.example.financemanager.ui.composable.analysis
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -34,9 +36,12 @@ import java.util.Locale
 @Composable
 fun AnalysisScreen(navController: NavController, viewModel: AnalysisVM, categoryAnalysisVM: CategoryAnalysisVM) {
     val categorySpendingList by viewModel.categorySpendingList.collectAsState()
+    val amountSavedLastTimeframe by viewModel.amountSavedLastTimeFrame.collectAsState()
+
 
     AnalysisScreenContent(
         categorySpendingList = categorySpendingList,
+        amountSaved = amountSavedLastTimeframe,
         onCategoryClick = { categoryId ->
             categoryAnalysisVM.selectedCategory.value = categoryId
             navController.navigate(Screen.ViewTransactionByCategory.route)
@@ -47,12 +52,34 @@ fun AnalysisScreen(navController: NavController, viewModel: AnalysisVM, category
 @Composable
 fun AnalysisScreenContent(
     categorySpendingList: List<CategorySpending>,
+    amountSaved: Double = 0.0,
     onCategoryClick: (Int?) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
         MyText.ScreenHeader("Analysis")
+        Row(
+            Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            val label = if (amountSaved >= 0) "You saved" else "You overspent"
+            val color = if (amountSaved >= 0) Color(0xFF02AF34) else Color(0xFF9B2600)
+            
+            MyText.Body(text = "Last Month", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            MyText.Header1(
+                String.format(Locale.getDefault(), "%s %.2f", label, kotlin.math.abs(amountSaved)),
+                color = color
+            )
+        }
+
+
         ListOfItems(categorySpendingList, Modifier.padding(16.dp)) { spending ->
             CategoryAnalysisItem(spending, onCategoryClick)
         }
@@ -178,6 +205,7 @@ fun AnalysisScreenPreview() {
     FinanceManagerTheme {
         AnalysisScreenContent(
             categorySpendingList = sampleSpending,
+            amountSaved = 1250.50,
             onCategoryClick = {}
         )
     }

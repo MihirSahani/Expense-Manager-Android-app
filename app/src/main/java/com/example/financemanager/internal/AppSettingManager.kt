@@ -8,7 +8,13 @@ enum class Keys {
     IS_INITIALIZATION_DONE,
     LAST_SMS_TIMESTAMP,
     SALARY_CREDIT_TIME,
-    BUDGET_TIMEFRAME
+    BUDGET_TIMEFRAME,
+    PREVIOUS_SALARY_CREDIT_TIME,
+}
+
+enum class BudgetTimeframe {
+    MONTHLY,
+    SALARY_DATE,
 }
 
 class AppSettingManager(

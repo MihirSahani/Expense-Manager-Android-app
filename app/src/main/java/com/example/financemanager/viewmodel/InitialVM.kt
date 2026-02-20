@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.financemanager.database.entity.User
+import com.example.financemanager.internal.BudgetTimeframe
 import com.example.financemanager.internal.ExpenseManagementInternal
 import com.example.financemanager.internal.Keys
 import kotlinx.coroutines.Job
@@ -44,7 +45,10 @@ class InitialVM(private val em: ExpenseManagementInternal): ViewModel() {
                     em.parseMessagesToTransactions(context)
                 })
                 waitGroup.add(launch {
-                    em.updateSetting(Keys.BUDGET_TIMEFRAME, 0L)
+                    em.updateSetting(Keys.BUDGET_TIMEFRAME, BudgetTimeframe.MONTHLY.ordinal.toLong())
+                })
+                waitGroup.add(launch {
+                    em.updateSetting(Keys.PREVIOUS_SALARY_CREDIT_TIME, 0L)
                 })
                 waitGroup.add(launch {
                     em.updateSetting(Keys.SALARY_CREDIT_TIME, 0L)

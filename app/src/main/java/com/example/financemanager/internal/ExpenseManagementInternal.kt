@@ -239,16 +239,24 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     }
 
     suspend fun updateSalaryCreditTime() {
-        val transaction = transactionManager.getTransactionWithIncomeCategory()
-        if (transaction != null) {
+        val transactions = transactionManager.getTransactionWithIncomeCategory()
+        if (transactions.isNotEmpty()) {
             try {
-                val date = transaction.transactionDate
-                updateSetting(Keys.SALARY_CREDIT_TIME, date)
+                updateSetting(Keys.SALARY_CREDIT_TIME, transactions[0]!!.transactionDate)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         } else {
             updateSetting(Keys.SALARY_CREDIT_TIME, 0L)
+        }
+        if (transactions.size==2) {
+            try {
+                updateSetting(Keys.PREVIOUS_SALARY_CREDIT_TIME, transactions[1]!!.transactionDate)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        } else {
+            updateSetting(Keys.PREVIOUS_SALARY_CREDIT_TIME, 0L)
         }
     }
 
@@ -256,7 +264,7 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     fun getTransactionsByCategoryCurrentTimeframe(categoryId: Int?): Flow<List<Transaction>> {
         return appSettingManager.getAppSettingFlow(Keys.BUDGET_TIMEFRAME)
             .flatMapLatest { timeframe ->
-                if (timeframe == 1L) {
+                if (timeframe == BudgetTimeframe.SALARY_DATE.ordinal.toLong()) {
                     appSettingManager.getAppSettingFlow(Keys.SALARY_CREDIT_TIME)
                         .flatMapLatest { timestamp ->
                             transactionManager.getTransactionsByCategoryAndSalaryFlow(categoryId, timestamp)
@@ -280,6 +288,22 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
                 } else {
                     val now = LocalDate.now()
                     transactionManager.getSumOfTransactionsByCategoryAndMonthFlow(now.year, now.monthValue)
+                }
+            }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getSumOfTransactionsBetweenTime(): Flow<Double> {
+        return appSettingManager.getAppSettingFlow(Keys.BUDGET_TIMEFRAME)
+            .flatMapLatest { timeframe ->
+                when(timeframe) {
+                    BudgetTimeframe.MONTHLY.ordinal.toLong()-> {
+                        val previousMonth = LocalDate.now().minusMonths(1)
+
+                        transactionManager.getAmountSavedMonth(previousMonth.monthValue, previousMonth.year)
+                    }
+                    BudgetTimeframe.SALARY_DATE.ordinal.toLong()-> transactionManager.getAmountSavedSalary(appSettingManager)
+                    else -> throw Exception("Invalid timeframe")
                 }
             }
     }
