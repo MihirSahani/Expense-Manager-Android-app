@@ -48,7 +48,8 @@ fun ViewTransactionScreen(
         },
         onUpdateAccount = { updatedTransaction ->
             transactionVM.updateTransactionAccount(updatedTransaction)
-        }
+        },
+        dateToString = transactionVM::dateToString
     )
 }
 
@@ -59,7 +60,8 @@ fun ViewTransactionContent(
     categories: List<Category>,
     accounts: List<Account>,
     onUpdateCategory: (Transaction, Boolean) -> Unit,
-    onUpdateAccount: (Transaction) -> Unit
+    onUpdateAccount: (Transaction) -> Unit,
+    dateToString: (Long) -> String
 ) {
     var showCategoryDialog by remember { mutableStateOf(false) }
     var showAccountDialog by remember { mutableStateOf(false) }
@@ -93,7 +95,7 @@ fun ViewTransactionContent(
                 HorizontalDivider(thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
                 DetailItem("Amount", "${transaction.amount} ${transaction.currency}")
                 HorizontalDivider(thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
-                DetailItem("Date", transaction.transactionDate)
+                DetailItem("Date", dateToString(transaction.transactionDate))
                 HorizontalDivider(thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
                 DetailItem("Type", transaction.type)
 
@@ -311,15 +313,15 @@ fun ViewTransactionPreview() {
         amount = 15.5,
         currency = "USD",
         type = "Expense",
-        transactionDate = "2023-10-27 08:30",
+        transactionDate = System.currentTimeMillis(),
         categoryId = 1,
         accountId = 1,
         description = "Morning coffee",
         receiptURL = "",
         location = "Seattle, WA",
-        createdAt = "",
-        updatedAt = "",
-        rawAccountIdName = "Visa 1234"
+        createdAt = 0,
+        updatedAt = 0,
+        rawAccountIdName = "1234"
     )
     val sampleCategories = listOf(
         Category(id = 1, name = "Food", description = "Groceries", type = "Expense", color = "#FF5733", createdAt = "", updatedAt = "")
@@ -333,7 +335,8 @@ fun ViewTransactionPreview() {
             categories = sampleCategories,
             accounts = sampleAccounts,
             onUpdateCategory = { _, _ -> },
-            onUpdateAccount = {}
+            onUpdateAccount = {},
+            dateToString = { "27-10-2023" }
         )
     }
 }

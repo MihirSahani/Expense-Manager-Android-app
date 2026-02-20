@@ -22,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.financemanager.ui.composable.Screen
+import com.example.financemanager.ui.composable.utils.BottomBar
 import com.example.financemanager.ui.composable.utils.MyText
 import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.InitialVM
@@ -49,27 +50,32 @@ fun HomeScreenContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background),
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        MyText.ScreenHeader("Hello $userName")
-
-
-        Column (
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        Column(
+            Modifier.fillMaxWidth(),
         ) {
-            HomeWidget(
-                title = "Accounts",
-                icon = Icons.Default.AccountBalanceWallet,
-                onClick = onAccountsClick
-            )
-            HomeWidget(
-                title = "Categories",
-                icon = Icons.Default.Category,
-                onClick = onCategoriesClick
-            )
+            MyText.ScreenHeader("Hello $userName")
+
+            Column (
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                HomeWidget(
+                    title = "Accounts",
+                    icon = Icons.Default.AccountBalanceWallet,
+                    onClick = onAccountsClick
+                )
+                HomeWidget(
+                    title = "Categories",
+                    icon = Icons.Default.Category,
+                    onClick = onCategoriesClick
+                )
+            }
         }
+
     }
 }
 

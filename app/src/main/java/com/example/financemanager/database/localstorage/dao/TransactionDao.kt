@@ -47,28 +47,24 @@ abstract class TransactionDao {
     @Query("SELECT * FROM `transactions` WHERE `raw_account_id_name` = :accountName")
     abstract suspend fun getByRawAccountName(accountName: String): List<Transaction>
 
-
-
-
     @Query(
         "SELECT SUM(CASE WHEN type = 'Expense' THEN -ABS(`amount`) ELSE ABS(`amount`) END) " +
                 "AS `totalAmount`, `category_id` AS `categoryId` FROM `transactions` " +
-                "WHERE transaction_date >= printf('%04d-%02d-01', :year, :month) AND " +
-                "transaction_date <= date(printf('%04d-%02d-01', :year, :month), '+1 month', '-1 day') " +
+                "WHERE transaction_date >= :startTime AND transaction_date <= :endTime " +
                 "GROUP BY `category_id`"
     )
-    abstract fun getSumOfTransactionsByCategoryFlow(
-        year: Int,
-        month: Int
+    abstract fun getSumOfTransactionsByCategoryAndMonthFlow(
+        startTime: Long,
+        endTime: Long
     ): Flow<List<TransactionSummary>>
 
     @Query(
         "SELECT SUM(CASE WHEN type = 'Expense' THEN -ABS(`amount`) ELSE ABS(`amount`) END)" +
-                " AS `totalAmount` FROM `transactions` " +
-                "WHERE transaction_date >= :timeMills"
+                " AS `totalAmount`, `category_id` AS `categoryId` FROM `transactions` " +
+                "WHERE transaction_date >= :timeMills GROUP BY `category_id`"
     )
-    abstract fun getSumOfTransactionsBySalaryDateFlow(
-        timeMills: Long
+    abstract fun getSumOfTransactionsByCategoryAndSalaryDateFlow(
+        timeMills: Long?
     ): Flow<List<TransactionSummary>>
 
     @Query(
@@ -79,7 +75,8 @@ abstract class TransactionDao {
     abstract suspend fun getTransactionWithIncomeCategory(): Transaction?
 
     @Query(
-        "SELECT * FROM `transactions` WHERE `category_id` = :categoryId AND " +
+        "SELECT * FROM `transactions` WHERE " +
+                "((:categoryId IS NULL AND `category_id` IS NULL) OR (`category_id` = :categoryId)) AND " +
                 "transaction_date >= :timeMills"
     )
     abstract fun getTransactionsByCategoryAndSalaryFlow(
@@ -88,20 +85,19 @@ abstract class TransactionDao {
     ): Flow<List<Transaction>>
 
     @Query(
-        "SELECT * FROM `transactions` WHERE `category_id` = :categoryId AND " +
-                "transaction_date >= printf('%04d-%02d-01', :year, :month) AND " +
-                "transaction_date <= date(printf('%04d-%02d-01', :year, :month), '+1 month', '-1 day'); "
+        "SELECT * FROM `transactions` WHERE " +
+                "((:categoryId IS NULL AND `category_id` IS NULL) OR (`category_id` = :categoryId)) AND " +
+                "transaction_date >= :startTime AND transaction_date <= :endTime"
     )
     abstract fun getTransactionsByCategoryAndMonthFlow(
         categoryId: Int?,
-        year: Int,
-        month: Int
+        startTime: Long,
+        endTime: Long
     ): Flow<List<Transaction>>
 
     @Query(
         "SELECT * FROM `transactions` " +
-                "WHERE transaction_date >= printf('%04d-%02d-01', :year, :month) AND " +
-                "transaction_date <= date(printf('%04d-%02d-01', :year, :month), '+1 month', '-1 day');"
+                "WHERE transaction_date >= :startTime AND transaction_date <= :endTime"
     )
-    abstract fun getTransactionsByMonthFlow(year: Int, month: Int): Flow<List<Transaction>>
+    abstract fun getTransactionsByMonthFlow(startTime: Long, endTime: Long): Flow<List<Transaction>>
 }

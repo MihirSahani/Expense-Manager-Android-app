@@ -12,9 +12,9 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 
 class CategoryAnalysisVM(
-    private val em: ExpenseManagementInternal, categoryId: Int
+    private val em: ExpenseManagementInternal
 ) : ViewModel() {
-    private var _selectedCategory = MutableStateFlow<Int?>(categoryId)
+    private var _selectedCategory = MutableStateFlow<Int?>(null)
     val selectedCategory: MutableStateFlow<Int?> get() = _selectedCategory
 
     @OptIn(ExperimentalCoroutinesApi::class)

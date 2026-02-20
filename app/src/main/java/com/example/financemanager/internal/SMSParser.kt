@@ -313,8 +313,7 @@ class SMSParser {
         accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager
     ) {
         val amount = amountStr.replace(",", "").toDoubleOrNull() ?: 0.0
-        val timestamp = getFormattedTimestamp(System.currentTimeMillis())
-        val transactionDate = getFormattedTimestamp(smsDateLong)
+        val timestamp = System.currentTimeMillis()
 
         transactionManager.addTransaction(
             Transaction(
@@ -324,7 +323,7 @@ class SMSParser {
                 categoryId = payeeCategoryMapperManager.getMapping(payee),
                 payee = payee,
                 currency = "INR",
-                transactionDate = transactionDate,
+                transactionDate = smsDateLong,
                 description = body,
                 receiptURL = "",
                 location = "",

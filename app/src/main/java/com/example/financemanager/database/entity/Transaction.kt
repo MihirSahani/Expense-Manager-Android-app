@@ -22,7 +22,7 @@ data class Transaction(
     @ColumnInfo(name = "currency")
     var currency: String,
     @ColumnInfo(name = "transaction_date")
-    var transactionDate: String,
+    var transactionDate: Long,
     @ColumnInfo(name = "description")
     var description: String,
     @ColumnInfo(name = "receipt_url")
@@ -30,9 +30,9 @@ data class Transaction(
     @ColumnInfo(name = "location")
     var location: String,
     @ColumnInfo(name = "created_at")
-    var createdAt: String,
+    var createdAt: Long,
     @ColumnInfo(name = "updated_at")
-    var updatedAt: String,
+    var updatedAt: Long,
     @ColumnInfo(name = "raw_account_id_name")
     var rawAccountIdName: String,
 )

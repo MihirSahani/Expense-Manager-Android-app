@@ -6,6 +6,8 @@ import com.example.financemanager.database.localstorage.dao.TransactionDao
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 class TransactionManager(val transactionDao: TransactionDao) {
 
@@ -57,19 +59,22 @@ class TransactionManager(val transactionDao: TransactionDao) {
     }
 
     fun getTransactionsByCategoryFlow(categoryId: Int?, year: Int, month: Int): Flow<List<Transaction>> {
-        return transactionDao.getTransactionsByCategoryAndMonthFlow(categoryId, year, month)
+        val (start, end) = getMonthRange(year, month)
+        return transactionDao.getTransactionsByCategoryAndMonthFlow(categoryId, start, end)
     }
 
     fun getTransactionByMonth(year: Int, month: Int): Flow<List<Transaction>> {
-        return transactionDao.getTransactionsByMonthFlow(year, month)
+        val (start, end) = getMonthRange(year, month)
+        return transactionDao.getTransactionsByMonthFlow(start, end)
     }
 
-    fun getSumOfTransactionsByCategoryFlow(year: Int, month: Int): Flow<List<TransactionSummary>> {
-        return transactionDao.getSumOfTransactionsByCategoryFlow(year, month)
+    fun getSumOfTransactionsByCategoryAndMonthFlow(year: Int, month: Int): Flow<List<TransactionSummary>> {
+        val (start, end) = getMonthRange(year, month)
+        return transactionDao.getSumOfTransactionsByCategoryAndMonthFlow(start, end)
     }
 
-    fun getSumOfTransactionsBySalaryDateFlow(timeMills: Long): Flow<List<TransactionSummary>> {
-        return transactionDao.getSumOfTransactionsBySalaryDateFlow(timeMills)
+    fun getSumOfTransactionsByCategoryAndSalaryDateFlow(timeMills: Long?): Flow<List<TransactionSummary>> {
+        return transactionDao.getSumOfTransactionsByCategoryAndSalaryDateFlow(timeMills)
     }
 
     suspend fun getTransactionWithIncomeCategory(): Transaction? {
@@ -81,6 +86,21 @@ class TransactionManager(val transactionDao: TransactionDao) {
     }
 
     fun getTransactionsByCategoryAndMonthFlow(categoryId: Int?, year: Int, month: Int): Flow<List<Transaction>> {
-        return transactionDao.getTransactionsByCategoryAndMonthFlow(categoryId, year, month)
+        val (start, end) = getMonthRange(year, month)
+        return transactionDao.getTransactionsByCategoryAndMonthFlow(categoryId, start, end)
+    }
+
+    private fun getMonthRange(year: Int, month: Int): Pair<Long, Long> {
+        val start = LocalDateTime.of(year, month, 1, 0, 0)
+            .atZone(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+        val end = LocalDateTime.of(year, month, 1, 0, 0)
+            .plusMonths(1)
+            .minusNanos(1)
+            .atZone(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+        return Pair(start, end)
     }
 }

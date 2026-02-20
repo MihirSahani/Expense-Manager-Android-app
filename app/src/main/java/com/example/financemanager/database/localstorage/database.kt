@@ -22,7 +22,7 @@ import com.example.financemanager.database.localstorage.dao.UserDao
 @Database(entities = [
         User::class, Account::class, Category::class, Transaction::class, AppSetting::class,
         PayeeCategoryMapper::class, AccountIdMapper::class
-], version = 8)
+], version = 9)
 abstract class ExpenseManagementDatabase: RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun accountDao(): AccountDao

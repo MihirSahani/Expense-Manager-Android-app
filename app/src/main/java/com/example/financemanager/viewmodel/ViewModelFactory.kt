@@ -25,6 +25,7 @@ class ViewModelFactory(private val expenseManagementInternal: ExpenseManagementI
     val categoryVM: CategoryVM by lazy { CategoryVM(expenseManagementInternal) }
     val analysisVM: AnalysisVM by lazy { AnalysisVM(expenseManagementInternal) }
     val settingsVM: SettingsVM by lazy { SettingsVM(expenseManagementInternal) }
+    val categoryAnalysisVM: CategoryAnalysisVM by lazy { CategoryAnalysisVM(expenseManagementInternal) }
 
     fun getViewModel(name: ViewModelName): ViewModel {
         return when (name) {
@@ -36,11 +37,7 @@ class ViewModelFactory(private val expenseManagementInternal: ExpenseManagementI
             ViewModelName.CATEGORY -> categoryVM
             ViewModelName.ANALYSIS -> analysisVM
             ViewModelName.SETTINGS -> settingsVM
-            else -> throw IllegalArgumentException("Unknown ViewModelName: $name")
+            ViewModelName.CATEGORY_ANALYSIS -> categoryAnalysisVM
         }
-    }
-
-    fun getCategoryAnalysisVM(categoryId: Int): CategoryAnalysisVM {
-        return CategoryAnalysisVM(expenseManagementInternal, categoryId)
     }
 }

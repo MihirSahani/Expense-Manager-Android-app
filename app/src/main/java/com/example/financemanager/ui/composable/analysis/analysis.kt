@@ -27,19 +27,19 @@ import com.example.financemanager.ui.composable.utils.ListOfItems
 import com.example.financemanager.ui.composable.utils.MyText
 import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.AnalysisVM
+import com.example.financemanager.viewmodel.CategoryAnalysisVM
 import com.example.financemanager.viewmodel.CategorySpending
 import java.util.Locale
 
 @Composable
-fun AnalysisScreen(navController: NavController, viewModel: AnalysisVM) {
+fun AnalysisScreen(navController: NavController, viewModel: AnalysisVM, categoryAnalysisVM: CategoryAnalysisVM) {
     val categorySpendingList by viewModel.categorySpendingList.collectAsState()
 
     AnalysisScreenContent(
         categorySpendingList = categorySpendingList,
         onCategoryClick = { categoryId ->
-            navController.navigate(
-                Screen.ViewTransactionByCategory.createRoute(categoryId)
-            )
+            categoryAnalysisVM.selectedCategory.value = categoryId
+            navController.navigate(Screen.ViewTransactionByCategory.route)
         }
     )
 }
@@ -47,7 +47,7 @@ fun AnalysisScreen(navController: NavController, viewModel: AnalysisVM) {
 @Composable
 fun AnalysisScreenContent(
     categorySpendingList: List<CategorySpending>,
-    onCategoryClick: (Int) -> Unit
+    onCategoryClick: (Int?) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
@@ -59,11 +59,11 @@ fun AnalysisScreenContent(
     }
 }
 @Composable
-fun CategoryAnalysisItem(spending: CategorySpending, onCategoryClick: (Int) -> Unit) {
+fun CategoryAnalysisItem(spending: CategorySpending, onCategoryClick: (Int?) -> Unit) {
        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onCategoryClick(spending.category.id) }
+                .clickable { onCategoryClick(if(spending.category.id != -1) spending.category.id else null) }
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,

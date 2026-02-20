@@ -10,6 +10,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.financemanager.database.entity.Transaction
+import java.text.SimpleDateFormat
 import java.util.Locale
 
 object MyText {
@@ -73,5 +74,12 @@ object MyText {
                 else Color(0xFF02AF34),
             modifier = modifier
         )
+    }
+
+    @Composable
+    fun Date(date: Long, color: Color = MaterialTheme.colorScheme.onSurfaceVariant) {
+        val format = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+        val formattedDate = format.format(date)
+        Body(text = formattedDate, color)
     }
 }

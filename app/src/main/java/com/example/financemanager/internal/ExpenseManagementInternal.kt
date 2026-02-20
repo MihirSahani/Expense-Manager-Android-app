@@ -13,7 +13,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -219,19 +218,11 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
         payeeCategoryMapperManager.addMapping(payee, categoryId)
     }
 
-    fun getTransactionsByCategoryFlow(categoryId: MutableStateFlow<Int?>, year: Int, month: Int): Flow<List<Transaction>> {
-        return transactionManager.getTransactionsByCategoryFlow(categoryId.value, year, month)
-    }
-
-    fun getTransactionSumByMonthFlow(year: Int, month: Int): Flow<List<TransactionSummary>> {
-        return transactionManager.getSumOfTransactionsByCategoryFlow(year, month)
-    }
-
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getTransactionSumBySalaryDateFlow(): Flow<List<TransactionSummary>> {
         return appSettingManager.getAppSettingFlow(Keys.SALARY_CREDIT_TIME)
             .flatMapLatest { timestamp ->
-                transactionManager.getSumOfTransactionsBySalaryDateFlow(timestamp ?: 0L)
+                transactionManager.getSumOfTransactionsByCategoryAndSalaryDateFlow(timestamp ?: 0L)
             }
     }
 
@@ -250,10 +241,9 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     suspend fun updateSalaryCreditTime() {
         val transaction = transactionManager.getTransactionWithIncomeCategory()
         if (transaction != null) {
-            val format = SimpleDateFormat("dd-MMM-yyyy HH:mm", Locale.getDefault())
             try {
-                val date = format.parse(transaction.transactionDate)
-                updateSetting(Keys.SALARY_CREDIT_TIME, date?.time)
+                val date = transaction.transactionDate
+                updateSetting(Keys.SALARY_CREDIT_TIME, date)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -273,7 +263,23 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
                         }
                 } else {
                     val now = LocalDate.now()
-                    transactionManager.getTransactionsByCategoryFlow(categoryId, now.year, now.monthValue)
+                    transactionManager.getTransactionsByCategoryAndMonthFlow(categoryId, now.year, now.monthValue)
+                }
+            }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getTransactionSumByCategoryCurrentTimeframe(): Flow<List<TransactionSummary>> {
+        return appSettingManager.getAppSettingFlow(Keys.BUDGET_TIMEFRAME)
+            .flatMapLatest { timeframe ->
+                if (timeframe == 1L) {
+                    appSettingManager.getAppSettingFlow(Keys.SALARY_CREDIT_TIME)
+                        .flatMapLatest { timestamp ->
+                            transactionManager.getSumOfTransactionsByCategoryAndSalaryDateFlow(timestamp)
+                        }
+                } else {
+                    val now = LocalDate.now()
+                    transactionManager.getSumOfTransactionsByCategoryAndMonthFlow(now.year, now.monthValue)
                 }
             }
     }

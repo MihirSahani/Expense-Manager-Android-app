@@ -35,9 +35,11 @@ fun Navigate() {
 
     Scaffold(
         bottomBar = {
-            if (currentRoute != Screen.Login.route &&
-                currentRoute != Screen.Permissions.route &&
-                currentRoute != Screen.UpdateUserDetails.route) {
+            if (currentRoute == Screen.Home.route ||
+                currentRoute == Screen.Analysis.route ||
+                currentRoute == Screen.TransactionHistory.route ||
+                currentRoute == Screen.Settings.route
+            ) {
                 NavigationBar(navController)
             }
         }
@@ -86,7 +88,9 @@ fun Navigate() {
                 AnalysisScreen(
                     navController,
                     Graph.viewModelFactory.getViewModel(ViewModelName.ANALYSIS)
-                            as AnalysisVM
+                            as AnalysisVM,
+                    Graph.viewModelFactory.getViewModel(ViewModelName.CATEGORY_ANALYSIS)
+                            as CategoryAnalysisVM
                 )
             }
             composable(Screen.TransactionHistory.route) {
@@ -133,14 +137,13 @@ fun Navigate() {
                 )
             }
 
-            composable(
-                route = Screen.ViewTransactionByCategory.route,
-                arguments = listOf(navArgument("categoryId") { type = NavType.IntType })
-            ) { backStackEntry ->
-                val categoryId = backStackEntry.arguments?.getInt("categoryId") ?: 0
+            composable(route = Screen.ViewTransactionByCategory.route) {
                 ViewTransactionByCategoryScreen(
                     navController,
-                    Graph.viewModelFactory.getCategoryAnalysisVM(categoryId)
+                    Graph.viewModelFactory.getViewModel(ViewModelName.CATEGORY_ANALYSIS)
+                            as CategoryAnalysisVM,
+                    Graph.viewModelFactory.getViewModel(ViewModelName.TRANSACTION)
+                            as TransactionVM
                 )
             }
         }

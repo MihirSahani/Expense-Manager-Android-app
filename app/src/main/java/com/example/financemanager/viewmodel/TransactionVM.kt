@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Locale
 import kotlin.collections.emptyList
 
 class TransactionVM(private val expenseManagementInternal: ExpenseManagementInternal) : ViewModel() {
@@ -58,4 +60,7 @@ class TransactionVM(private val expenseManagementInternal: ExpenseManagementInte
         }
     }
 
+    fun dateToString(date: Long): String {
+        return SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.getDefault()).format(date)
+    }
 }
