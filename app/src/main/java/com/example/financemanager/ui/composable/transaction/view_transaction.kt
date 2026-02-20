@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import com.example.financemanager.database.entity.Account
 import com.example.financemanager.database.entity.Category
@@ -95,10 +96,10 @@ fun ViewTransactionContent(
                 DetailItem("Date", transaction.transactionDate)
                 HorizontalDivider(thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
                 DetailItem("Type", transaction.type)
-                HorizontalDivider(thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
 
 
                 if (transaction.location.isNotEmpty()) {
+                    HorizontalDivider(thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
                     DetailItem("Location", transaction.location)
                 }
 
@@ -180,6 +181,9 @@ fun ViewTransactionContent(
         var updateCategoryForAllTransactionsWithPayee by remember { mutableStateOf(true) }
 
         AlertDialog(
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            modifier = Modifier.padding(horizontal = 16.dp),
+            containerColor = MaterialTheme.colorScheme.background,
             onDismissRequest = { showCategoryDialog = false },
             title = { MyText.Header1("Select Category") },
             text = {
@@ -236,6 +240,9 @@ fun ViewTransactionContent(
     if (showAccountDialog && transaction != null) {
 
         AlertDialog(
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            modifier = Modifier.padding(horizontal = 16.dp),
+            containerColor = MaterialTheme.colorScheme.background,
             onDismissRequest = { showAccountDialog = false },
             title = { MyText.Header1("Select Account") },
             text = {
