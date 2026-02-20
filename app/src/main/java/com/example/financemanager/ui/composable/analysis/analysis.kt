@@ -52,7 +52,7 @@ fun AnalysisScreenContent(
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        MyText.ScreenHeader("Category")
+        MyText.ScreenHeader("Analysis")
         ListOfItems(categorySpendingList, Modifier.padding(16.dp)) { spending ->
             CategoryAnalysisItem(spending, onCategoryClick)
         }
