@@ -6,11 +6,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.financemanager.ui.composable.Screen
+import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.InitialVM
 
 @Composable
@@ -20,7 +22,7 @@ fun LoginScreen(navController: NavController, viewModel: InitialVM) {
 
     if (isUserLoaded) {
         if (user == null) {
-            SignUpContent(navController, viewModel)
+            SignUpContent(onSignUp = { first, last -> viewModel.signUp(first, last) })
         } else {
             LaunchedEffect(Unit) {
                 navController.navigate(Screen.Home.route) {
@@ -34,7 +36,7 @@ fun LoginScreen(navController: NavController, viewModel: InitialVM) {
 }
 
 @Composable
-fun SignUpContent(navController: NavController, viewModel: InitialVM = viewModel()) {
+fun SignUpContent(onSignUp: (String, String) -> Unit) {
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
 
@@ -73,8 +75,7 @@ fun SignUpContent(navController: NavController, viewModel: InitialVM = viewModel
         Button(
             onClick = { 
                 if (firstName.isNotBlank() && lastName.isNotBlank()) {
-                    viewModel.signUp(firstName, lastName)
-                    // Navigation will be handled automatically by the collectAsState in LoginScreen
+                    onSignUp(firstName, lastName)
                 }
             },
             modifier = Modifier.fillMaxWidth(),
@@ -96,5 +97,21 @@ fun LoadingScreen() {
             Spacer(modifier = Modifier.height(16.dp))
             Text("Loading your data...", color = MaterialTheme.colorScheme.primary)
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SignUpPreview() {
+    FinanceManagerTheme {
+        SignUpContent(onSignUp = { _, _ -> })
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LoadingPreview() {
+    FinanceManagerTheme {
+        LoadingScreen()
     }
 }

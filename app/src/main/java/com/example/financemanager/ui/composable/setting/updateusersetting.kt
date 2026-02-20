@@ -1,77 +1,87 @@
 package com.example.financemanager.ui.composable.setting
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.financemanager.database.entity.User
+import com.example.financemanager.ui.composable.utils.MyInput
+import com.example.financemanager.ui.composable.utils.MyText
+import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.UserVM
+
+@Composable
+fun UpdateUserDetailsScreen(navController: NavController, viewModel: UserVM) {
+    val user by viewModel.user.collectAsState()
+
+    UpdateUserDetailsContent(
+        initialFirstName = user?.firstName ?: "",
+        initialLastName = user?.lastName ?: "",
+        onSaveClick = { firstName, lastName ->
+            val updatedUser = user?.copy(firstName = firstName, lastName = lastName) ?: User(
+                firstName = firstName,
+                lastName = lastName,
+                token = ""
+            )
+            viewModel.updateUserDetails(updatedUser)
+            navController.popBackStack()
+        }
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UpdateUserDetailsScreen(navController: NavController, viewModel: UserVM) {
+fun UpdateUserDetailsContent(
+    initialFirstName: String,
+    initialLastName: String,
+    onSaveClick: (String, String) -> Unit
+) {
+    var firstName by remember(initialFirstName) { mutableStateOf(initialFirstName) }
+    var lastName by remember(initialLastName) { mutableStateOf(initialLastName) }
 
-    var firstName by remember { mutableStateOf("") }
-    var lastName by remember { mutableStateOf("") }
+    Column(
+        modifier = Modifier
+            .fillMaxSize(),
+        horizontalAlignment = Alignment.Start
+    ) {
+        MyText.ScreenHeader("Update User Details")
 
-    // Initialize fields when user data is loaded
-    LaunchedEffect(viewModel.user) {
-        viewModel.user.value?.let {
-            firstName = it.firstName
-            lastName = it.lastName
+        MyInput.TextField(
+            value = firstName,
+            onValueChange = { firstName = it },
+            label = "First Name",
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
+        )
+
+        MyInput.TextField(
+            value = lastName,
+            onValueChange = { lastName = it },
+            label = "Last Name",
+            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp, start = 16.dp, end = 16.dp)
+        )
+
+        Button(
+            onClick = { onSaveClick(firstName, lastName) },
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            enabled = firstName.isNotBlank() && lastName.isNotBlank()
+        ) {
+            Text("Save Changes")
         }
     }
+}
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Update Details") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            OutlinedTextField(
-                value = firstName,
-                onValueChange = { firstName = it },
-                label = { Text("First Name") },
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
-            )
-
-            OutlinedTextField(
-                value = lastName,
-                onValueChange = { lastName = it },
-                label = { Text("Last Name") },
-                modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
-            )
-
-            Button(
-                onClick = {
-                    viewModel.updateUserDetails(
-                        User(firstName = firstName, lastName = lastName, token = "")
-                    )
-                    navController.popBackStack()
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = firstName.isNotBlank() && lastName.isNotBlank()
-            ) {
-                Text("Save Changes")
-            }
-        }
+@Preview(showBackground = true)
+@Composable
+fun UpdateUserDetailsPreview() {
+    FinanceManagerTheme {
+        UpdateUserDetailsContent(
+            initialFirstName = "John",
+            initialLastName = "Doe",
+            onSaveClick = { _, _ -> }
+        )
     }
 }
