@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,12 +34,15 @@ fun TransactionHistoryScreen(navController: NavController, viewModel: Transactio
     LaunchedEffect(Unit) {
         viewModel.selectTransaction(null)
     }
+    val isArchived by viewModel.isArchived.collectAsState()
     val transactions by viewModel.transactions.collectAsState()
     val categories by viewModel.categories.collectAsState()
 
     TransactionHistoryContent(
         transactions = transactions,
         categories = categories,
+        isArchived = isArchived,
+        onToggleArchive = { viewModel.isArchived.value = !isArchived },
         onTransactionClick = { transaction ->
             viewModel.selectTransaction(transaction)
             navController.navigate(Screen.ViewTransaction.route)
@@ -50,6 +55,8 @@ fun TransactionHistoryScreen(navController: NavController, viewModel: Transactio
 fun TransactionHistoryContent(
     transactions: List<Transaction>,
     categories: List<Category>,
+    isArchived: Boolean,
+    onToggleArchive: () -> Unit,
     onTransactionClick: (Transaction) -> Unit,
     dateToString: (Long) -> String
 ) {
@@ -63,7 +70,20 @@ fun TransactionHistoryContent(
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        MyText.ScreenHeader("My Transactions")
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(end = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            MyText.ScreenHeader(if (isArchived) "Archived Transactions" else "My Transactions")
+            IconButton(onClick = onToggleArchive) {
+                Icon(
+                    imageVector = if (isArchived) Icons.Default.Unarchive else Icons.Default.Archive,
+                    contentDescription = if (isArchived) "Show Active" else "Show Archived",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
         
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -80,6 +100,8 @@ fun TransactionHistoryContent(
             },
             modifier = Modifier.padding(16.dp)
         )
+
+        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
@@ -166,6 +188,8 @@ fun TransactionHistoryPreview() {
         TransactionHistoryContent(
             transactions = sampleTransactions,
             categories = sampleCategories,
+            isArchived = false,
+            onToggleArchive = {},
             onTransactionClick = {},
             dateToString = { date ->
                 SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(Date(date))

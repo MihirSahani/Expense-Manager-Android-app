@@ -6,9 +6,11 @@ import com.example.financemanager.database.entity.Account
 import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.Transaction
 import com.example.financemanager.internal.ExpenseManagementInternal
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -17,8 +19,16 @@ import kotlin.collections.emptyList
 
 class TransactionVM(private val expenseManagementInternal: ExpenseManagementInternal) : ViewModel() {
 
-    private val _transactions = expenseManagementInternal.getTransactionsFlow()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+    var isArchived: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val _transactions = isArchived.flatMapLatest { archived ->
+        if (archived) {
+            expenseManagementInternal.getTransactionArchived()
+        } else {
+            expenseManagementInternal.getTransactionCurrentCycle()
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val transactions: StateFlow<List<Transaction>> = _transactions
 
     private val _categories = expenseManagementInternal.getCategoriesFlow()

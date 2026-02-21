@@ -10,6 +10,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.financemanager.database.entity.Transaction
+import java.text.DecimalFormat
+import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -67,7 +69,7 @@ object MyText {
     @Composable
     fun TransactionAmount(t: Transaction, modifier: Modifier = Modifier) {
         Text(
-            text = String.format(Locale.getDefault(), "%.2f", t.amount),
+            text = t.amount.toIndianFormat(),
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
             color = if (t.type.equals("expense", ignoreCase = true)) Color(0xFF9B2600)
@@ -81,5 +83,13 @@ object MyText {
         val format = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
         val formattedDate = format.format(date)
         Body(text = formattedDate, color)
+    }
+
+    fun Double.toIndianFormat(): String {
+        val formatter = NumberFormat.getCurrencyInstance(Locale("en", "IN"))
+        formatter.minimumFractionDigits = 2
+        formatter.maximumFractionDigits = 2
+
+        return formatter.format(this)
     }
 }

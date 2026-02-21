@@ -9,12 +9,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
-import java.time.YearMonth
 import java.time.ZoneId
-import java.time.ZoneOffset
 
 class TransactionManager(val transactionDao: TransactionDao) {
 
+    // ---------------------------------------------------------------------------------CRUD
     fun getAllTransactionsFlow(): Flow<List<Transaction>> {
         return transactionDao.getAllFlow()
     }
@@ -49,6 +48,7 @@ class TransactionManager(val transactionDao: TransactionDao) {
     suspend fun removeTransaction(transaction: Transaction) {
         transactionDao.delete(transaction)
     }
+    // --------------------------------------------------------------------------------
 
     suspend fun updateCategoryForTransactionsWithPayee(payee: String, categoryId: Int) {
         transactionDao.updateCategoryForTransactionsWithPayee(payee, categoryId)
@@ -62,27 +62,8 @@ class TransactionManager(val transactionDao: TransactionDao) {
         return transactionDao.getByRawAccountName(accountName)
     }
 
-
-    fun getSumOfTransactionsByCategoryAndMonthFlow(year: Int, month: Int): Flow<List<TransactionSummary>> {
-        val (start, end) = getMonthRange(year, month)
-        return transactionDao.getSumOfTransactionsByCategoryAndMonthFlow(start, end)
-    }
-
-    fun getSumOfTransactionsByCategoryAndSalaryDateFlow(timeMills: Long?): Flow<List<TransactionSummary>> {
-        return transactionDao.getSumOfTransactionsByCategoryAndSalaryDateFlow(timeMills)
-    }
-
     suspend fun getTransactionWithIncomeCategory(): List<Transaction?> {
         return transactionDao.getTransactionWithIncomeCategory()
-    }
-
-    fun getTransactionsByCategoryAndSalaryFlow(categoryId: Int?, timeMills: Long?): Flow<List<Transaction>> {
-        return transactionDao.getTransactionsByCategoryAndSalaryFlow(categoryId, timeMills)
-    }
-
-    fun getTransactionsByCategoryAndMonthFlow(categoryId: Int?, year: Int, month: Int): Flow<List<Transaction>> {
-        val (start, end) = getMonthRange(year, month)
-        return transactionDao.getTransactionsByCategoryAndMonthFlow(categoryId, start, end)
     }
 
     private fun getMonthRange(year: Int, month: Int): Pair<Long, Long> {
@@ -99,13 +80,9 @@ class TransactionManager(val transactionDao: TransactionDao) {
         return Pair(start, end)
     }
     fun getAmountSavedMonth(month: Int, year: Int): Flow<Double> {
-        val first = YearMonth.of(year, month).atDay(1).atStartOfDay(ZoneOffset.systemDefault())
-        val end = YearMonth.of(year, month).atEndOfMonth().atTime(23, 59, 59, 999).atZone(ZoneOffset.systemDefault())
+        val (startTime, endTime) = getMonthRange(year, month)
 
-        val startTime = first.toInstant().toEpochMilli()
-        val endTime = end.toInstant().toEpochMilli()
-
-        return transactionDao.getSumOfTransactionsBetweenTime(startTime, endTime)
+        return transactionDao.getSumOfTransactionsBetween(startTime, endTime)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -114,8 +91,50 @@ class TransactionManager(val transactionDao: TransactionDao) {
             .flatMapLatest { salaryDate ->
                 appSettingManager.getAppSettingFlow(Keys.PREVIOUS_SALARY_CREDIT_TIME)
                     .flatMapLatest { previousSalaryDate ->
-                        transactionDao.getSumOfTransactionsBetweenTime(previousSalaryDate!!, salaryDate!!)
-                }
+                        transactionDao.getSumOfTransactionsBetween(previousSalaryDate!!, salaryDate!!)
+                    }
             }
+    }
+
+    // ------------------------------------------------------------------------- Sum of Transactions
+
+    fun getSumOfTransactionsByCategoryAndMonthFlow(year: Int, month: Int): Flow<List<TransactionSummary>> {
+        val (start, end) = getMonthRange(year, month)
+        return transactionDao.getSumOfTransactionsByCategoryBetweenFlow(start, end)
+    }
+
+    fun getSumOfTransactionsByCategoryAndSalaryDateFlow(timeMills: Long?): Flow<List<TransactionSummary>> {
+        return transactionDao.getSumOfTransactionsByCategoryAfterFlow(timeMills)
+    }
+
+    // ---------------------------------------------------------------------------- Get Transactions
+    fun getTransactionsByCategoryAndSalaryFlow(categoryId: Int?, timeMills: Long?): Flow<List<Transaction>> {
+        return transactionDao.getTransactionsByCategoryAfterFlow(categoryId, timeMills)
+    }
+
+    fun getTransactionsByCategoryAndMonthFlow(categoryId: Int?, year: Int, month: Int): Flow<List<Transaction>> {
+        val (start, end) = getMonthRange(year, month)
+        return transactionDao.getTransactionsByCategoryBetweenFlow(categoryId, start, end)
+    }
+
+    fun getTransactionsByMonthCurrentCycleFlow(month: Int, year: Int): Flow<List<Transaction>> {
+        val (startTime, endTime) = getMonthRange(year, month)
+
+        return transactionDao.getTransactionsBetween(startTime, endTime)
+    }
+
+    fun getTransactionsBySalaryCurrentCycleFlow(salaryDate: Long): Flow<List<Transaction>> {
+        return transactionDao.getTransactionsAfter(salaryDate)
+    }
+
+    fun getArchivedTransactionMonth(): Flow<List<Transaction>> {
+        val date = LocalDateTime.now().minusMonths(1)
+        val (_, endTime) = getMonthRange(date.year, date.monthValue)
+
+        return transactionDao.getTransactionsBefore(endTime-1)
+    }
+
+    fun getArchivedTransactionsSalary(timestamp: Long): Flow<List<Transaction>> {
+        return transactionDao.getTransactionsBefore(timestamp-1)
     }
 }

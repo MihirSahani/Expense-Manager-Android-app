@@ -16,7 +16,7 @@ data class CategorySpending(
 
 class AnalysisVM(private var em: ExpenseManagementInternal): ViewModel() {
 
-    val _amountSavedLastTimeframe: StateFlow<Double> = em.getSumOfTransactionsBetweenTime()
+    val _amountSavedLastTimeframe: StateFlow<Double> = em.getSumOfTransactionsPreviousCycle()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
     val amountSavedLastTimeFrame: StateFlow<Double> = _amountSavedLastTimeframe
 

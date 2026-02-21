@@ -16,9 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
 import java.time.LocalDate
-import java.util.Locale
 
 class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     val accountManager: AccountManager = AccountManager(database.accountDao())
@@ -44,6 +42,45 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
 
     fun getTransactionsFlow(): Flow<List<Transaction>> {
         return transactionManager.getAllTransactionsFlow()
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getTransactionCurrentCycle(): Flow<List<Transaction>> {
+        return appSettingManager.getAppSettingFlow(Keys.BUDGET_TIMEFRAME)
+            .flatMapLatest { timeframe ->
+                when(timeframe) {
+                    BudgetTimeframe.MONTHLY.ordinal.toLong()-> {
+                        val currMonth = LocalDate.now()
+                        transactionManager.getTransactionsByMonthCurrentCycleFlow(
+                            currMonth.monthValue,
+                            currMonth.year
+                        )
+                    }
+                    BudgetTimeframe.SALARY_DATE.ordinal.toLong() -> {
+                        appSettingManager.getAppSettingFlow(Keys.SALARY_CREDIT_TIME).flatMapLatest { timestamp ->
+                            transactionManager.getTransactionsBySalaryCurrentCycleFlow(timestamp?:0L)
+                        }
+                    }
+                    else -> {
+                        throw Exception("Invalid timeframe")
+                    }
+                }
+            }
+    }
+    
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getTransactionArchived(): Flow<List<Transaction>> {
+        return appSettingManager.getAppSettingFlow(Keys.BUDGET_TIMEFRAME).flatMapLatest { timeframe ->
+            when(timeframe) {
+                BudgetTimeframe.MONTHLY.ordinal.toLong() -> transactionManager.getArchivedTransactionMonth()
+                BudgetTimeframe.SALARY_DATE.ordinal.toLong() -> {
+                    appSettingManager.getAppSettingFlow(Keys.SALARY_CREDIT_TIME).flatMapLatest { timestamp ->
+                        transactionManager.getArchivedTransactionsSalary(timestamp?:1L)
+                    }
+                }
+                else -> throw Exception("Invalid timeframe")
+            }
+        }
     }
 
     suspend fun addTransaction(transaction: Transaction) {
@@ -293,13 +330,12 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun getSumOfTransactionsBetweenTime(): Flow<Double> {
+    fun getSumOfTransactionsPreviousCycle(): Flow<Double> {
         return appSettingManager.getAppSettingFlow(Keys.BUDGET_TIMEFRAME)
             .flatMapLatest { timeframe ->
                 when(timeframe) {
                     BudgetTimeframe.MONTHLY.ordinal.toLong()-> {
                         val previousMonth = LocalDate.now().minusMonths(1)
-
                         transactionManager.getAmountSavedMonth(previousMonth.monthValue, previousMonth.year)
                     }
                     BudgetTimeframe.SALARY_DATE.ordinal.toLong()-> transactionManager.getAmountSavedSalary(appSettingManager)
@@ -307,4 +343,5 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
                 }
             }
     }
+
 }
