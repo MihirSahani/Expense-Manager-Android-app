@@ -33,16 +33,13 @@ class InitialVM(private val em: ExpenseManagementInternal): ViewModel() {
     val userName: StateFlow<String> = _user.map { it?.firstName ?: "Guest" }
         .stateIn(viewModelScope, SharingStarted.Eagerly, "Guest")
 
-    fun initialize(context: Context) {
+    fun initialize() {
         viewModelScope.launch {
             if (em.appSettingManager.getAppSetting(Keys.IS_INITIALIZATION_DONE) == null) {
                 val waitGroup = mutableListOf<Job>()
 
                 waitGroup.add(launch {
                     em.loadDummyData()
-                })
-                waitGroup.add(launch {
-                    em.parseMessagesToTransactions(context)
                 })
                 waitGroup.add(launch {
                     em.updateSetting(Keys.BUDGET_TIMEFRAME, BudgetTimeframe.MONTHLY.ordinal.toLong())
@@ -62,6 +59,12 @@ class InitialVM(private val em: ExpenseManagementInternal): ViewModel() {
                 })
                 waitGroup.joinAll()
             }
+        }
+    }
+
+    fun parseMessages(context: Context) {
+        viewModelScope.launch {
+            em.parseMessagesToTransactions(context)
         }
     }
 
