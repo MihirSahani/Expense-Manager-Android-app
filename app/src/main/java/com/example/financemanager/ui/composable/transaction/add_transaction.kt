@@ -9,7 +9,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
@@ -19,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import com.example.financemanager.database.entity.Account
 import com.example.financemanager.database.entity.Category
@@ -68,7 +68,7 @@ fun AddTransactionContent(
     var showAccountDialog by remember { mutableStateOf(false) }
 
     val calendar = Calendar.getInstance()
-    var transactionDate by remember { mutableStateOf(calendar.timeInMillis) }
+    var transactionDate by remember { mutableLongStateOf(calendar.timeInMillis) }
     val context = LocalContext.current
     val datePickerDialog = DatePickerDialog(
         context,
@@ -210,7 +210,7 @@ fun AddTransactionContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         if (showCategoryDialog) {
-            val filteredCategories = categories.filter { it.type.lowercase() == transactionType.lowercase() }
+            val filteredCategories = categories.filter { it.type.equals(transactionType, ignoreCase = true) }
             SimpleDialog(
                 title = "Select Category",
                 items = filteredCategories.map { it.name },
@@ -244,6 +244,9 @@ private fun SimpleDialog(
     onDismiss: () -> Unit
 ) {
     AlertDialog(
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier.padding(horizontal = 16.dp),
+        containerColor = MaterialTheme.colorScheme.background,
         onDismissRequest = onDismiss,
         title = { MyText.Header1(title) },
         text = {
@@ -252,13 +255,15 @@ private fun SimpleDialog(
             ) { item ->
                 MyText.Header1(
                     item,
-                    modifier = Modifier.clickable { onItemSelected(items.indexOf(item)) }.padding(16.dp)
+                    modifier = Modifier
+                        .clickable { onItemSelected(items.indexOf(item)) }
+                        .padding(16.dp)
                 )
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                MyText.Header1("Cancel")
             }
         }
     )
