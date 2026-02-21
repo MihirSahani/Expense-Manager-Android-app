@@ -88,7 +88,7 @@ object MyText {
 
     @Composable
     fun Date(date: Long, color: Color = MaterialTheme.colorScheme.onSurfaceVariant) {
-        val format = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+        val format = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault())
         val formattedDate = format.format(date)
         Body(text = formattedDate, color)
     }

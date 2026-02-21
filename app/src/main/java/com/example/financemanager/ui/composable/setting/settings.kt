@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Money
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
@@ -30,9 +32,12 @@ import com.example.financemanager.viewmodel.SettingsVM
 @Composable
 fun SettingsScreen(navController: NavController, viewModel: SettingsVM) {
     val budgetTimeframe by viewModel.budgetTimeframe.collectAsState()
+    val salaryCreditTime by viewModel.salaryCreditTime.collectAsState()
+
 
     SettingsScreenContent(
         budgetTimeframe = budgetTimeframe ?: 0L,
+        salaryCreditTime = salaryCreditTime ,
         onUpdateUserDetailsClick = { navController.navigate(Screen.UpdateUserDetails.route) },
         onBudgetTimeframeChange = { isChecked ->
             viewModel.updateBudgetTimeframe(if (isChecked) 1L else 0L)
@@ -43,6 +48,7 @@ fun SettingsScreen(navController: NavController, viewModel: SettingsVM) {
 @Composable
 fun SettingsScreenContent(
     budgetTimeframe: Long,
+    salaryCreditTime: Long?,
     onUpdateUserDetailsClick: () -> Unit,
     onBudgetTimeframeChange: (Boolean) -> Unit
 ) {
@@ -91,6 +97,29 @@ fun SettingsScreenContent(
                     onCheckedChange = onBudgetTimeframeChange
                 )
             }
+            if (salaryCreditTime != null &&  salaryCreditTime != 0L) {
+                HorizontalDivider(thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp, horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Money,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        MyText.Header1(text = "Salary Credit Time")
+                    }
+                    MyText.Date(salaryCreditTime)
+                }
+            }
+
         }
     }
 }
@@ -133,6 +162,7 @@ fun SettingsScreenPreview() {
     FinanceManagerTheme {
         SettingsScreenContent(
             budgetTimeframe = 1L,
+            salaryCreditTime = 0L,
             onUpdateUserDetailsClick = {},
             onBudgetTimeframeChange = {}
         )

@@ -72,7 +72,6 @@ private fun <T> ListOfItemsBase(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surface),
-        contentPadding = PaddingValues(bottom = 80.dp)
     ) {
         itemsIndexed(items) { idx, item ->
             if (idx != 0) {
