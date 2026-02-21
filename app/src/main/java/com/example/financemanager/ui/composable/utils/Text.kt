@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.financemanager.database.entity.Transaction
@@ -49,11 +50,12 @@ object MyText {
     }
 
     @Composable
-    fun Body(text: String, color: Color = MaterialTheme.colorScheme.onSurfaceVariant) {
+    fun Body(text: String, color: Color = MaterialTheme.colorScheme.onSurfaceVariant, modifier: Modifier = Modifier) {
         Text(
             text = text,
             fontSize = 14.sp,
-            color = color
+            color = color,
+            modifier = modifier
         )
     }
 
@@ -67,12 +69,18 @@ object MyText {
     }
 
     @Composable
-    fun TransactionAmount(t: Transaction, modifier: Modifier = Modifier) {
+    fun TransactionAmount(
+        amount: Double,
+        modifier: Modifier = Modifier,
+        fontSize: TextUnit = 16.sp,
+        color: Color? = null,
+        type: String = "income") {
         Text(
-            text = t.amount.toIndianFormat(),
-            fontSize = 16.sp,
+            text = amount.toIndianFormat(),
+            fontSize = fontSize,
             fontWeight = FontWeight.Bold,
-            color = if (t.type.equals("expense", ignoreCase = true)) Color(0xFF9B2600)
+            color = color
+                ?: if (type.equals("expense", ignoreCase = true) || amount < 0) Color(0xFF9B2600)
                 else Color(0xFF02AF34),
             modifier = modifier
         )

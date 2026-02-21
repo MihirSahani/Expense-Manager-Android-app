@@ -21,17 +21,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.financemanager.database.entity.Category
 import com.example.financemanager.ui.composable.Screen
 import com.example.financemanager.ui.composable.category.parseColor
 import com.example.financemanager.ui.composable.utils.ListOfItems
 import com.example.financemanager.ui.composable.utils.MyText
+import com.example.financemanager.ui.composable.utils.MyText.toIndianFormat
 import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.AnalysisVM
 import com.example.financemanager.viewmodel.CategoryAnalysisVM
 import com.example.financemanager.viewmodel.CategorySpending
 import java.util.Locale
+import kotlin.math.abs
 
 @Composable
 fun AnalysisScreen(navController: NavController, viewModel: AnalysisVM, categoryAnalysisVM: CategoryAnalysisVM) {
@@ -73,10 +76,7 @@ fun AnalysisScreenContent(
             val color = if (amountSaved >= 0) Color(0xFF02AF34) else Color(0xFF9B2600)
             
             MyText.Body(text = "Last Month", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            MyText.Header1(
-                String.format(Locale.getDefault(), "%s %.2f", label, kotlin.math.abs(amountSaved)),
-                color = color
-            )
+            MyText.Header1("${label}: ${abs(amountSaved).toIndianFormat()}", color = color)
         }
 
 
@@ -148,12 +148,7 @@ fun CategoryAnalysisItem(spending: CategorySpending, onCategoryClick: (Int?) -> 
                     )
                     if (spending.budget != null) {
                         MyText.Subtitle(
-                            text = "Budget: ${
-                                String.format(
-                                    Locale.getDefault(), "%.2f",
-                                    spending.budget
-                                )
-                            }"
+                            text = "Budget: ${spending.budget.toIndianFormat()}"
                         )
                     }
                 }

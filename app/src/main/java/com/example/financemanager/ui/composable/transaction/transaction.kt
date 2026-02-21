@@ -101,7 +101,6 @@ fun TransactionHistoryContent(
             modifier = Modifier.padding(16.dp)
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
@@ -165,7 +164,7 @@ fun TransactionItem(transaction: Transaction, category: Category?, onClick: () -
         }
         
         Column(horizontalAlignment = Alignment.End) {
-            MyText.TransactionAmount(transaction)
+            MyText.TransactionAmount(transaction.amount, type = transaction.type)
             MyText.Body(timeFormat.format(transaction.transactionDate))
         }
     }

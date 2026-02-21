@@ -22,6 +22,7 @@ fun <K, V> ListOfItems(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(bottom = 80.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items.forEach { (header, subItems) ->
@@ -70,7 +71,8 @@ private fun <T> ListOfItemsBase(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surface)
+            .background(MaterialTheme.colorScheme.surface),
+        contentPadding = PaddingValues(bottom = 80.dp)
     ) {
         itemsIndexed(items) { idx, item ->
             if (idx != 0) {

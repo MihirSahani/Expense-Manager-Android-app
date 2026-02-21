@@ -89,7 +89,7 @@ fun NetWorthCard(netWorth: Double) {
             modifier = Modifier.padding(24.dp)
         ) {
             MyText.Header1("Net Worth")
-            MyText.ScreenTitle("₹ " + String.format(Locale.getDefault(), "%.2f", netWorth))
+            MyText.TransactionAmount(netWorth, fontSize = 24.sp, type = "income", color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
@@ -108,14 +108,7 @@ fun AccountItem(account: Account, onClick: () -> Unit) {
             MyText.Body(account.type)
 
         }
-        Text(
-            text = "₹ " + String.format(
-                Locale.getDefault(), "%.2f", account.currentBalance
-            ),
-            fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.bodyLarge,
-            color = if (account.currentBalance >= 0) Color.Unspecified else Color.Red
-        )
+        MyText.TransactionAmount(account.currentBalance)
     }
 }
 

@@ -283,7 +283,7 @@ fun DetailItem(label: String, value: String) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        MyText.Body(label)
+        MyText.Body(label, modifier = Modifier.padding(end=8.dp))
         MyText.Header1(value)
     }
 }
