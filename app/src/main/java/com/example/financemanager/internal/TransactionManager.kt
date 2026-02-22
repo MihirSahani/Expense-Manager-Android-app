@@ -18,6 +18,10 @@ class TransactionManager(val transactionDao: TransactionDao) {
         return transactionDao.getAllFlow()
     }
 
+    suspend fun getTransaction(id: Int): Transaction? {
+        return transactionDao.get(id)
+    }
+
     @androidx.room.Transaction
     suspend fun addTransaction(transaction: Transaction, accountManager: AccountManager) {
         coroutineScope {

@@ -3,12 +3,11 @@ package com.example.financemanager.ui.composable.setting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Money
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
@@ -41,6 +40,9 @@ fun SettingsScreen(navController: NavController, viewModel: SettingsVM) {
         onUpdateUserDetailsClick = { navController.navigate(Screen.UpdateUserDetails.route) },
         onBudgetTimeframeChange = { isChecked ->
             viewModel.updateBudgetTimeframe(if (isChecked) 1L else 0L)
+        },
+        onSendTestNotificationClick = {
+            viewModel.sendTestNotification()
         }
     )
 }
@@ -50,7 +52,8 @@ fun SettingsScreenContent(
     budgetTimeframe: Long,
     salaryCreditTime: Long?,
     onUpdateUserDetailsClick: () -> Unit,
-    onBudgetTimeframeChange: (Boolean) -> Unit
+    onBudgetTimeframeChange: (Boolean) -> Unit,
+    onSendTestNotificationClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -119,6 +122,14 @@ fun SettingsScreenContent(
                     MyText.Date(salaryCreditTime)
                 }
             }
+            
+            HorizontalDivider(thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
+            
+            SettingsItem(
+                title = "Test Notification", 
+                icon = Icons.Default.Notifications, 
+                onClick = onSendTestNotificationClick
+            )
 
         }
     }
@@ -164,7 +175,8 @@ fun SettingsScreenPreview() {
             budgetTimeframe = 1L,
             salaryCreditTime = 0L,
             onUpdateUserDetailsClick = {},
-            onBudgetTimeframeChange = {}
+            onBudgetTimeframeChange = {},
+            onSendTestNotificationClick = {}
         )
     }
 }

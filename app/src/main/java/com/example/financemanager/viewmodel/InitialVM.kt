@@ -5,14 +5,18 @@ import android.content.Context
 import android.content.pm.PackageManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.financemanager.database.entity.Transaction
 import com.example.financemanager.database.entity.User
 import com.example.financemanager.internal.BudgetTimeframe
 import com.example.financemanager.internal.ExpenseManagementInternal
 import com.example.financemanager.internal.Keys
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -32,6 +36,15 @@ class InitialVM(private val em: ExpenseManagementInternal): ViewModel() {
 
     val userName: StateFlow<String> = _user.map { it?.firstName ?: "Guest" }
         .stateIn(viewModelScope, SharingStarted.Eagerly, "Guest")
+
+   private val _navigateToEditTransaction = MutableSharedFlow<Transaction>(replay = 1)
+    val navigateToEditTransaction = _navigateToEditTransaction.asSharedFlow()
+
+    fun triggerNavigateToEditTransaction(transaction: Transaction) {
+        viewModelScope.launch {
+            _navigateToEditTransaction.emit(transaction)
+        }
+    }
 
     fun initialize() {
         viewModelScope.launch {

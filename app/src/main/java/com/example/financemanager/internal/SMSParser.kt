@@ -2,14 +2,12 @@ package com.example.financemanager.internal
 
 import android.content.Context
 import androidx.core.net.toUri
+import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.Transaction
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -64,7 +62,7 @@ class SMSParser {
         context: Context, transactionManager: TransactionManager,
         payeeCategoryMapperManager: PayeeCategoryMapperManager,
         accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager,
-        lastProcessedTimestamp: Long = 0L
+        categoryManager: CategoryManager, lastProcessedTimestamp: Long = 0L
     ): Long {
         var latestTimestamp = lastProcessedTimestamp
         
@@ -82,7 +80,7 @@ class SMSParser {
                 val addressIndex = it.getColumnIndexOrThrow("address")
                 val dateIndex = it.getColumnIndexOrThrow("date")
 
-                val tasks = mutableListOf<Deferred<Unit>>()
+                val tasks = mutableListOf<Deferred<Pair<Transaction, Category?>?>>()
 
                 while (it.moveToNext()) {
                     val body = it.getString(bodyIndex)
@@ -95,7 +93,7 @@ class SMSParser {
 
                     tasks.add(async {
                         parseSingleMessage(body, sender, smsDateLong, transactionManager,
-                            payeeCategoryMapperManager, accountIdMapperManager, accountManager)
+                            payeeCategoryMapperManager, accountIdMapperManager, accountManager, categoryManager)
                     })
                 }
                 tasks.awaitAll()
@@ -108,231 +106,247 @@ class SMSParser {
         body: String, sender: String, smsDateLong: Long,
         transactionManager: TransactionManager,
         payeeCategoryMapperManager: PayeeCategoryMapperManager,
-        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager
-    ) {
-        if (hdfcSenderRegex.matches(sender)) {
+        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager,
+        categoryManager: CategoryManager
+    ): Pair<Transaction, Category?>? {
+        return if (hdfcSenderRegex.matches(sender)) {
             coroutineScope {
-                val waitGroup = mutableListOf<Job>()
-                waitGroup.add(launch{
+                val d1 = async {
                     processUpiMessage(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
-                        accountIdMapperManager, accountManager)
-                })
-                waitGroup.add(launch {
+                        accountIdMapperManager, accountManager, categoryManager)
+                }
+                val d2 = async {
                     processSalaryMessage(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
-                        accountIdMapperManager, accountManager)
-                })
-                waitGroup.add(launch{
+                        accountIdMapperManager, accountManager, categoryManager)
+                }
+                val d3 = async {
                     processHdfcCreditMessage(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
-                        accountIdMapperManager, accountManager)
-                })
-                waitGroup.joinAll()
+                        accountIdMapperManager, accountManager, categoryManager)
+                }
+                awaitAll(d1, d2, d3).firstOrNull { it != null }
             }
         } else if (amexSenderRegex.matches(sender)) {
             processAmexDebitMessage(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
-                accountIdMapperManager, accountManager)
+                accountIdMapperManager, accountManager, categoryManager)
         } else if (bobSenderRegex.matches(sender) || sbiSenderRegex.matches(sender)) {
             coroutineScope {
-                val waitGroup = mutableListOf<Job>()
-
-                waitGroup.add(launch {
-                    processSbiUpiMessage(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
-                        accountIdMapperManager, accountManager)
-                })
-                waitGroup.add(launch {
-                    processSbiCreditMessage(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
-                        accountIdMapperManager, accountManager)
-                })
-                waitGroup.add(launch {
-                    processBobCredit1Message(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
-                        accountIdMapperManager, accountManager)
-                })
-                waitGroup.add(launch {
-                    processBobDebit1Message(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
-                        accountIdMapperManager, accountManager)
-                })
-                waitGroup.add(launch {
-                    processBobCredit2Message(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
-                        accountIdMapperManager, accountManager)
-                })
-                waitGroup.add(launch {
-                    processBobDebit2Message(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
-                        accountIdMapperManager, accountManager)
-                })
-                waitGroup.joinAll()
+                val tasks = listOf(
+                    async {
+                        processSbiUpiMessage(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
+                            accountIdMapperManager, accountManager, categoryManager)
+                    },
+                    async {
+                        processSbiCreditMessage(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
+                            accountIdMapperManager, accountManager, categoryManager)
+                    },
+                    async {
+                        processBobCredit1Message(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
+                            accountIdMapperManager, accountManager, categoryManager)
+                    },
+                    async {
+                        processBobDebit1Message(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
+                            accountIdMapperManager, accountManager, categoryManager)
+                    },
+                    async {
+                        processBobCredit2Message(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
+                            accountIdMapperManager, accountManager, categoryManager)
+                    },
+                    async {
+                        processBobDebit2Message(body, smsDateLong, transactionManager, payeeCategoryMapperManager,
+                            accountIdMapperManager, accountManager, categoryManager)
+                    }
+                )
+                tasks.awaitAll().firstOrNull { it != null }
             }
+        } else {
+            null
         }
     }
 
     private suspend fun processUpiMessage(
         body: String, smsDateLong: Long, transactionManager: TransactionManager,
         payeeCategoryMapperManager: PayeeCategoryMapperManager,
-        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager
-    ) {
+        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager,
+        categoryManager: CategoryManager
+    ): Pair<Transaction, Category?>? {
         val matchResult = hdfcDebitRegex.find(body)
-        if (matchResult != null) {
+        return if (matchResult != null) {
             val (amountStr, accountNo, payee, _) = matchResult.destructured
             createTransaction(amountStr, accountNo, payee, "Expense", body, smsDateLong,
                 transactionManager, payeeCategoryMapperManager, accountIdMapperManager,
-                accountManager)
-        }
+                accountManager, categoryManager)
+        } else null
     }
 
     private suspend fun processSalaryMessage(
         body: String, smsDateLong: Long, transactionManager: TransactionManager,
         payeeCategoryMapperManager: PayeeCategoryMapperManager,
         accountIdMapperManager: AccountIdMapperManager,
-        accountManager: AccountManager
-    ) {
+        accountManager: AccountManager,
+        categoryManager: CategoryManager
+    ): Pair<Transaction, Category?>? {
         val matchResult = hdfcSalaryRegex.find(body)
-        if (matchResult != null) {
+        return if (matchResult != null) {
             val (amountStr, accountNo, companyName) = matchResult.destructured
             createTransaction(amountStr, accountNo, companyName.trim(), "Income",
                 body, smsDateLong, transactionManager, payeeCategoryMapperManager,
-                accountIdMapperManager, accountManager)
-        }
+                accountIdMapperManager, accountManager, categoryManager)
+        } else null
     }
 
     private suspend fun processHdfcCreditMessage(
         body: String, smsDateLong: Long, transactionManager: TransactionManager,
         payeeCategoryMapperManager: PayeeCategoryMapperManager,
         accountIdMapperManager: AccountIdMapperManager,
-        accountManager: AccountManager
-    ) {
+        accountManager: AccountManager,
+        categoryManager: CategoryManager
+    ): Pair<Transaction, Category?>? {
         val matchResult = hdfcCreditRegex.find(body)
-        if (matchResult != null) {
+        return if (matchResult != null) {
             val (amountStr, accountNo, payee) = matchResult.destructured
             createTransaction(amountStr, accountNo, payee.trim(), "Income", body, smsDateLong,
                 transactionManager, payeeCategoryMapperManager, accountIdMapperManager,
-                accountManager)
-        }
+                accountManager, categoryManager)
+        } else null
     }
 
     private suspend fun processSbiUpiMessage(
         body: String, smsDateLong: Long, transactionManager: TransactionManager,
         payeeCategoryMapperManager: PayeeCategoryMapperManager,
-        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager
-    ) {
+        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager,
+        categoryManager: CategoryManager
+    ): Pair<Transaction, Category?>? {
         val matchResult = sbiDebitRegex.find(body)
-        if (matchResult != null) {
+        return if (matchResult != null) {
             val (accountNo, amountStr, payee) = matchResult.destructured
             createTransaction(amountStr, accountNo, payee.trim(), "Expense", body, smsDateLong,
                 transactionManager, payeeCategoryMapperManager, accountIdMapperManager,
-                accountManager)
-        }
+                accountManager, categoryManager)
+        } else null
     }
 
     private suspend fun processSbiCreditMessage(
         body: String, smsDateLong: Long, transactionManager: TransactionManager,
         payeeCategoryMapperManager: PayeeCategoryMapperManager,
-        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager
-    ) {
+        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager,
+        categoryManager: CategoryManager
+    ): Pair<Transaction, Category?>? {
         val matchResult = sbiCreditRegex.find(body)
-        if (matchResult != null) {
+        return if (matchResult != null) {
             val (accountNo, amountStr, payee) = matchResult.destructured
             createTransaction(amountStr, accountNo, payee.trim(), "Income", body, smsDateLong,
                 transactionManager, payeeCategoryMapperManager, accountIdMapperManager,
-                accountManager)
-        }
+                accountManager, categoryManager)
+        } else null
     }
 
     private suspend fun processAmexDebitMessage(
         body: String, smsDateLong: Long, transactionManager: TransactionManager,
         payeeCategoryMapperManager: PayeeCategoryMapperManager,
-        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager
-    ) {
+        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager,
+        categoryManager: CategoryManager
+    ): Pair<Transaction, Category?>? {
         val matchResult = amexDebitRegex.find(body)
-        if (matchResult != null) {
+        return if (matchResult != null) {
             val (amountStr, accountNo, payee) = matchResult.destructured
             createTransaction(amountStr, accountNo, payee.trim(), "Expense", body, smsDateLong,
                 transactionManager, payeeCategoryMapperManager, accountIdMapperManager,
-                accountManager)
-        }
+                accountManager, categoryManager)
+        } else null
     }
 
     private suspend fun processBobCredit1Message(
         body: String, smsDateLong: Long, transactionManager: TransactionManager,
         payeeCategoryMapperManager: PayeeCategoryMapperManager,
-        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager
-    ) {
+        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager,
+        categoryManager: CategoryManager
+    ): Pair<Transaction, Category?>? {
         val matchResult = bobCredit1Regex.find(body)
-        if (matchResult != null) {
+        return if (matchResult != null) {
             val (amountStr, accountNo, payee) = matchResult.destructured
             createTransaction(amountStr, accountNo, payee.trim(), "Income", body, smsDateLong,
                 transactionManager, payeeCategoryMapperManager, accountIdMapperManager,
-                accountManager)
-        }
+                accountManager, categoryManager)
+        } else null
     }
 
     private suspend fun processBobDebit1Message(
         body: String, smsDateLong: Long, transactionManager: TransactionManager,
         payeeCategoryMapperManager: PayeeCategoryMapperManager,
-        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager
-    ) {
+        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager,
+        categoryManager: CategoryManager
+    ): Pair<Transaction, Category?>? {
         val matchResult = bobDebit1Regex.find(body)
-        if (matchResult != null) {
+        return if (matchResult != null) {
             val (amountStr, accountNo, payee) = matchResult.destructured
             createTransaction(amountStr, accountNo, payee.trim(), "Expense", body, smsDateLong,
                 transactionManager, payeeCategoryMapperManager, accountIdMapperManager,
-                accountManager)
-        }
+                accountManager, categoryManager)
+        } else null
     }
 
     private suspend fun processBobCredit2Message(
         body: String, smsDateLong: Long, transactionManager: TransactionManager,
         payeeCategoryMapperManager: PayeeCategoryMapperManager,
-        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager
-    ) {
+        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager,
+        categoryManager: CategoryManager
+    ): Pair<Transaction, Category?>? {
         val matchResult = bobCredit2Regex.find(body)
-        if (matchResult != null) {
+        return if (matchResult != null) {
             val (amountStr, payee) = matchResult.destructured
             // Account number is not in this format, using a placeholder or common identifier if possible
             createTransaction(amountStr, "BOB-UPI", payee.trim(), "Income", body, smsDateLong,
                 transactionManager, payeeCategoryMapperManager, accountIdMapperManager,
-                accountManager)
-        }
+                accountManager, categoryManager)
+        } else null
     }
 
     private suspend fun processBobDebit2Message(
         body: String, smsDateLong: Long, transactionManager: TransactionManager,
         payeeCategoryMapperManager: PayeeCategoryMapperManager,
-        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager
-    ) {
+        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager,
+        categoryManager: CategoryManager
+    ): Pair<Transaction, Category?>? {
         val matchResult = bobDebit2Regex.find(body)
-        if (matchResult != null) {
+        return if (matchResult != null) {
             val (amountStr, accountNo, payee) = matchResult.destructured
             createTransaction(amountStr, accountNo, payee.trim(), "Expense", body, smsDateLong,
                 transactionManager, payeeCategoryMapperManager, accountIdMapperManager,
-                accountManager)
-        }
+                accountManager, categoryManager)
+        } else null
     }
 
     private suspend fun createTransaction(
         amountStr: String, accountNo: String, payee: String, type: String,
         body: String, smsDateLong: Long, transactionManager: TransactionManager,
         payeeCategoryMapperManager: PayeeCategoryMapperManager,
-        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager
-    ) {
+        accountIdMapperManager: AccountIdMapperManager, accountManager: AccountManager, 
+        categoryManager: CategoryManager
+    ): Pair<Transaction, Category?> {
         val amount = amountStr.replace(",", "").toDoubleOrNull() ?: 0.0
         val timestamp = System.currentTimeMillis()
+        val categoryId = payeeCategoryMapperManager.getMapping(payee)
+        val transaction = Transaction(
+            accountId = accountIdMapperManager.getAccountId(accountNo),
+            type = type,
+            amount = amount,
+            categoryId = categoryId,
+            payee = payee,
+            currency = "INR",
+            transactionDate = smsDateLong,
+            description = body,
+            receiptURL = "",
+            location = "",
+            createdAt = timestamp,
+            updatedAt = timestamp,
+            rawAccountIdName = accountNo
+        )
 
         transactionManager.addTransaction(
-            Transaction(
-                accountId = accountIdMapperManager.getAccountId(accountNo),
-                type = type,
-                amount = amount,
-                categoryId = payeeCategoryMapperManager.getMapping(payee),
-                payee = payee,
-                currency = "INR",
-                transactionDate = smsDateLong,
-                description = body,
-                receiptURL = "",
-                location = "",
-                createdAt = timestamp,
-                updatedAt = timestamp,
-                rawAccountIdName = accountNo
-            ),
+            transaction,
             accountManager
         )
+        return Pair(transaction, if (categoryId != null) categoryManager.getCategory(categoryId) else null)
     }
 
     private fun getFormattedTimestamp(timeMillis: Long): String {

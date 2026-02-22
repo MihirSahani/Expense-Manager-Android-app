@@ -1,9 +1,11 @@
 package com.example.financemanager.ui.composable.initial
 
 import android.Manifest
+import android.os.Build
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,6 +19,7 @@ import androidx.navigation.NavController
 import com.example.financemanager.ui.composable.Screen
 import com.example.financemanager.viewmodel.InitialVM
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun Permission(navController: NavController, viewModel: InitialVM) {
     val context = LocalContext.current
@@ -25,6 +28,7 @@ fun Permission(navController: NavController, viewModel: InitialVM) {
     val permissionsToRequest = arrayOf(
         Manifest.permission.READ_SMS,
         Manifest.permission.RECEIVE_SMS,
+        Manifest.permission.POST_NOTIFICATIONS
     )
 
     val requestPermissionLauncher = rememberLauncherForActivityResult(

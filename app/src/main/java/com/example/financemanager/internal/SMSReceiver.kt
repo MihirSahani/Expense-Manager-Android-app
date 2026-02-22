@@ -22,7 +22,10 @@ class SMSReceiver : BroadcastReceiver() {
                 val timestamp = message.timestampMillis
 
                 scope.launch {
-                    Graph.expenseManagementInternal.parseSingleMessage(body, sender, timestamp)
+                    val result = Graph.expenseManagementInternal.parseSingleMessage(body, sender, timestamp)
+                    if (result != null) {
+                        Graph.notificationManager.showTransactionNotification(result.first, result.second)
+                    }
                 }
             }
         }

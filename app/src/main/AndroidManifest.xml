@@ -6,11 +6,10 @@
         android:name="android.hardware.telephony"
         android:required="true"
         tools:ignore="UnnecessaryRequiredFeature" />
-    <uses-permission android:name="android.permission.READ_SMS"
-        tools:ignore="SmsAndCallLogPolicy" />
-    <uses-permission android:name="android.permission.RECEIVE_SMS"
-        tools:ignore="SmsAndCallLogPolicy" />
 
+    <uses-permission android:name="android.permission.READ_SMS" tools:ignore="SmsAndCallLogPolicy" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" tools:ignore="SmsAndCallLogPolicy" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
         android:allowBackup="true"

@@ -7,6 +7,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavType
@@ -33,10 +34,16 @@ import com.example.financemanager.ui.composable.transaction.ViewTransactionScree
 import com.example.financemanager.viewmodel.*
 
 @Composable
-fun Navigate() {
+fun Navigate(viewModel: InitialVM) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    LaunchedEffect(Unit) {
+        viewModel.navigateToEditTransaction.collect {
+            navController.navigate(Screen.ViewTransaction.route)
+        }
+    }
 
     Scaffold(
         bottomBar = {

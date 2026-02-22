@@ -7,9 +7,11 @@ import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.Transaction
 import com.example.financemanager.internal.ExpenseManagementInternal
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -41,6 +43,7 @@ class TransactionVM(private val expenseManagementInternal: ExpenseManagementInte
 
     private val _selectedTransaction = MutableStateFlow<Transaction?>(null)
     val selectedTransaction: StateFlow<Transaction?> = _selectedTransaction
+
 
     fun selectTransaction(transaction: Transaction?) {
         _selectedTransaction.value = transaction

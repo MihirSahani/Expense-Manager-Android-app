@@ -49,6 +49,10 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
         return transactionManager.getAllTransactionsFlow()
     }
 
+    suspend fun getTransaction(id: Int): Transaction? {
+        return transactionManager.getTransaction(id)
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getTransactionCurrentCycle(): Flow<List<Transaction>> {
         return appSettingManager.getAppSettingFlow(Keys.BUDGET_TIMEFRAME)
@@ -203,29 +207,40 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
         val lastTimestamp = appSettingManager.getAppSetting(Keys.LAST_SMS_TIMESTAMP) ?: 0L
         val timestamp = smsParser.parseMessages(
             context, transactionManager, payeeCategoryMapperManager, accountIdMapperManager,
-            accountManager, lastTimestamp)
-        appSettingManager.updateAppSetting(Keys.LAST_SMS_TIMESTAMP, timestamp)
+            accountManager, categoryManager, lastTimestamp)
+        updateSMSParseTime(timestamp)
         updateSalaryCreditTime()
     }
 
-    suspend fun parseSingleMessage(body: String, sender: String, smsDateLong: Long) {
-        smsParser.parseSingleMessage(body, sender, smsDateLong, transactionManager,
-            payeeCategoryMapperManager, accountIdMapperManager, accountManager)
+    suspend fun updateSMSParseTime(timestamp: Long) {
+        appSettingManager.updateAppSetting(Keys.LAST_SMS_TIMESTAMP, timestamp)
+    }
+
+    suspend fun parseSingleMessage(body: String, sender: String, smsDateLong: Long): Pair<Transaction, Category?>? {
+        val result = smsParser.parseSingleMessage(body, sender, smsDateLong, transactionManager,
+            payeeCategoryMapperManager, accountIdMapperManager, accountManager, categoryManager)
+
+        updateSMSParseTime(System.currentTimeMillis())
         updateSalaryCreditTime()
+        return result
     }
 
     suspend fun addAccount(account: Account) {
         accountManager.addAccount(account)
+        accountIdMapperManager.insert(AccountIdMapper(account.accountNumber, account.id))
+        transactionManager.updateAccountForTransactionsWithRawAccount(account.accountNumber, account.id)
     }
     suspend fun updateAccount(account: Account) {
         accountManager.updateAccount(account)
+        accountIdMapperManager.insert(AccountIdMapper(account.accountNumber, account.id))
+        transactionManager.updateAccountForTransactionsWithRawAccount(account.accountNumber, account.id)
     }
 
     suspend fun getAccount(id: Int): Account? {
         return accountManager.getAccount(id)
     }
 
-    suspend fun getAccountFlow(id: Int): Flow<Account?> {
+    fun getAccountFlow(id: Int): Flow<Account?> {
         return accountManager.getAccountFlow(id)
     }
     suspend fun createUser(firstName: String, lastName: String) {
