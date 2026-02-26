@@ -12,7 +12,6 @@ import com.example.financemanager.R
 import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.Transaction
 import com.example.financemanager.ui.composable.utils.MyText.toIndianFormat
-import java.util.Locale
 
 class NotificationManager(
     private val context: Context

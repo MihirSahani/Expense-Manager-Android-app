@@ -3,10 +3,12 @@ package com.example.financemanager
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -51,11 +53,15 @@ object Graph {
     }
 }
 class MainActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         Graph.provide(this)
-        handleIntents(intent)
+        
+        val initialVM = Graph.viewModelFactory.getViewModel(ViewModelName.LOGIN) as InitialVM
+        handleIntents(intent, initialVM)
+        
         setContent {
             FinanceManagerTheme {
                 Surface(
@@ -63,7 +69,7 @@ class MainActivity : ComponentActivity() {
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.background)
                 ) {
-                    Navigate(Graph.viewModelFactory.getViewModel(ViewModelName.LOGIN) as InitialVM)
+                    Navigate(initialVM)
                 }
             }
         }
@@ -71,10 +77,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        handleIntents(intent)
+        val initialVM = Graph.viewModelFactory.getViewModel(ViewModelName.LOGIN) as InitialVM
+        handleIntents(intent, initialVM)
     }
 
-    private fun handleIntents(intent: Intent) {
+    private fun handleIntents(intent: Intent, initialVM: InitialVM) {
         lifecycleScope.launch {
             when(intent.action) {
                 Intent.ACTION_EDIT -> {
@@ -83,7 +90,6 @@ class MainActivity : ComponentActivity() {
                         val transaction = Graph.expenseManagementInternal.getTransaction(transactionId)
                         val transactionVM = Graph.viewModelFactory.getViewModel(ViewModelName.TRANSACTION) as TransactionVM
                         transactionVM.selectTransaction(transaction)
-                        val initialVM = Graph.viewModelFactory.getViewModel(ViewModelName.LOGIN) as InitialVM
                         if (transaction != null) {
                             initialVM.triggerNavigateToEditTransaction(transaction)
                         }

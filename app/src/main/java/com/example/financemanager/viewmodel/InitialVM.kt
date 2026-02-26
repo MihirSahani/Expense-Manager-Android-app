@@ -46,6 +46,15 @@ class InitialVM(private val em: ExpenseManagementInternal): ViewModel() {
         }
     }
 
+    private val _modalEditTransaction = MutableSharedFlow<Transaction>(replay = 1)
+    val modalEditTransaction = _modalEditTransaction.asSharedFlow()
+
+    fun triggerModalEditTransaction(transaction: Transaction) {
+        viewModelScope.launch {
+            _modalEditTransaction.emit(transaction)
+        }
+    }
+
     fun initialize() {
         viewModelScope.launch {
             if (em.appSettingManager.getAppSetting(Keys.IS_INITIALIZATION_DONE) == null) {

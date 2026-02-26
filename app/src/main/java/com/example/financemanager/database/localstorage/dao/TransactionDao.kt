@@ -18,12 +18,6 @@ abstract class TransactionDao {
     @Query("SELECT * FROM `transactions` WHERE id = :id")
     abstract suspend fun get(id: Int): Transaction?
 
-    @Query("SELECT * FROM `transactions`")
-    abstract fun getAllFlow(): Flow<List<Transaction>>
-
-    @Query("SELECT * FROM `transactions`")
-    abstract suspend fun getAll(): List<Transaction>
-
     @Update
     abstract suspend fun update(transaction: Transaction)
 
@@ -45,27 +39,7 @@ abstract class TransactionDao {
     )
 
     @Query("SELECT * FROM `transactions` WHERE `raw_account_id_name` = :accountName")
-    abstract suspend fun getByRawAccountName(accountName: String): List<Transaction>
-
-    @Query(
-        "SELECT SUM(CASE WHEN type = 'Expense' THEN -ABS(`amount`) ELSE ABS(`amount`) END) " +
-                "AS `totalAmount`, `category_id` AS `categoryId` FROM `transactions` " +
-                "WHERE transaction_date >= :startTime AND transaction_date <= :endTime " +
-                "GROUP BY `category_id`"
-    )
-    abstract fun getSumOfTransactionsByCategoryBetweenFlow(
-        startTime: Long,
-        endTime: Long
-    ): Flow<List<TransactionSummary>>
-
-    @Query(
-        "SELECT SUM(CASE WHEN type = 'Expense' THEN -ABS(`amount`) ELSE ABS(`amount`) END)" +
-                " AS `totalAmount`, `category_id` AS `categoryId` FROM `transactions` " +
-                "WHERE transaction_date >= :timeMills GROUP BY `category_id`"
-    )
-    abstract fun getSumOfTransactionsByCategoryAfterFlow(
-        timeMills: Long?
-    ): Flow<List<TransactionSummary>>
+    abstract suspend fun getTransactionsByRawAccountName(accountName: String): List<Transaction>
 
     @Query(
         "SELECT * FROM `transactions` " +
@@ -75,24 +49,26 @@ abstract class TransactionDao {
     abstract suspend fun getTransactionWithIncomeCategory(): List<Transaction?>
 
     @Query(
-        "SELECT * FROM `transactions` WHERE " +
-                "((:categoryId IS NULL AND `category_id` IS NULL) OR (`category_id` = :categoryId)) AND " +
-                "transaction_date >= :timeMills"
+        "SELECT SUM(CASE WHEN type = 'Expense' THEN -ABS(`amount`) ELSE ABS(`amount`) END) " +
+                "AS `totalAmount`, `category_id` AS `categoryId` FROM `transactions` " +
+                "WHERE transaction_date >= :from AND transaction_date <= :to " +
+                "GROUP BY `category_id`"
     )
-    abstract fun getTransactionsByCategoryAfterFlow(
-        categoryId: Int?,
-        timeMills: Long?
-    ): Flow<List<Transaction>>
+    abstract fun getSumOfTransactionsByCategoryFlow(
+        from: Long = 0L,
+        to: Long = Long.MAX_VALUE
+    ): Flow<List<TransactionSummary>>
+
 
     @Query(
         "SELECT * FROM `transactions` WHERE " +
                 "((:categoryId IS NULL AND `category_id` IS NULL) OR (`category_id` = :categoryId)) AND " +
                 "transaction_date >= :startTime AND transaction_date <= :endTime"
     )
-    abstract fun getTransactionsByCategoryBetweenFlow(
+    abstract fun getTransactionsByCategoryFlow(
         categoryId: Int?,
-        startTime: Long,
-        endTime: Long
+        startTime: Long = 0L,
+        endTime: Long = Long.MAX_VALUE
     ): Flow<List<Transaction>>
 
 
@@ -101,17 +77,17 @@ abstract class TransactionDao {
                 "AS `totalAmount` FROM `transactions` " +
                 "WHERE transaction_date >= :from AND transaction_date < :to"
     )
-    abstract fun getSumOfTransactionsBetween(from: Long, to: Long): Flow<Double>
+    abstract fun getSumOfTransactionsFlow(
+        from: Long = 0,
+        to: Long = Long.MAX_VALUE
+    ): Flow<Double>
 
     @Query(
         "SELECT * FROM `transactions` " +
-                "WHERE transaction_date >= :startTime AND transaction_date <= :endTime"
+                "WHERE transaction_date >= :from AND transaction_date <= :to"
     )
-    abstract fun getTransactionsBetween(startTime: Long, endTime: Long): Flow<List<Transaction>>
-
-    @Query("SELECT * FROM `transactions` WHERE transaction_date >= :salaryDate")
-    abstract fun getTransactionsAfter(salaryDate: Long): Flow<List<Transaction>>
-
-    @Query("SELECT * FROM `transactions` WHERE transaction_date <= :salaryDate")
-    abstract fun getTransactionsBefore(salaryDate: Long): Flow<List<Transaction>>
+    abstract fun getTransactionsFlow(
+        from: Long = 0,
+        to: Long = Long.MAX_VALUE
+    ): Flow<List<Transaction>>
 }

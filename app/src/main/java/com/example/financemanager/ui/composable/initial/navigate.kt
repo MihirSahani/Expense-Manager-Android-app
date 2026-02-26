@@ -1,5 +1,7 @@
 package com.example.financemanager.ui.composable.initial
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -10,12 +12,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.example.financemanager.Graph
 import com.example.financemanager.ui.composable.NavigationBar
 import com.example.financemanager.ui.composable.Screen
@@ -33,6 +33,7 @@ import com.example.financemanager.ui.composable.transaction.TransactionHistorySc
 import com.example.financemanager.ui.composable.transaction.ViewTransactionScreen
 import com.example.financemanager.viewmodel.*
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun Navigate(viewModel: InitialVM) {
     val navController = rememberNavController()

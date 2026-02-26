@@ -34,10 +34,4 @@ abstract class AccountDao {
 
     @Query("UPDATE `accounts` SET `balance` = `balance` + :diff WHERE id = :accountId")
     abstract suspend fun updateBalance(accountId: Int, diff: Double)
-
-    @Query("UPDATE `accounts` SET `balance` = `balance` + :diff WHERE id = :newAccountId")
-    abstract suspend fun addBalanceToNewAccount(newAccountId: Int?, diff: Double)
-
-    @Query("UPDATE `accounts` SET `balance` = `balance` - :diff WHERE id = :oldAccountId")
-    abstract suspend fun removeBalanceFromOldAccount(oldAccountId: Int?, diff: Double)
 }
