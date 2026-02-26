@@ -1,12 +1,8 @@
 package com.example.financemanager.internal
 
 import com.example.financemanager.database.entity.Account
-import com.example.financemanager.database.entity.Transaction
 import com.example.financemanager.database.localstorage.dao.AccountDao
 import kotlinx.coroutines.flow.Flow
-import java.time.Year
-import java.time.YearMonth
-import java.time.ZoneOffset
 
 class AccountManager(
     private val accountDao: AccountDao
@@ -25,7 +21,7 @@ class AccountManager(
     }
 
     fun getAllAccountsFlow(): Flow<List<Account>> {
-        return accountDao.getAllFlow()
+        return accountDao.getAccountsFlow()
     }
     suspend fun getAllAccounts(): List<Account> {
         return accountDao.getAll()

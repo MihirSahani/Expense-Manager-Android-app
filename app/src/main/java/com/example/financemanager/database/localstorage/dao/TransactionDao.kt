@@ -32,10 +32,10 @@ abstract class TransactionDao {
 
     @Query(
         "UPDATE `transactions` SET `account_id` = :accountId " +
-                "WHERE `raw_account_id_name` = :accountName"
+                "WHERE `raw_account_id_name` = :rawAccount"
     )
     abstract suspend fun updateAccountForTransactionsWithRawAccount(
-        accountName: String, accountId: Int
+        rawAccount: String, accountId: Int?
     )
 
     @Query("SELECT * FROM `transactions` WHERE `raw_account_id_name` = :accountName")
@@ -90,4 +90,13 @@ abstract class TransactionDao {
         from: Long = 0,
         to: Long = Long.MAX_VALUE
     ): Flow<List<Transaction>>
+
+    @Query(
+        """
+    SELECT SUM(CASE WHEN type = 'expense' THEN -amount ELSE amount END) 
+    FROM transactions 
+    WHERE `raw_account_id_name`= :rawAccountName
+"""
+    )
+    abstract suspend fun getTotalAmountForRawAccount(rawAccountName: String): Double?
 }

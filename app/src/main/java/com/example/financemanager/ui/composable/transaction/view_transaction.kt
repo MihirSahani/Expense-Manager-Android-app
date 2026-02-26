@@ -327,7 +327,7 @@ fun ViewTransactionPreview() {
         Category(id = 1, name = "Food", description = "Groceries", type = "Expense", color = "#FF5733", createdAt = "", updatedAt = "")
     )
     val sampleAccounts = listOf(
-        Account(id = 1, name = "Debit Card", type = "Bank", currency = "USD", currentBalance = 1000.0, bankName = "Chase", accountNumber = "1234", isIncludedInTotal = true, createdAt = "", updatedAt = "")
+        Account(id = 1, name = "Debit Card", type = "Bank", currency = "USD", currentBalance = 1000.0, bankName = "Chase", accountNo = "1234", isIncludedInTotal = true, createdAt = "", updatedAt = "")
     )
     FinanceManagerTheme {
         ViewTransactionContent(

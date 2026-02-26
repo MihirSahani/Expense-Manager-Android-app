@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 abstract class AccountDao {
     @Query("SELECT * FROM `accounts`")
-    abstract fun getAllFlow(): Flow<List<Account>>
+    abstract fun getAccountsFlow(): Flow<List<Account>>
 
     @Query("SELECT * FROM `accounts`")
     abstract suspend fun getAll(): List<Account>

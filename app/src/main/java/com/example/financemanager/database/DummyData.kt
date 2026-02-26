@@ -6,8 +6,8 @@ import com.example.financemanager.database.entity.Category
 
 object DummyData {
     val accounts = listOf(
-        Account(name = "Savings", type = "Bank", currency = "INR", currentBalance = 0.0, bankName = "HDFC", accountNumber = BuildConfig.ACCOUNT_NUMBER),
-        Account(name = "Credit Card", type = "Credit", currency = "INR", currentBalance = 0.0, bankName = "AMEX", accountNumber = BuildConfig.ACCOUNT_NUMBER),
+        Account(name = "Savings", type = "Bank", currency = "INR", currentBalance = 0.0, bankName = "HDFC", accountNo = BuildConfig.ACCOUNT_NUMBER),
+        Account(name = "Credit Card", type = "Credit", currency = "INR", currentBalance = 0.0, bankName = "AMEX", accountNo = BuildConfig.ACCOUNT_NUMBER),
         Account(name = "Cash", type = "Cash", currency = "INR", currentBalance = 0.0)
     )
 

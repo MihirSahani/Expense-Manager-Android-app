@@ -3,6 +3,7 @@ package com.example.financemanager.repository
 import android.icu.util.Calendar
 import androidx.room.withTransaction
 import com.example.financemanager.database.entity.AppSetting
+import com.example.financemanager.database.entity.PayeeCategoryMapper
 import com.example.financemanager.database.entity.Transaction
 import com.example.financemanager.database.entity.TransactionSummary
 import com.example.financemanager.database.localstorage.ExpenseManagementDatabase
@@ -10,8 +11,12 @@ import com.example.financemanager.internal.AppSettingManager
 import com.example.financemanager.internal.BudgetTimeframe
 import com.example.financemanager.internal.Keys
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
@@ -184,5 +189,59 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
                     else -> throw Exception("Invalid timeframe")
                 }
             }
+    }
+
+    suspend fun updateAccount(t: Transaction, newAccountId: Int) {
+        db.withTransaction {
+            val amount = db.transactionDao()
+                .getTotalAmountForRawAccount(t.rawAccountIdName)
+            coroutineScope {
+                if (amount != null) {
+                    val waitGroup = mutableListOf<Job>()
+                    waitGroup.add( launch {
+                        if (t.accountId != null) {
+                            db.accountDao().updateBalance(t.accountId!!, -amount)
+                        }
+                    })
+                    waitGroup.add( launch {
+                        db.accountDao().updateBalance(newAccountId, amount)
+                    })
+                    waitGroup.add( launch {
+                        db.transactionDao()
+                            .updateAccountForTransactionsWithRawAccount(t.rawAccountIdName, newAccountId)
+                    })
+                    waitGroup.joinAll()
+                }
+            }
+        }
+    }
+
+    suspend fun updateTransactionCategory(t: Transaction, forAll: Boolean) {
+        db.withTransaction {
+            coroutineScope {
+                val waitGroup = mutableListOf<Job>()
+                if(t.categoryId != null) {
+                    when (forAll) {
+                        true -> {
+                            waitGroup.add( launch {
+                                db.PayeeCategoryMapperDao()
+                                    .addMapping(PayeeCategoryMapper(categoryId = t.categoryId!!, payee = t.payee))
+                            })
+                            waitGroup.add( launch {
+                                db.transactionDao()
+                                    .updateCategoryForTransactionsWithPayee(t.payee, t.categoryId!!)
+                            })
+                        }
+                        false -> {
+                            waitGroup.add( launch {
+                                db.transactionDao()
+                                    .update(t)
+                            })
+                        }
+                    }
+                }
+                waitGroup.joinAll()
+            }
+        }
     }
 }

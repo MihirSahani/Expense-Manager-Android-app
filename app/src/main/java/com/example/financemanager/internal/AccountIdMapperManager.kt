@@ -7,7 +7,7 @@ class AccountIdMapperManager(
     private val accountIdMapperDao: AccountIdMapperDao
 ) {
     suspend fun getAccountId(accountName: String): Int? {
-        return accountIdMapperDao.getAccountId(accountName)
+        return accountIdMapperDao.get(accountName)
     }
 
     suspend fun insert(accountIdMapper: AccountIdMapper) {
