@@ -30,7 +30,7 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     val accountIdMapperManager: AccountIdMapperManager = AccountIdMapperManager(
         database.accountIdMapperDao()
     )
-    val smsParser: SMSParser = SMSParser()
+    // val smsParser: SMSParser = SMSParser()
 
     fun getUser(): Flow<User?> {
         return userManager.getUser()
@@ -194,27 +194,27 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
         }
     }
 
-    suspend fun parseMessagesToTransactions(context: Context) {
-        val lastTimestamp = appSettingManager.getAppSetting(Keys.LAST_SMS_TIMESTAMP) ?: 0L
-        val timestamp = smsParser.parseMessages(
-            context, transactionManager, payeeCategoryMapperManager, accountIdMapperManager,
-            accountManager, categoryManager, lastTimestamp)
-        updateSMSParseTime(timestamp)
-        updateSalaryCreditTime()
-    }
+    // suspend fun parseMessagesToTransactions(context: Context) {
+    //     val lastTimestamp = appSettingManager.getAppSetting(Keys.LAST_SMS_TIMESTAMP) ?: 0L
+    //     val timestamp = smsParser.parseMessages(
+    //         context, transactionManager, payeeCategoryMapperManager, accountIdMapperManager,
+    //         accountManager, categoryManager, lastTimestamp)
+    //     updateSMSParseTime(timestamp)
+    //     updateSalaryCreditTime()
+    // }
 
-    suspend fun updateSMSParseTime(timestamp: Long) {
-        appSettingManager.updateAppSetting(Keys.LAST_SMS_TIMESTAMP, timestamp)
-    }
+    // suspend fun updateSMSParseTime(timestamp: Long) {
+    //     appSettingManager.updateAppSetting(Keys.LAST_SMS_TIMESTAMP, timestamp)
+    // }
 
-    suspend fun parseSingleMessage(body: String, sender: String, smsDateLong: Long): Pair<Transaction, Category?>? {
-        val result = smsParser.parseSingleMessage(body, sender, smsDateLong, transactionManager,
-            payeeCategoryMapperManager, accountIdMapperManager, accountManager, categoryManager)
+    // suspend fun parseSingleMessage(body: String, sender: String, smsDateLong: Long): Pair<Transaction, Category?>? {
+    //     val result = smsParser.parseSingleMessage(body, sender, smsDateLong, transactionManager,
+    //         payeeCategoryMapperManager, accountIdMapperManager, accountManager, categoryManager)
 
-        updateSMSParseTime(System.currentTimeMillis())
-        updateSalaryCreditTime()
-        return result
-    }
+    //     updateSMSParseTime(System.currentTimeMillis())
+    //     updateSalaryCreditTime()
+    //     return result
+    // }
 
     // suspend fun addAccount(account: Account) {
     //     accountManager.addAccount(account)
@@ -242,13 +242,13 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
         userManager.updateUser(user)
     }
 
-    fun getAccountsFlow(): Flow<List<Account>> {
-        return accountManager.getAllAccountsFlow()
-    }
+    // fun getAccountsFlow(): Flow<List<Account>> {
+    //     return accountManager.getAllAccountsFlow()
+    // }
 
-    suspend fun getAccounts(): List<Account> {
-        return accountManager.getAllAccounts()
-    }
+    // suspend fun getAccounts(): List<Account> {
+    //     return accountManager.getAllAccounts()
+    // }
 
     fun getCategoriesFlow(): Flow<List<Category>> {
         return categoryManager.getCategoriesFlow()
@@ -262,9 +262,9 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
         return payeeCategoryMapperManager.getMapping(payee)
     }
 
-    suspend fun updatePayeeCategory(payee: String, categoryId: Int) {
-        payeeCategoryMapperManager.addMapping(payee, categoryId)
-    }
+    // suspend fun updatePayeeCategory(payee: String, categoryId: Int) {
+    //     payeeCategoryMapperManager.addMapping(payee, categoryId)
+    // }
 
     // @OptIn(ExperimentalCoroutinesApi::class)
     // fun getTransactionSumBySalaryDateFlow(): Flow<List<TransactionSummary>> {

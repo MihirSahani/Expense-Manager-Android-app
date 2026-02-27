@@ -225,18 +225,19 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
                         true -> {
                             waitGroup.add( launch {
                                 db.PayeeCategoryMapperDao()
-                                    .addMapping(PayeeCategoryMapper(categoryId = t.categoryId!!, payee = t.payee))
+                                    .addMapping(
+                                        PayeeCategoryMapper(categoryId = t.categoryId!!, payee = t.payee)
+                                    )
                             })
                             waitGroup.add( launch {
                                 db.transactionDao()
-                                    .updateCategoryForTransactionsWithPayee(t.payee, t.categoryId!!)
+                                    .updateCategoryForTransactionsWithPayee(
+                                        t.payee, t.categoryId!!
+                                    )
                             })
                         }
                         false -> {
-                            waitGroup.add( launch {
-                                db.transactionDao()
-                                    .update(t)
-                            })
+                            waitGroup.add( launch { db.transactionDao().update(t) })
                         }
                     }
                 }
