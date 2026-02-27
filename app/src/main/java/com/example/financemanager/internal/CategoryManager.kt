@@ -21,7 +21,7 @@ class CategoryManager(
     }
 
     fun getCategoriesFlow(): Flow<List<Category>> {
-        return categoryDao.getAllFlow()
+        return categoryDao.getCategoriesFlow()
     }
     suspend fun getCategories(): List<Category> {
         return categoryDao.getAll()

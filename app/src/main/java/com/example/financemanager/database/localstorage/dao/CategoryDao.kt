@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.Flow
 abstract class CategoryDao {
 
     @Query("SELECT * FROM `categories`")
-    abstract fun getAllFlow(): Flow<List<Category>>
+    abstract fun getCategoriesFlow(): Flow<List<Category>>
 
     @Query("SELECT * FROM `categories`")
     abstract suspend fun getAll(): List<Category>
