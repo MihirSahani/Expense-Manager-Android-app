@@ -13,5 +13,5 @@ data class User (
     @ColumnInfo(name = "lastName")
     var lastName: String,
     @ColumnInfo(name = "token")
-    var token: String
+    var token: String = ""
 )

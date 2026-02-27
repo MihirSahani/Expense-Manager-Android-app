@@ -32,9 +32,9 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     )
     // val smsParser: SMSParser = SMSParser()
 
-    fun getUser(): Flow<User?> {
-        return userManager.getUser()
-    }
+    // fun getUser(): Flow<User?> {
+    //     return userManager.getUser()
+    // }
 
     // fun getTransactionsFlow(): Flow<List<Transaction>> {
     //     return transactionManager.getAllTransactionsFlow()
@@ -234,13 +234,13 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     // fun getAccountFlow(id: Int): Flow<Account?> {
     //     return accountManager.getAccountFlow(id)
     // }
-    suspend fun createUser(firstName: String, lastName: String) {
-        userManager.addUser(firstName, lastName)
-    }
+    // suspend fun createUser(firstName: String, lastName: String) {
+    //     userManager.addUser(firstName, lastName)
+    // }
 
-    suspend fun updateUser(user: User) {
-        userManager.updateUser(user)
-    }
+    // suspend fun updateUser(user: User) {
+    //     userManager.updateUser(user)
+    // }
 
     // fun getAccountsFlow(): Flow<List<Account>> {
     //     return accountManager.getAllAccountsFlow()
@@ -250,17 +250,17 @@ class ExpenseManagementInternal(database: ExpenseManagementDatabase) {
     //     return accountManager.getAllAccounts()
     // }
 
-    fun getCategoriesFlow(): Flow<List<Category>> {
-        return categoryManager.getCategoriesFlow()
-    }
+    // fun getCategoriesFlow(): Flow<List<Category>> {
+    //     return categoryManager.getCategoriesFlow()
+    // }
 
-    suspend fun getCategories(): List<Category> {
-        return categoryManager.getCategories()
-    }
+    // suspend fun getCategories(): List<Category> {
+    //     return categoryManager.getCategories()
+    // }
 
-    suspend fun getPayeeCategory(payee: String): Int? {
-        return payeeCategoryMapperManager.getMapping(payee)
-    }
+    // suspend fun getPayeeCategory(payee: String): Int? {
+    //     return payeeCategoryMapperManager.getMapping(payee)
+    // }
 
     // suspend fun updatePayeeCategory(payee: String, categoryId: Int) {
     //     payeeCategoryMapperManager.addMapping(payee, categoryId)
