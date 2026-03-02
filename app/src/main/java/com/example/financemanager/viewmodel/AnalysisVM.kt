@@ -4,19 +4,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.TransactionSummary
-import com.example.financemanager.internal.ExpenseManagementInternal
+import com.example.financemanager.repository.CategoryRepo
+import com.example.financemanager.repository.TransactionRepo
+import com.example.financemanager.viewmodel.data.CategorySpending
 import kotlinx.coroutines.flow.*
 import kotlin.math.abs
 
-data class CategorySpending(
-    val category: Category,
-    val totalSpending: Double,
-    val budget: Double?
-)
+class AnalysisVM(
+    private val transactionRepo: TransactionRepo,
+    private val categoryRepo: CategoryRepo
+): ViewModel() {
 
-class AnalysisVM(private var em: ExpenseManagementInternal): ViewModel() {
-
-    val _amountSavedLastTimeframe: StateFlow<Double> = em.getSumOfTransactionsPreviousCycle()
+    val _amountSavedLastTimeframe: StateFlow<Double> = transactionRepo.getSumOfTransactionsPreviousCycle()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
     val amountSavedLastTimeFrame: StateFlow<Double> = _amountSavedLastTimeframe
 
@@ -24,8 +23,8 @@ class AnalysisVM(private var em: ExpenseManagementInternal): ViewModel() {
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     val categorySpendingList: StateFlow<List<CategorySpending>> =
-        em.getTransactionSumByCategoryCurrentTimeframe()
-        .combine(em.getCategoriesFlow()) { transactionSum, categories ->
+        transactionRepo.getSumOfTransactionsByCategoryCurrentCycle()
+        .combine(categoryRepo.categories) { transactionSum, categories ->
             transformToSpendingList(categories, transactionSum)
         }.stateIn(
             scope = viewModelScope,

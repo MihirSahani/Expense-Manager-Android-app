@@ -1,10 +1,12 @@
-package com.example.financemanager.internal
+package com.example.financemanager.receiver
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.provider.Telephony
 import com.example.financemanager.Graph
+import com.example.financemanager.repository.TransactionRepo
+import com.example.financemanager.repository.data.RepoName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -22,9 +24,11 @@ class SMSReceiver : BroadcastReceiver() {
                 val timestamp = message.timestampMillis
 
                 scope.launch {
-                    val result = Graph.expenseManagementInternal.parseSingleMessage(body, sender, timestamp)
+                    val result = (Graph.repoFactory.get(RepoName.TRANSACTION) as TransactionRepo)
+                        .parseSingleMessage(body, sender, timestamp)
                     if (result != null) {
-                        Graph.notificationManager.showTransactionNotification(result.first, result.second)
+                        Graph.notificationManager
+                            .showTransactionNotification(result.first, result.second)
                     }
                 }
             }

@@ -30,4 +30,6 @@ abstract class CategoryDao {
     @Query("SELECT * FROM `categories` WHERE `id` = :id")
     abstract suspend fun getById(id: Int): Category?
 
+    @Query("SELECT * FROM `categories` WHERE `id` = :id")
+    abstract fun getFlow(id: Int): Flow<Category?>
 }

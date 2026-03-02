@@ -28,7 +28,7 @@ abstract class TransactionDao {
     abstract suspend fun create(transaction: Transaction)
 
     @Query("UPDATE `transactions` SET `category_id` = :categoryId WHERE payee = :payee")
-    abstract suspend fun updateCategoryForTransactionsWithPayee(payee: String, categoryId: Int)
+    abstract suspend fun updateCategoryForTransactionsWithPayee(payee: String, categoryId: Int?)
 
     @Query(
         "UPDATE `transactions` SET `account_id` = :accountId " +

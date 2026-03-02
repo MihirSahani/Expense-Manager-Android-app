@@ -20,6 +20,8 @@ class AccountRepo(private val db: ExpenseManagementDatabase) {
         )
     }
 
+    fun get(id: Int) = db.accountDao().getFlow(id)
+
     suspend fun addAccount(account: Account) {
         db.withTransaction {
             db.accountDao().create(account)

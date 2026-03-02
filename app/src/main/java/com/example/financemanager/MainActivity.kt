@@ -7,7 +7,6 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,24 +16,25 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
 import com.example.financemanager.database.localstorage.ExpenseManagementDatabase
-import com.example.financemanager.internal.ExpenseManagementInternal
 import com.example.financemanager.internal.NotificationManager
+import com.example.financemanager.repository.RepoFactory
+import com.example.financemanager.repository.TransactionRepo
+import com.example.financemanager.repository.data.RepoName
 import com.example.financemanager.ui.composable.initial.Navigate
 import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.InitialVM
 import com.example.financemanager.viewmodel.TransactionVM
 import com.example.financemanager.viewmodel.ViewModelFactory
-import com.example.financemanager.viewmodel.ViewModelName
-import kotlinx.coroutines.coroutineScope
+import com.example.financemanager.viewmodel.data.ViewModelName
 import kotlinx.coroutines.launch
 
 object Graph {
     lateinit var database: ExpenseManagementDatabase
-    lateinit var expenseManagementInternal: ExpenseManagementInternal
 
     lateinit var viewModelFactory: ViewModelFactory
     @SuppressLint("StaticFieldLeak")
     lateinit var notificationManager: NotificationManager
+    lateinit var repoFactory: RepoFactory
 
 
     fun provide(context: Context) {
@@ -45,9 +45,9 @@ object Graph {
         )
             .fallbackToDestructiveMigration(false)
             .build()
-        // Initialize ExpenseManagementInternal after the database is ready
-        expenseManagementInternal = ExpenseManagementInternal(database)
-        viewModelFactory = ViewModelFactory(expenseManagementInternal)
+
+        repoFactory = RepoFactory(database)
+        viewModelFactory = ViewModelFactory(repoFactory)
         notificationManager = NotificationManager(context)
         notificationManager.createPaymentNotificationChannel()
     }
@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
 
         Graph.provide(this)
         
-        val initialVM = Graph.viewModelFactory.getViewModel(ViewModelName.LOGIN) as InitialVM
+        val initialVM = Graph.viewModelFactory.getViewModel(ViewModelName.INITIAL) as InitialVM
         handleIntents(intent, initialVM)
         
         setContent {
@@ -77,7 +77,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        val initialVM = Graph.viewModelFactory.getViewModel(ViewModelName.LOGIN) as InitialVM
+        val initialVM = Graph.viewModelFactory.getViewModel(ViewModelName.INITIAL) as InitialVM
         handleIntents(intent, initialVM)
     }
 
@@ -87,7 +87,7 @@ class MainActivity : ComponentActivity() {
                 Intent.ACTION_EDIT -> {
                     val transactionId = intent.getIntExtra("transaction_id", -1)
                     if (transactionId != -1) {
-                        val transaction = Graph.expenseManagementInternal.getTransaction(transactionId)
+                        val transaction = (Graph.repoFactory.get(RepoName.TRANSACTION) as TransactionRepo).getTransaction(transactionId)
                         val transactionVM = Graph.viewModelFactory.getViewModel(ViewModelName.TRANSACTION) as TransactionVM
                         transactionVM.selectTransaction(transaction)
                         if (transaction != null) {

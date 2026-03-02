@@ -3,10 +3,11 @@ package com.example.financemanager.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.financemanager.Graph
+import com.example.financemanager.database.entity.AppSetting
 import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.Transaction
-import com.example.financemanager.internal.ExpenseManagementInternal
-import com.example.financemanager.internal.Keys
+import com.example.financemanager.repository.AppSettingRepo
+import com.example.financemanager.repository.data.Keys
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -14,23 +15,17 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class SettingsVM(private val expenseManagementInternal: ExpenseManagementInternal) : ViewModel() {
+class SettingsVM(private val appSettingRepo: AppSettingRepo) : ViewModel() {
 
-    val budgetTimeframe: StateFlow<Long?> = expenseManagementInternal.getSettingFlow(Keys.BUDGET_TIMEFRAME)
+    val budgetTimeframe: StateFlow<Long?> = appSettingRepo.getFlow(Keys.BUDGET_TIMEFRAME)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0L)
 
-    val salaryCreditTime: StateFlow<Long?> = expenseManagementInternal.getSettingFlow(Keys.SALARY_CREDIT_TIME)
+    val salaryCreditTime: StateFlow<Long?> = appSettingRepo.getFlow(Keys.SALARY_CREDIT_TIME)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0L)
 
     fun updateBudgetTimeframe(timeframe: Long) {
         viewModelScope.launch {
-            expenseManagementInternal.updateSetting(Keys.BUDGET_TIMEFRAME, timeframe)
-        }
-    }
-
-    fun updateSalaryCreditTime(timestamp: Long) {
-        viewModelScope.launch {
-            expenseManagementInternal.updateSetting(Keys.SALARY_CREDIT_TIME, timestamp)
+            appSettingRepo.insert(AppSetting(Keys.BUDGET_TIMEFRAME.ordinal, timeframe))
         }
     }
 

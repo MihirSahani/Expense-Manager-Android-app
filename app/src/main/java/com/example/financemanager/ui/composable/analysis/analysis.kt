@@ -32,7 +32,7 @@ import com.example.financemanager.ui.composable.utils.MyText.toIndianFormat
 import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.AnalysisVM
 import com.example.financemanager.viewmodel.CategoryAnalysisVM
-import com.example.financemanager.viewmodel.CategorySpending
+import com.example.financemanager.viewmodel.data.CategorySpending
 import java.util.Locale
 import kotlin.math.abs
 

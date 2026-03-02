@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.financemanager.database.entity.Account
 import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.Transaction
-import com.example.financemanager.internal.ExpenseManagementInternal
+import com.example.financemanager.repository.AccountRepo
+import com.example.financemanager.repository.CategoryRepo
+import com.example.financemanager.repository.TransactionRepo
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,25 +21,29 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlin.collections.emptyList
 
-class TransactionVM(private val expenseManagementInternal: ExpenseManagementInternal) : ViewModel() {
+class TransactionVM(
+    private val transactionRepo: TransactionRepo,
+    private val categoryRepo: CategoryRepo,
+    private val accountRepo: AccountRepo
+) : ViewModel() {
 
     var isArchived: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val _transactions = isArchived.flatMapLatest { archived ->
         if (archived) {
-            expenseManagementInternal.getTransactionArchived()
+            transactionRepo.getTransactionsArchivedCycle()
         } else {
-            expenseManagementInternal.getTransactionCurrentCycle()
+            transactionRepo.getTransactionsCurrentCycle()
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val transactions: StateFlow<List<Transaction>> = _transactions
 
-    private val _categories = expenseManagementInternal.getCategoriesFlow()
+    private val _categories = categoryRepo.categories
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     val categories: StateFlow<List<Category>> = _categories
 
-    private val _accounts = expenseManagementInternal.getAccountsFlow()
+    private val _accounts = accountRepo.accounts
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
     val accounts: StateFlow<List<Account>> = _accounts
 
@@ -51,7 +57,7 @@ class TransactionVM(private val expenseManagementInternal: ExpenseManagementInte
 
     fun addTransaction(transaction: Transaction) {
         viewModelScope.launch {
-            expenseManagementInternal.addTransaction(transaction)
+            transactionRepo.addTransaction(transaction)
         }
     }
 
@@ -59,8 +65,9 @@ class TransactionVM(private val expenseManagementInternal: ExpenseManagementInte
         transaction: Transaction, updateCategoryForAllTransactionsWithPayee: Boolean
     ) {
         viewModelScope.launch {
-            expenseManagementInternal.updateTransactionCategory(
-                transaction, updateCategoryForAllTransactionsWithPayee
+            transactionRepo.updateTransactionCategory(
+                transaction,
+                updateCategoryForAllTransactionsWithPayee
             )
             _selectedTransaction.value = transaction
         }
@@ -68,7 +75,7 @@ class TransactionVM(private val expenseManagementInternal: ExpenseManagementInte
 
     fun updateTransactionAccount(transaction: Transaction) {
         viewModelScope.launch {
-            expenseManagementInternal.updateTransactionAccount(transaction)
+            transactionRepo.updateAccount(transaction)
             _selectedTransaction.value = transaction
         }
     }

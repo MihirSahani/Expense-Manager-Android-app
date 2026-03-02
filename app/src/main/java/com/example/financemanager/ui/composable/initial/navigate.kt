@@ -32,6 +32,7 @@ import com.example.financemanager.ui.composable.transaction.AddTransactionScreen
 import com.example.financemanager.ui.composable.transaction.TransactionHistoryScreen
 import com.example.financemanager.ui.composable.transaction.ViewTransactionScreen
 import com.example.financemanager.viewmodel.*
+import com.example.financemanager.viewmodel.data.ViewModelName
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -76,21 +77,21 @@ fun Navigate(viewModel: InitialVM) {
             composable(Screen.Permissions.route) {
                 Permission(
                     navController,
-                    Graph.viewModelFactory.getViewModel(ViewModelName.LOGIN)
+                    Graph.viewModelFactory.getViewModel(ViewModelName.INITIAL)
                             as InitialVM
                 )
             }
             composable(Screen.Login.route) {
                 LoginScreen(
                     navController,
-                    Graph.viewModelFactory.getViewModel(ViewModelName.LOGIN)
+                    Graph.viewModelFactory.getViewModel(ViewModelName.INITIAL)
                             as InitialVM
                 )
             }
             composable(Screen.Home.route) {
                 HomeScreen(
                     navController,
-                    Graph.viewModelFactory.getViewModel(ViewModelName.HOME)
+                    Graph.viewModelFactory.getViewModel(ViewModelName.INITIAL)
                             as InitialVM
                 )
             }

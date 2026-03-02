@@ -33,7 +33,7 @@
         </activity>
 
         <receiver
-            android:name=".internal.SMSReceiver"
+            android:name=".receiver.SMSReceiver"
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.BROADCAST_SMS">
