@@ -181,7 +181,7 @@ fun TransactionHistoryPreview() {
     val sampleTransactions = listOf(
         Transaction(id = 1, payee = "Starbucks", amount = 15.5, currency = "USD", type = "Expense", transactionDate = calendar.timeInMillis, categoryId = 1, description = "", receiptURL = "", location = "", createdAt = 0L, updatedAt = 0L, rawAccountIdName = ""),
         Transaction(id = 2, payee = "Employer", amount = 5000.0, currency = "USD", type = "Income", transactionDate = calendar.apply { add(Calendar.HOUR, -2) }.timeInMillis, categoryId = 2, description = "", receiptURL = "", location = "", createdAt = 0L, updatedAt = 0L, rawAccountIdName = ""),
-        Transaction(id = 3, payee = "Unknown", amount = 20.0, currency = "USD", type = "Expense", transactionDate = calendar.apply { add(Calendar.DAY_OF_YEAR, -1) }.timeInMillis, categoryId = null, description = "", receiptURL = "", location = "", createdAt = 0L, updatedAt = 0L, rawAccountIdName = "")
+        Transaction(id = 3, payee = "Unknown", amount = 20.0, currency = "USD", type = "Expense", transactionDate = calendar.apply { add(Calendar.HOUR, -3) }.timeInMillis, categoryId = null, description = "", receiptURL = "", location = "", createdAt = 0L, updatedAt = 0L, rawAccountIdName = "")
     )
     FinanceManagerTheme {
         TransactionHistoryContent(

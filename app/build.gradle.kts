@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import java.util.Properties
 import java.io.FileInputStream
 
@@ -5,13 +6,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
-}
-
-val env = Properties().apply {
-    val envFile = rootProject.file(".env")
-    if (envFile.exists()) {
-        load(FileInputStream(envFile))
-    }
 }
 
 android {
@@ -27,7 +21,18 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
-        buildConfigField("String", "ACCOUNT_NUMBER", "\"${env.getProperty("ACCOUNT_NUMBER") ?: ""}\"")
+        buildConfigField(
+            "String",
+            "SAVINGS_ACCOUNT_NO",
+            "\"${gradleLocalProperties(rootDir, providers)
+                .getProperty("SAVINGS_ACCOUNT_NO", "") }\""
+        )
+        buildConfigField(
+            "String",
+            "CREDIT_ACCOUNT_NO",
+            "\"${gradleLocalProperties(rootDir, providers)
+                .getProperty("CREDIT_ACCOUNT_NO", "") }\""
+        )
     }
 
     buildTypes {

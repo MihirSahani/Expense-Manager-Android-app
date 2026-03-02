@@ -14,7 +14,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
-import androidx.room.Room
 import com.example.financemanager.database.localstorage.ExpenseManagementDatabase
 import com.example.financemanager.internal.NotificationManager
 import com.example.financemanager.repository.RepoFactory
@@ -38,13 +37,7 @@ object Graph {
 
 
     fun provide(context: Context) {
-        database = Room.databaseBuilder(
-            context,
-            ExpenseManagementDatabase::class.java,
-            "expense_management.db"
-        )
-            .fallbackToDestructiveMigration(false)
-            .build()
+        database = ExpenseManagementDatabase.buildDatabase(context)
 
         repoFactory = RepoFactory(database)
         viewModelFactory = ViewModelFactory(repoFactory)
@@ -52,6 +45,7 @@ object Graph {
         notificationManager.createPaymentNotificationChannel()
     }
 }
+
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {

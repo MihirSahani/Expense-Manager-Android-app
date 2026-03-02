@@ -13,20 +13,19 @@ import com.example.financemanager.repository.data.Keys
 import com.example.financemanager.repository.data.Timeframe
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
 
 class TransactionRepo(private val db: ExpenseManagementDatabase) {
     private var transactions = db.transactionDao().getTransactionsFlow()
+    private val parseMutex = Mutex()
 
     private val hdfcSenderRegex = """[A-Z]{2}-HDFCBK-[ST]""".toRegex()
     private val sbiSenderRegex = """[A-Z]{2}-SBIUPI-[ST]""".toRegex()
@@ -44,15 +43,14 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
     private val bobDebit2Regex = """Rs\.([\d,.]+) Dr\. from A/C X+(\d{4}) and Cr\. to (.*?)\. Ref""".toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
 
     suspend fun parseMessages(context: Context) {
-        val lastProcessedTimestamp = db.appSettingDao().getByKey(Keys.LAST_SMS_TIMESTAMP.ordinal)?:0L
-        var latestTimestamp = lastProcessedTimestamp
+        if (!parseMutex.tryLock()) return
+        try {
+            val lastProcessedTimestamp = db.appSettingDao().getByKey(Keys.LAST_SMS_TIMESTAMP.ordinal) ?: 0L
+            var latestTimestamp = lastProcessedTimestamp
 
-        db.withTransaction {
             coroutineScope {
                 val selection = if (lastProcessedTimestamp > 0) "date > ?" else null
-                val selectionArgs =
-                    if (lastProcessedTimestamp > 0) arrayOf(lastProcessedTimestamp.toString())
-                    else null
+                val selectionArgs = if (lastProcessedTimestamp > 0) arrayOf(lastProcessedTimestamp.toString()) else null
 
                 val cursor = context.contentResolver.query(
                     "content://sms/inbox".toUri(),
@@ -64,57 +62,37 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
                     val addressIndex = it.getColumnIndexOrThrow("address")
                     val dateIndex = it.getColumnIndexOrThrow("date")
 
+                    val tasks = mutableListOf<Deferred<Pair<Transaction, Category?>?>>()
+                    while (it.moveToNext()) {
+                        val body = it.getString(bodyIndex)
+                        val sender = it.getString(addressIndex)
+                        val smsDateLong = it.getLong(dateIndex)
 
-                    db.withTransaction {
-                        val tasks = mutableListOf<Deferred<Pair<Transaction, Category?>?>>()
-
-                        while (it.moveToNext()) {
-                            val body = it.getString(bodyIndex)
-                            val sender = it.getString(addressIndex)
-                            val smsDateLong = it.getLong(dateIndex)
-
-                            if (smsDateLong > latestTimestamp) {
-                                latestTimestamp = smsDateLong
-                            }
-
-                            tasks.add(async {
-                                parseSingleMessage(body, sender, smsDateLong, false)
-                            })
+                        if (smsDateLong > latestTimestamp) {
+                            latestTimestamp = smsDateLong
                         }
-                        tasks.awaitAll()
+                        tasks.add(async { parseSingleMessage(body, sender, smsDateLong, false) })
                     }
+                    tasks.awaitAll()
                 }
             }
             db.appSettingDao().insert(AppSetting(Keys.LAST_SMS_TIMESTAMP.ordinal, latestTimestamp))
             updateSalaryCreditTime()
+        } finally {
+            parseMutex.unlock()
         }
     }
 
     private suspend fun updateSalaryCreditTime() {
         val transactions = db.transactionDao().getTransactionWithIncomeCategory()
         if (transactions.isNotEmpty()) {
-            try {
-                db.appSettingDao()
-                    .insert(
-                        AppSetting(Keys.SALARY_CREDIT_TIME.ordinal, transactions[0]!!.transactionDate)
-                    )
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-
-        }
-        else {
+            db.appSettingDao().insert(AppSetting(Keys.SALARY_CREDIT_TIME.ordinal, transactions[0]?.transactionDate ?: 0L))
+        } else {
             db.appSettingDao().insert(AppSetting(Keys.SALARY_CREDIT_TIME.ordinal, 0L))
         }
-        if(transactions.size == 2) {
-            try {
-                db.appSettingDao()
-                    .insert(AppSetting(Keys.PREVIOUS_SALARY_CREDIT_TIME.ordinal, transactions[1]!!.transactionDate))
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-        else {
+        if (transactions.size == 2) {
+            db.appSettingDao().insert(AppSetting(Keys.PREVIOUS_SALARY_CREDIT_TIME.ordinal, transactions[1]?.transactionDate ?: 0L))
+        } else {
             db.appSettingDao().insert(AppSetting(Keys.PREVIOUS_SALARY_CREDIT_TIME.ordinal, 0L))
         }
     }
@@ -122,19 +100,15 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
     suspend fun parseSingleMessage(
         body: String, sender: String, smsDateLong: Long, isSalaryCreditTimeUpdateRequired: Boolean = true
     ): Pair<Transaction, Category?>? {
-        val transactionAndCategory = if (hdfcSenderRegex.matches(sender)) {
-            coroutineScope {
+        val transactionAndCategory = coroutineScope {
+            if (hdfcSenderRegex.matches(sender)) {
                 val d1 = async { processUpiMessage(body, smsDateLong) }
                 val d2 = async { processSalaryMessage(body, smsDateLong) }
                 val d3 = async { processHdfcCreditMessage(body, smsDateLong) }
                 awaitAll(d1, d2, d3).firstOrNull { it != null }
-            }
-        }
-        else if (amexSenderRegex.matches(sender)) {
-            processAmexDebitMessage(body, smsDateLong)
-        }
-        else if (bobSenderRegex.matches(sender) || sbiSenderRegex.matches(sender)) {
-            coroutineScope {
+            } else if (amexSenderRegex.matches(sender)) {
+                processAmexDebitMessage(body, smsDateLong)
+            } else if (bobSenderRegex.matches(sender) || sbiSenderRegex.matches(sender)) {
                 val tasks = listOf(
                     async { processSbiUpiMessage(body, smsDateLong) },
                     async { processSbiCreditMessage(body, smsDateLong) },
@@ -144,119 +118,98 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
                     async { processBobDebit2Message(body, smsDateLong) }
                 )
                 tasks.awaitAll().firstOrNull { it != null }
+            } else {
+                null
             }
         }
-        else {
-            null
-        }
 
-        if(isSalaryCreditTimeUpdateRequired) {
-            updateSalaryCreditTime()
+        transactionAndCategory?.let { (transaction, _) ->
+            db.transactionDao().create(transaction)
+            if (isSalaryCreditTimeUpdateRequired) {
+                updateSalaryCreditTime()
+            }
         }
         return transactionAndCategory
     }
 
-    private suspend fun processUpiMessage(
-        body: String, smsDateLong: Long
-    ): Pair<Transaction, Category?>? {
+    private suspend fun processUpiMessage(body: String, smsDateLong: Long): Pair<Transaction, Category?>? {
         val matchResult = hdfcDebitRegex.find(body)
-        return if (matchResult != null) {
-            val (amountStr, accountNo, payee, _) = matchResult.destructured
+        return matchResult?.let {
+            val (amountStr, accountNo, payee, _) = it.destructured
             createTransaction(amountStr, accountNo, payee, "Expense", body, smsDateLong)
-        } else null
+        }
     }
 
-    private suspend fun processSalaryMessage(
-        body: String, smsDateLong: Long
-    ): Pair<Transaction, Category?>? {
+    private suspend fun processSalaryMessage(body: String, smsDateLong: Long): Pair<Transaction, Category?>? {
         val matchResult = hdfcSalaryRegex.find(body)
-        return if (matchResult != null) {
-            val (amountStr, accountNo, companyName) = matchResult.destructured
-            createTransaction(
-                amountStr, accountNo, companyName.trim(), "Income", body, smsDateLong
-            )
-        } else null
+        return matchResult?.let {
+            val (amountStr, accountNo, companyName) = it.destructured
+            createTransaction(amountStr, accountNo, companyName.trim(), "Income", body, smsDateLong)
+        }
     }
 
-    private suspend fun processHdfcCreditMessage(
-        body: String, smsDateLong: Long
-    ): Pair<Transaction, Category?>? {
+    private suspend fun processHdfcCreditMessage(body: String, smsDateLong: Long): Pair<Transaction, Category?>? {
         val matchResult = hdfcCreditRegex.find(body)
-        return if (matchResult != null) {
-            val (amountStr, accountNo, payee) = matchResult.destructured
+        return matchResult?.let {
+            val (amountStr, accountNo, payee) = it.destructured
             createTransaction(amountStr, accountNo, payee.trim(), "Income", body, smsDateLong)
-        } else null
+        }
     }
 
-    private suspend fun processSbiUpiMessage(
-        body: String, smsDateLong: Long
-    ): Pair<Transaction, Category?>? {
+    private suspend fun processSbiUpiMessage(body: String, smsDateLong: Long): Pair<Transaction, Category?>? {
         val matchResult = sbiDebitRegex.find(body)
-        return if (matchResult != null) {
-            val (accountNo, amountStr, payee) = matchResult.destructured
+        return matchResult?.let {
+            val (accountNo, amountStr, payee) = it.destructured
             createTransaction(amountStr, accountNo, payee.trim(), "Expense", body, smsDateLong)
-        } else null
+        }
     }
 
-    private suspend fun processSbiCreditMessage(
-        body: String, smsDateLong: Long
-    ): Pair<Transaction, Category?>? {
+    private suspend fun processSbiCreditMessage(body: String, smsDateLong: Long): Pair<Transaction, Category?>? {
         val matchResult = sbiCreditRegex.find(body)
-        return if (matchResult != null) {
-            val (accountNo, amountStr, payee) = matchResult.destructured
+        return matchResult?.let {
+            val (accountNo, amountStr, payee) = it.destructured
             createTransaction(amountStr, accountNo, payee.trim(), "Income", body, smsDateLong)
-        } else null
+        }
     }
 
-    private suspend fun processAmexDebitMessage(
-        body: String, smsDateLong: Long
-    ): Pair<Transaction, Category?>? {
+    private suspend fun processAmexDebitMessage(body: String, smsDateLong: Long): Pair<Transaction, Category?>? {
         val matchResult = amexDebitRegex.find(body)
-        return if (matchResult != null) {
-            val (amountStr, accountNo, payee) = matchResult.destructured
+        return matchResult?.let {
+            val (amountStr, accountNo, payee) = it.destructured
             createTransaction(amountStr, accountNo, payee.trim(), "Expense", body, smsDateLong)
-        } else null
+        }
     }
 
-    private suspend fun processBobCredit1Message(
-        body: String, smsDateLong: Long
-    ): Pair<Transaction, Category?>? {
+    private suspend fun processBobCredit1Message(body: String, smsDateLong: Long): Pair<Transaction, Category?>? {
         val matchResult = bobCredit1Regex.find(body)
-        return if (matchResult != null) {
-            val (amountStr, accountNo, payee) = matchResult.destructured
+        return matchResult?.let {
+            val (amountStr, accountNo, payee) = it.destructured
             createTransaction(amountStr, accountNo, payee.trim(), "Income", body, smsDateLong)
-        } else null
+        }
     }
 
-    private suspend fun processBobDebit1Message(
-        body: String, smsDateLong: Long
-    ): Pair<Transaction, Category?>? {
+    private suspend fun processBobDebit1Message(body: String, smsDateLong: Long): Pair<Transaction, Category?>? {
         val matchResult = bobDebit1Regex.find(body)
-        return if (matchResult != null) {
-            val (amountStr, accountNo, payee) = matchResult.destructured
+        return matchResult?.let {
+            val (amountStr, accountNo, payee) = it.destructured
             createTransaction(amountStr, accountNo, payee.trim(), "Expense", body, smsDateLong)
-        } else null
+        }
     }
 
-    private suspend fun processBobCredit2Message(
-        body: String, smsDateLong: Long
-    ): Pair<Transaction, Category?>? {
+    private suspend fun processBobCredit2Message(body: String, smsDateLong: Long): Pair<Transaction, Category?>? {
         val matchResult = bobCredit2Regex.find(body)
-        return if (matchResult != null) {
-            val (amountStr, payee) = matchResult.destructured
-            // Account number is not in this format, using a placeholder or common identifier if possible
+        return matchResult?.let {
+            val (amountStr, payee) = it.destructured
             createTransaction(amountStr, "BOB-UPI", payee.trim(), "Income", body, smsDateLong)
-        } else null
+        }
     }
 
-    private suspend fun processBobDebit2Message(
-        body: String, smsDateLong: Long
-    ): Pair<Transaction, Category?>? {
+    private suspend fun processBobDebit2Message(body: String, smsDateLong: Long): Pair<Transaction, Category?>? {
         val matchResult = bobDebit2Regex.find(body)
-        return if (matchResult != null) {
-            val (amountStr, accountNo, payee) = matchResult.destructured
+        return matchResult?.let {
+            val (amountStr, accountNo, payee) = it.destructured
             createTransaction(amountStr, accountNo, payee.trim(), "Expense", body, smsDateLong)
-        } else null
+        }
     }
 
     private suspend fun createTransaction(
@@ -265,13 +218,14 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
     ): Pair<Transaction, Category?> {
         val amount = amountStr.replace(",", "").toDoubleOrNull() ?: 0.0
         val timestamp = System.currentTimeMillis()
-        val categoryId = db.PayeeCategoryMapperDao().get(payee)
+        val dbPayee = db.payeeDisplayDao().get(payee) ?: payee.beautify()
+        val categoryId = db.PayeeCategoryMapperDao().get(dbPayee)
         val transaction = Transaction(
             accountId = db.accountIdMapperDao().get(accountNo),
             type = type,
             amount = amount,
             categoryId = categoryId,
-            payee = payee,
+            payee = dbPayee,
             currency = "INR",
             transactionDate = smsDateLong,
             description = body,
@@ -281,8 +235,6 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
             updatedAt = timestamp,
             rawAccountIdName = accountNo
         )
-
-        db.transactionDao().create(transaction)
         return Pair(transaction, if (categoryId != null) db.categoryDao().getById(categoryId) else null)
     }
 
@@ -293,29 +245,16 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
     private fun getTimeMillis(month: Int, year: Int): Pair<Long, Long> {
         val yearMonth = YearMonth.of(year, month)
         val zoneId = ZoneId.systemDefault()
-
-        val startMillis = yearMonth
-            .atDay(1)
-            .atStartOfDay(zoneId)
-            .toInstant()
-            .toEpochMilli()
-
-        val endMillis = yearMonth
-            .atEndOfMonth()
-            .atTime(23, 59, 59, 999_000_000)
-            .atZone(zoneId)
-            .toInstant()
-            .toEpochMilli()
-
+        val startMillis = yearMonth.atDay(1).atStartOfDay(zoneId).toInstant().toEpochMilli()
+        val endMillis = yearMonth.atEndOfMonth().atTime(23, 59, 59, 999_000_000).atZone(zoneId).toInstant().toEpochMilli()
         return Pair(startMillis, endMillis)
     }
 
     private suspend fun updateAccountBalance(t: Transaction, addingTransaction: Boolean = true) {
-        if(t.accountId != null) {
-            when(t.type.equals("expense", ignoreCase = true).xor(addingTransaction)) {
-                true -> db.accountDao().updateBalance(t.accountId!!, -t.amount)
-                false -> db.accountDao().updateBalance(t.accountId!!, t.amount)
-            }
+        t.accountId?.let {
+            val isExpense = t.type.equals("expense", ignoreCase = true)
+            val balanceChange = if (isExpense xor addingTransaction) -t.amount else t.amount
+            db.accountDao().updateBalance(it, balanceChange)
         }
     }
 
@@ -330,7 +269,7 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
     suspend fun deleteTransaction(t: Transaction) {
         db.withTransaction {
             db.transactionDao().delete(t)
-            updateAccountBalance(t)
+            updateAccountBalance(t, false)
             updateSalaryCreditTime()
         }
     }
@@ -339,12 +278,10 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
     fun getTransactionsCurrentCycle(): Flow<List<Transaction>> {
         return db.appSettingDao().getByKeyFlow(Keys.BUDGET_TIMEFRAME.ordinal)
             .flatMapLatest { timeframe ->
-                when(timeframe) {
+                when (timeframe) {
                     Timeframe.SALARY_DATE.ordinal.toLong() -> {
                         db.appSettingDao().getByKeyFlow(Keys.SALARY_CREDIT_TIME.ordinal)
-                            .flatMapLatest { timestamp ->
-                                db.transactionDao().getTransactionsFlow(from = timestamp?:0L)
-                            }
+                            .flatMapLatest { timestamp -> db.transactionDao().getTransactionsFlow(from = timestamp ?: 0L) }
                     }
                     Timeframe.MONTHLY.ordinal.toLong() -> {
                         val date = LocalDate.now()
@@ -360,14 +297,12 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
     fun getTransactionsArchivedCycle(): Flow<List<Transaction>> {
         return db.appSettingDao().getByKeyFlow(Keys.BUDGET_TIMEFRAME.ordinal)
             .flatMapLatest { timeframe ->
-                when(timeframe) {
+                when (timeframe) {
                     Timeframe.SALARY_DATE.ordinal.toLong() -> {
                         db.appSettingDao().getByKeyFlow(Keys.SALARY_CREDIT_TIME.ordinal)
-                            .flatMapLatest { timestamp ->
-                                db.transactionDao().getTransactionsFlow(to = timestamp?:0L)
-                            }
+                            .flatMapLatest { timestamp -> db.transactionDao().getTransactionsFlow(to = (timestamp ?: 1L) - 1) }
                     }
-                    Timeframe.MONTHLY.ordinal.toLong()-> {
+                    Timeframe.MONTHLY.ordinal.toLong() -> {
                         val date = LocalDate.now().minusMonths(1)
                         val (_, to) = getTimeMillis(date.monthValue, date.year)
                         db.transactionDao().getTransactionsFlow(to = to)
@@ -381,12 +316,10 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
     fun getTransactionsByCategoryCurrentCycle(id: Int?): Flow<List<Transaction>> {
         return db.appSettingDao().getByKeyFlow(Keys.BUDGET_TIMEFRAME.ordinal)
             .flatMapLatest { timeframe ->
-                when(timeframe) {
+                when (timeframe) {
                     Timeframe.SALARY_DATE.ordinal.toLong() -> {
                         db.appSettingDao().getByKeyFlow(Keys.SALARY_CREDIT_TIME.ordinal)
-                            .flatMapLatest { timestamp ->
-                                db.transactionDao().getTransactionsByCategoryFlow(id, timestamp?:0L)
-                            }
+                            .flatMapLatest { timestamp -> db.transactionDao().getTransactionsByCategoryFlow(id, timestamp ?: 0L) }
                     }
                     Timeframe.MONTHLY.ordinal.toLong() -> {
                         val date = LocalDate.now()
@@ -402,12 +335,10 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
     fun getSumOfTransactionsByCategoryCurrentCycle(): Flow<List<TransactionSummary>> {
         return db.appSettingDao().getByKeyFlow(Keys.BUDGET_TIMEFRAME.ordinal)
             .flatMapLatest { timeframe ->
-                when(timeframe) {
+                when (timeframe) {
                     Timeframe.SALARY_DATE.ordinal.toLong() -> {
                         db.appSettingDao().getByKeyFlow(Keys.SALARY_CREDIT_TIME.ordinal)
-                            .flatMapLatest { timeframe ->
-                                db.transactionDao().getSumOfTransactionsByCategoryFlow(timeframe?:0L)
-                            }
+                            .flatMapLatest { time -> db.transactionDao().getSumOfTransactionsByCategoryFlow(time ?: 0L) }
                     }
                     Timeframe.MONTHLY.ordinal.toLong() -> {
                         val date = LocalDate.now()
@@ -423,14 +354,12 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
     fun getSumOfTransactionsPreviousCycle(): Flow<Double> {
         return db.appSettingDao().getByKeyFlow(Keys.BUDGET_TIMEFRAME.ordinal)
             .flatMapLatest { timeframe ->
-                when(timeframe) {
-                    Timeframe.SALARY_DATE.ordinal.toLong()-> {
+                when (timeframe) {
+                    Timeframe.SALARY_DATE.ordinal.toLong() -> {
                         db.appSettingDao().getByKeyFlow(Keys.SALARY_CREDIT_TIME.ordinal)
                             .flatMapLatest { to ->
                                 db.appSettingDao().getByKeyFlow(Keys.PREVIOUS_SALARY_CREDIT_TIME.ordinal)
-                                    .flatMapLatest { from ->
-                                        db.transactionDao().getSumOfTransactionsFlow(from?:0L, (to?:1L)-1)
-                                    }
+                                    .flatMapLatest { from -> db.transactionDao().getSumOfTransactionsFlow(from ?: 0L, (to ?: 1L) - 1) }
                             }
                     }
                     Timeframe.MONTHLY.ordinal.toLong() -> {
@@ -447,39 +376,33 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
         val newAccountId = transaction.accountId
         val t = db.transactionDao().get(transaction.id) ?: return
         db.withTransaction {
-            val amount = db.transactionDao()
-                .getTotalAmountForRawAccount(t.rawAccountIdName)
-            coroutineScope {
-                if (amount != null) {
-                    if (t.accountId != null) {
-                        db.accountDao().updateBalance(t.accountId!!, -amount)
-                    }
-                    if (newAccountId != null) {
-                        db.accountDao().updateBalance(newAccountId, amount)
-                    }
-                    db.transactionDao()
-                        .updateAccountForTransactionsWithRawAccount(t.rawAccountIdName, newAccountId)
-                }
+            val amount = db.transactionDao().getTotalAmountForRawAccount(t.rawAccountIdName)
+            if (amount != null) {
+                t.accountId?.let { db.accountDao().updateBalance(it, -amount) }
+                newAccountId?.let { db.accountDao().updateBalance(it, amount) }
+                db.transactionDao().updateAccountForTransactionsWithRawAccount(t.rawAccountIdName, newAccountId)
+                updateSalaryCreditTime()
             }
         }
     }
 
     suspend fun updateTransactionCategory(t: Transaction, forAll: Boolean) {
         db.withTransaction {
-            coroutineScope {
-                if(t.categoryId != null) {
-                    if(forAll) {
-                        db.PayeeCategoryMapperDao()
-                            .insert(
-                                PayeeCategoryMapper(categoryId = t.categoryId!!, payee = t.payee)
-                            )
-                        db.transactionDao()
-                            .updateCategoryForTransactionsWithPayee(
-                                t.payee, t.categoryId!!
-                            )
-                    }
+            t.categoryId?.let { catId ->
+                if (forAll) {
+                    db.PayeeCategoryMapperDao().insert(PayeeCategoryMapper(categoryId = catId, payee = t.payee))
+                    db.transactionDao().updateCategoryForTransactionsWithPayee(t.payee, catId)
+                }
+                else {
+                    db.transactionDao().update(t)
                 }
             }
         }
+    }
+
+    fun String.beautify(): String {
+        return this.split(" ").map { word ->
+            word.lowercase().replaceFirstChar { it.titlecaseChar() }
+        }.joinToString(" ").replace("  ", " ")
     }
 }

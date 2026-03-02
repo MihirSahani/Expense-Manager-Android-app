@@ -29,12 +29,6 @@ import com.example.financemanager.viewmodel.InitialVM
 @Composable
 fun HomeScreen(navController: NavController, viewModel: InitialVM) {
     val userName by viewModel.userName.collectAsState()
-    val context = LocalContext.current
-
-    LaunchedEffect(Unit) {
-        viewModel.initialize()
-        viewModel.parseMessages(context)
-    }
 
     HomeScreenContent(
         userName = userName,

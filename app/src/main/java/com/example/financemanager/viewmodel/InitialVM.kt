@@ -43,18 +43,11 @@ class InitialVM(
         }
     }
 
-    fun initialize() {
-        viewModelScope.launch {
-            onboardingRepo.initialize()
-        }
-    }
-
     fun parseMessages(context: Context) {
         viewModelScope.launch {
             transactionRepo.parseMessages(context)
         }
     }
-
 
     fun signUp(firstName: String, lastName: String) {
         viewModelScope.launch {
