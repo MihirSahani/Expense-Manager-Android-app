@@ -20,5 +20,4 @@ object DummyData {
         Category(name = "Family and Friends", description = "Gifts, vacations", type = "Expense", color = "#FFCA28", createdAt = "", updatedAt = ""),
         Category(name = "Shopping", description = "Clothing, shoes, accessories", type = "Expense", color = "#66BB6A", createdAt = "", updatedAt = "")
     )
-
 }

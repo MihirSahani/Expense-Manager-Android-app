@@ -24,7 +24,7 @@ abstract class AccountDao {
     abstract suspend fun delete(account: Account)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    abstract suspend fun create(account: Account)
+    abstract suspend fun create(account: Account): Long
 
     @Query("SELECT * FROM `accounts` WHERE id = :id")
     abstract fun getFlow(id: Int): Flow<Account?>

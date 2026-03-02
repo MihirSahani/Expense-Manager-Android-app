@@ -28,7 +28,10 @@ class SMSReceiver : BroadcastReceiver() {
                         .parseSingleMessage(body, sender, timestamp)
                     if (result != null) {
                         Graph.notificationManager
-                            .showTransactionNotification(result.first, result.second)
+                            .showTransactionNotification(
+                                result.first,
+                                result.second
+                            )
                     }
                 }
             }

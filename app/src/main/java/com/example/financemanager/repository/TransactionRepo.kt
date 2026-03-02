@@ -46,76 +46,76 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
     suspend fun parseMessages(context: Context) {
         val lastProcessedTimestamp = db.appSettingDao().getByKey(Keys.LAST_SMS_TIMESTAMP.ordinal)?:0L
         var latestTimestamp = lastProcessedTimestamp
-        db..bbbbb
-        coroutineScope {
-            val selection = if (lastProcessedTimestamp > 0) "date > ?" else null
-            val selectionArgs =
-                if (lastProcessedTimestamp > 0) arrayOf(lastProcessedTimestamp.toString())
-                else null
 
-            val cursor = context.contentResolver.query(
-                "content://sms/inbox".toUri(),
-                null, selection, selectionArgs, "date ASC"
-            )
+        db.withTransaction {
+            coroutineScope {
+                val selection = if (lastProcessedTimestamp > 0) "date > ?" else null
+                val selectionArgs =
+                    if (lastProcessedTimestamp > 0) arrayOf(lastProcessedTimestamp.toString())
+                    else null
 
-            cursor?.use {
-                val bodyIndex = it.getColumnIndexOrThrow("body")
-                val addressIndex = it.getColumnIndexOrThrow("address")
-                val dateIndex = it.getColumnIndexOrThrow("date")
+                val cursor = context.contentResolver.query(
+                    "content://sms/inbox".toUri(),
+                    null, selection, selectionArgs, "date ASC"
+                )
+
+                cursor?.use {
+                    val bodyIndex = it.getColumnIndexOrThrow("body")
+                    val addressIndex = it.getColumnIndexOrThrow("address")
+                    val dateIndex = it.getColumnIndexOrThrow("date")
 
 
-                db.withTransaction {
-                    val tasks = mutableListOf<Deferred<Pair<Transaction, Category?>?>>()
+                    db.withTransaction {
+                        val tasks = mutableListOf<Deferred<Pair<Transaction, Category?>?>>()
 
-                    while (it.moveToNext()) {
-                        val body = it.getString(bodyIndex)
-                        val sender = it.getString(addressIndex)
-                        val smsDateLong = it.getLong(dateIndex)
+                        while (it.moveToNext()) {
+                            val body = it.getString(bodyIndex)
+                            val sender = it.getString(addressIndex)
+                            val smsDateLong = it.getLong(dateIndex)
 
-                        if (smsDateLong > latestTimestamp) {
-                            latestTimestamp = smsDateLong
+                            if (smsDateLong > latestTimestamp) {
+                                latestTimestamp = smsDateLong
+                            }
+
+                            tasks.add(async {
+                                parseSingleMessage(body, sender, smsDateLong, false)
+                            })
                         }
-
-                        tasks.add(async {
-                            parseSingleMessage(body, sender, smsDateLong, false)
-                        })
+                        tasks.awaitAll()
                     }
-                    tasks.awaitAll()
                 }
             }
+            db.appSettingDao().insert(AppSetting(Keys.LAST_SMS_TIMESTAMP.ordinal, latestTimestamp))
+            updateSalaryCreditTime()
         }
-        db.appSettingDao().insert(AppSetting(Keys.LAST_SMS_TIMESTAMP.ordinal, latestTimestamp))
-        updateSalaryCreditTime()
     }
 
     private suspend fun updateSalaryCreditTime() {
-        db.withTransaction {
-            val transactions = db.transactionDao().getTransactionWithIncomeCategory()
-            if (transactions.isNotEmpty()) {
-                try {
-                    db.appSettingDao()
-                        .insert(
-                            AppSetting(Keys.SALARY_CREDIT_TIME.ordinal, transactions[0]!!.transactionDate)
-                        )
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+        val transactions = db.transactionDao().getTransactionWithIncomeCategory()
+        if (transactions.isNotEmpty()) {
+            try {
+                db.appSettingDao()
+                    .insert(
+                        AppSetting(Keys.SALARY_CREDIT_TIME.ordinal, transactions[0]!!.transactionDate)
+                    )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
 
+        }
+        else {
+            db.appSettingDao().insert(AppSetting(Keys.SALARY_CREDIT_TIME.ordinal, 0L))
+        }
+        if(transactions.size == 2) {
+            try {
+                db.appSettingDao()
+                    .insert(AppSetting(Keys.PREVIOUS_SALARY_CREDIT_TIME.ordinal, transactions[1]!!.transactionDate))
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-            else {
-                db.appSettingDao().insert(AppSetting(Keys.SALARY_CREDIT_TIME.ordinal, 0L))
-            }
-            if(transactions.size == 2) {
-                try {
-                    db.appSettingDao()
-                        .insert(AppSetting(Keys.PREVIOUS_SALARY_CREDIT_TIME.ordinal, transactions[1]!!.transactionDate))
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-            else {
-                db.appSettingDao().insert(AppSetting(Keys.PREVIOUS_SALARY_CREDIT_TIME.ordinal, 0L))
-            }
+        }
+        else {
+            db.appSettingDao().insert(AppSetting(Keys.PREVIOUS_SALARY_CREDIT_TIME.ordinal, 0L))
         }
     }
 
@@ -129,9 +129,11 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
                 val d3 = async { processHdfcCreditMessage(body, smsDateLong) }
                 awaitAll(d1, d2, d3).firstOrNull { it != null }
             }
-        } else if (amexSenderRegex.matches(sender)) {
+        }
+        else if (amexSenderRegex.matches(sender)) {
             processAmexDebitMessage(body, smsDateLong)
-        } else if (bobSenderRegex.matches(sender) || sbiSenderRegex.matches(sender)) {
+        }
+        else if (bobSenderRegex.matches(sender) || sbiSenderRegex.matches(sender)) {
             coroutineScope {
                 val tasks = listOf(
                     async { processSbiUpiMessage(body, smsDateLong) },
@@ -143,9 +145,11 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
                 )
                 tasks.awaitAll().firstOrNull { it != null }
             }
-        } else {
+        }
+        else {
             null
         }
+
         if(isSalaryCreditTimeUpdateRequired) {
             updateSalaryCreditTime()
         }

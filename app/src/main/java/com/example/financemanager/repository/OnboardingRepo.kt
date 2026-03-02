@@ -3,6 +3,7 @@ package com.example.financemanager.repository
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import androidx.room.withTransaction
 import com.example.financemanager.database.DummyData
 import com.example.financemanager.database.entity.AppSetting
 import com.example.financemanager.database.entity.User
@@ -10,7 +11,8 @@ import com.example.financemanager.database.localstorage.ExpenseManagementDatabas
 import com.example.financemanager.repository.data.Keys
 import com.example.financemanager.repository.data.Timeframe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class OnboardingRepo(private val db: ExpenseManagementDatabase) {
     val user = db.userDao().get()
@@ -23,14 +25,10 @@ class OnboardingRepo(private val db: ExpenseManagementDatabase) {
     suspend fun initialize() {
         val isInitialized = db.appSettingDao().getByKey(Keys.IS_INITIALIZATION_DONE.ordinal)
         if (isInitialized == null) {
-            coroutineScope {
-                // ----------------------------------------------------- Load dummy data
-                DummyData.accounts.forEach { account ->
-                    db.accountDao().create(account)
-                }
-                DummyData.categories.forEach { category ->
-                    db.categoryDao().create(category)
-                }
+            db.withTransaction {
+                DummyData.accounts.forEach { account -> db.accountDao().create(account) }
+                DummyData.categories.forEach { category -> db.categoryDao().create(category) }
+
                 db.appSettingDao()
                     .insert(AppSetting(Keys.BUDGET_TIMEFRAME.ordinal, Timeframe.MONTHLY.ordinal.toLong()))
                 db.appSettingDao()
