@@ -351,6 +351,27 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
+    fun getSumOfTransactionsCurrentCycle(): Flow<Double> {
+        return db.appSettingDao().getByKeyFlow(Keys.BUDGET_TIMEFRAME.ordinal)
+            .flatMapLatest { timeframe ->
+                when (timeframe) {
+                    Timeframe.SALARY_DATE.ordinal.toLong() -> {
+                        db.appSettingDao().getByKeyFlow(Keys.SALARY_CREDIT_TIME.ordinal)
+                            .flatMapLatest { from ->
+                                db.transactionDao().getSumOfTransactionsFlow(from ?: 0L)
+                            }
+                    }
+                    Timeframe.MONTHLY.ordinal.toLong() -> {
+                        val currMonth = LocalDate.now()
+                        val (from, to) = getTimeMillis(currMonth.monthValue, currMonth.year)
+                        db.transactionDao().getSumOfTransactionsFlow(from, to)
+                    }
+                    else -> throw IllegalArgumentException("Invalid timeframe")
+                }
+            }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun getSumOfTransactionsPreviousCycle(): Flow<Double> {
         return db.appSettingDao().getByKeyFlow(Keys.BUDGET_TIMEFRAME.ordinal)
             .flatMapLatest { timeframe ->
@@ -401,8 +422,8 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
     }
 
     fun String.beautify(): String {
-        return this.split(" ").map { word ->
+        return this.split(" ").joinToString(" ") { word ->
             word.lowercase().replaceFirstChar { it.titlecaseChar() }
-        }.joinToString(" ").replace("  ", " ")
+        }.replace("  ", " ")
     }
 }

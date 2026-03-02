@@ -78,8 +78,7 @@ private fun <T> ListOfItemsBase(
                 HorizontalDivider(
                     thickness = 1.dp,
                     modifier = Modifier.padding(horizontal = 16.dp)
-                )
-            }
+                )           }
             content(item)
         }
     }

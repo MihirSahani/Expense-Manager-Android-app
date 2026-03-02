@@ -1,12 +1,9 @@
 package com.example.financemanager.ui.composable.analysis
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -19,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,12 +37,15 @@ import kotlin.math.abs
 @Composable
 fun AnalysisScreen(navController: NavController, viewModel: AnalysisVM, categoryAnalysisVM: CategoryAnalysisVM) {
     val categorySpendingList by viewModel.categorySpendingList.collectAsState()
-    val amountSavedLastTimeframe by viewModel.amountSavedLastTimeFrame.collectAsState()
+    val netTransactionPrevCycle by viewModel.netTransactionPreviousCycle.collectAsState()
+    val netTransactionCurrCycle by viewModel.netTransactionCurrentCycle.collectAsState()
+
 
 
     AnalysisScreenContent(
         categorySpendingList = categorySpendingList,
-        amountSaved = amountSavedLastTimeframe,
+        netTransactionPrevMonth = netTransactionPrevCycle,
+        netTransactionCurrMonth = netTransactionCurrCycle,
         onCategoryClick = { categoryId ->
             categoryAnalysisVM.selectedCategory.value = categoryId
             navController.navigate(Screen.ViewTransactionByCategory.route)
@@ -55,28 +56,48 @@ fun AnalysisScreen(navController: NavController, viewModel: AnalysisVM, category
 @Composable
 fun AnalysisScreenContent(
     categorySpendingList: List<CategorySpending>,
-    amountSaved: Double = 0.0,
+    netTransactionPrevMonth: Double = 0.0,
+    netTransactionCurrMonth: Double = 0.0,
     onCategoryClick: (Int?) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
         MyText.ScreenHeader("Analysis")
-        Row(
+        Column(
             Modifier
                 .padding(16.dp)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .background(MaterialTheme.colorScheme.surface),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val label = if (amountSaved >= 0) "You saved" else "You overspent"
-            val color = if (amountSaved >= 0) Color(0xFF02AF34) else Color(0xFF9B2600)
-            
-            MyText.Body(text = "Last Month", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            MyText.Header1("${label}: ${abs(amountSaved).toIndianFormat()}", color = color)
+            Row(
+                Modifier.fillMaxWidth().padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                val label = if (netTransactionPrevMonth >= 0) "you saved" else "you overspent"
+                val color = if (netTransactionPrevMonth >= 0) Color(0xFF02AF34) else Color(0xFF9B2600)
+
+                MyText.Body(text = "Last month $label", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                MyText.Header1(abs(netTransactionPrevMonth).toIndianFormat(), color = color)
+            }
+
+            HorizontalDivider(thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
+
+            Row(
+                Modifier.fillMaxWidth().padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                val label = if (netTransactionCurrMonth>= 0) "balance remaining" else "you overspent"
+                val color = if (netTransactionCurrMonth>= 0) Color(0xFF02AF34) else Color(0xFF9B2600)
+
+                MyText.Body(text = "This month's $label ", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                MyText.Header1(abs(netTransactionCurrMonth).toIndianFormat(), color = color)
+            }
         }
 
 
@@ -140,11 +161,7 @@ fun CategoryAnalysisItem(spending: CategorySpending, onCategoryClick: (Int?) -> 
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    MyText.Subtitle(text ="Spent: ${
-                        String.format(
-                            Locale.getDefault(), "%.2f",
-                            spending.totalSpending
-                        )}"
+                    MyText.Subtitle(text ="Spent: ${spending.totalSpending.toIndianFormat()}"
                     )
                     if (spending.budget != null) {
                         MyText.Subtitle(
@@ -156,18 +173,21 @@ fun CategoryAnalysisItem(spending: CategorySpending, onCategoryClick: (Int?) -> 
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    val progress = if (spending.budget > 0) {
-                        (spending.totalSpending / spending.budget)
+                    val progress = when(spending.totalSpending < spending.budget) {
+                        true -> (spending.totalSpending / spending.budget)
                             .coerceAtMost(1.0).toFloat()
-                    } else {
-                        0f
+                        false -> (spending.budget / spending.totalSpending)
+                            .coerceAtMost(1.0).toFloat()
                     }
+
                     LinearProgressIndicator(
                         progress = { progress },
-                        modifier = Modifier.fillMaxWidth(),
-                        color = if (spending.totalSpending > spending.budget)
-                            MaterialTheme.colorScheme.error
-                        else MaterialTheme.colorScheme.primary
+                        modifier = Modifier.fillMaxWidth().height(10.dp),
+                        gapSize = (-10).dp,
+                        strokeCap = StrokeCap.Round,
+                        drawStopIndicator = {},
+                        trackColor = if (spending.totalSpending > spending.budget) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.surfaceContainer,
                     )
                     if (spending.totalSpending > spending.budget && spending.budget > 0) {
                         MyText.Body(text = "Over Budget!")
@@ -200,7 +220,8 @@ fun AnalysisScreenPreview() {
     FinanceManagerTheme {
         AnalysisScreenContent(
             categorySpendingList = sampleSpending,
-            amountSaved = 1250.50,
+            netTransactionPrevMonth = 1250.50,
+            netTransactionCurrMonth = -500.00,
             onCategoryClick = {}
         )
     }

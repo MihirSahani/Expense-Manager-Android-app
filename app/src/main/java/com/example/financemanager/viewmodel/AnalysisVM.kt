@@ -15,10 +15,11 @@ class AnalysisVM(
     private val categoryRepo: CategoryRepo
 ): ViewModel() {
 
-    val _amountSavedLastTimeframe: StateFlow<Double> = transactionRepo.getSumOfTransactionsPreviousCycle()
+    val netTransactionPreviousCycle: StateFlow<Double> = transactionRepo.getSumOfTransactionsPreviousCycle()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
-    val amountSavedLastTimeFrame: StateFlow<Double> = _amountSavedLastTimeframe
 
+    val netTransactionCurrentCycle: StateFlow<Double> = transactionRepo.getSumOfTransactionsCurrentCycle()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
 
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
