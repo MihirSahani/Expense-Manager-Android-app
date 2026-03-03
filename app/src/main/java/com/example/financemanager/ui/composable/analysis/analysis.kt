@@ -40,8 +40,6 @@ fun AnalysisScreen(navController: NavController, viewModel: AnalysisVM, category
     val netTransactionPrevCycle by viewModel.netTransactionPreviousCycle.collectAsState()
     val netTransactionCurrCycle by viewModel.netTransactionCurrentCycle.collectAsState()
 
-
-
     AnalysisScreenContent(
         categorySpendingList = categorySpendingList,
         netTransactionPrevMonth = netTransactionPrevCycle,
@@ -182,12 +180,14 @@ fun CategoryAnalysisItem(spending: CategorySpending, onCategoryClick: (Int?) -> 
 
                     LinearProgressIndicator(
                         progress = { progress },
-                        modifier = Modifier.fillMaxWidth().height(10.dp),
-                        gapSize = (-10).dp,
+                        modifier = Modifier.fillMaxWidth().height(16.dp),
+                        gapSize = (-16).dp,
                         strokeCap = StrokeCap.Round,
                         drawStopIndicator = {},
-                        trackColor = if (spending.totalSpending > spending.budget) MaterialTheme.colorScheme.error
-                            else MaterialTheme.colorScheme.surfaceContainer,
+                        color = if (spending.totalSpending > spending.budget) Color(0xFF9F0000)
+                            else MaterialTheme.colorScheme.primary,
+                        trackColor = if (spending.totalSpending > spending.budget) MaterialTheme.colorScheme.primary
+                            else Color(0xFF008F00),
                     )
                     if (spending.totalSpending > spending.budget && spending.budget > 0) {
                         MyText.Body(text = "Over Budget!")
