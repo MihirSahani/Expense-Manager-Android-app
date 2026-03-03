@@ -6,23 +6,24 @@ import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.PayeeCategoryMapper
 import com.example.financemanager.database.entity.PayeeDisplayNames
 import com.example.financemanager.database.entity.User
+import com.example.financemanager.repository.data.colors
 
 object DummyData {
     val accounts = listOf(
         Account(id = 1, name = "Savings", type = "Bank", currency = "INR", currentBalance = 0.0, bankName = "HDFC", accountNo = BuildConfig.SAVINGS_ACCOUNT_NO),
-        Account(id = 2, name = "Credit Card", type = "Bank", currency = "INR", currentBalance = 0.0, bankName = "American Express", accountNo = BuildConfig.CREDIT_ACCOUNT_NO),
+        Account(id = 2, name = "Credit Card", type = "Credit", currency = "INR", currentBalance = 0.0, bankName = "American Express", accountNo = BuildConfig.CREDIT_ACCOUNT_NO),
         Account(id = 3, name = "Cash", type = "Cash", currency = "INR", currentBalance = 0.0)
     )
 
     val categories = listOf(
-        Category(id = 1, name = "Food", description = "Dining and groceries", type = "Expense", color = "#FF7043", createdAt = "", updatedAt = ""),
-        Category(id = 2, name = "Transport", description = "Fuel and public transport", type = "Expense", color = "#42A5F5", createdAt = "", updatedAt = ""),
-        Category(id = 3, name = "Salary", description = "Monthly pay", type = "Income", color = "#66BB6A", createdAt = "", updatedAt = ""),
-        Category(id = 4, name = "Groceries", description = "Groceries", type = "Expense", color = "#FF7043", createdAt = "", updatedAt = ""),
-        Category(id = 5, name = "Utilities", description = "Electricity, water, gas", type = "Expense", color = "#29B6F6", createdAt = "", updatedAt = ""),
-        Category(id = 6, name = "Family and Friends", description = "Gifts, vacations", type = "Expense", color = "#FFCA28", createdAt = "", updatedAt = ""),
-        Category(id = 7, name = "Shopping", description = "Clothing, shoes, accessories", type = "Expense", color = "#66BB6A", createdAt = "", updatedAt = ""),
-        Category(id = 8, name = "Investment", description = "Mutual Funds, stocks, etc", type = "Expense", color = "#FFE5B4", createdAt = "", updatedAt = "")
+        Category(id = 1, name = "Food", description = "Dining and groceries", type = "Expense", color = colors[0], createdAt = "", updatedAt = ""),
+        Category(id = 2, name = "Transport", description = "Fuel and public transport", type = "Expense", color = colors[5], createdAt = "", updatedAt = ""),
+        Category(id = 3, name = "Salary", description = "Monthly pay", type = "Income", color = colors[9], createdAt = "", updatedAt = ""),
+        Category(id = 4, name = "Groceries", description = "Groceries", type = "Expense", color = colors[14], createdAt = "", updatedAt = ""),
+        Category(id = 5, name = "Utilities", description = "Electricity, water, gas", type = "Expense", color = colors[2], createdAt = "", updatedAt = ""),
+        Category(id = 6, name = "Family and Friends", description = "Gifts, vacations", type = "Expense", color = colors[1], createdAt = "", updatedAt = ""),
+        Category(id = 7, name = "Shopping", description = "Clothing, shoes, accessories", type = "Expense", color = colors[7], createdAt = "", updatedAt = ""),
+        Category(id = 8, name = "Investment", description = "Mutual Funds, stocks, etc", type = "Expense", color = colors[13], createdAt = "", updatedAt = "")
     )
 
     val payeeCategoryMapping = listOf(
@@ -30,17 +31,14 @@ object DummyData {
         PayeeCategoryMapper(payee = "Swiggy", categoryId = 1),
         PayeeCategoryMapper(payee = "Zomato", categoryId = 1),
         PayeeCategoryMapper(payee = "Jubilant Foodworks", categoryId = 1),
-        PayeeCategoryMapper(payee = "Tandoori Bay Shree Foods", categoryId = 1),
         // Transport
         PayeeCategoryMapper(payee = "Uber", categoryId = 2),
         PayeeCategoryMapper(payee = "IATA Pay Account", categoryId = 2),
-        PayeeCategoryMapper(payee = "Rapido", categoryId = 2),
         // Salary
         PayeeCategoryMapper(payee = "Deloitte Consulting India", categoryId = 3),
         // Groceries
         PayeeCategoryMapper(payee = "Zepto", categoryId = 4),
         PayeeCategoryMapper(payee = "Blinkit", categoryId = 4),
-        PayeeCategoryMapper(payee = "American Express", categoryId = 4),
         // Utilities
         PayeeCategoryMapper(payee = "PayU", categoryId = 5),
         PayeeCategoryMapper(payee = "Samsung Pay", categoryId = 5),

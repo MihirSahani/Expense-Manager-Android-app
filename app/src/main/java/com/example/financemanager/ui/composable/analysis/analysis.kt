@@ -79,8 +79,8 @@ fun AnalysisScreenContent(
                 val label = if (netTransactionPrevMonth >= 0) "you saved" else "you overspent"
                 val color = if (netTransactionPrevMonth >= 0) Color(0xFF02AF34) else Color(0xFF9B2600)
 
-                MyText.Body(text = "Last month $label", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                MyText.Header1(abs(netTransactionPrevMonth).toIndianFormat(), color = color)
+                MyText.Header2(text = "Last month $label")
+                MyText.Header2(abs(netTransactionPrevMonth).toIndianFormat(), color = color)
             }
 
             HorizontalDivider(thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
@@ -90,14 +90,13 @@ fun AnalysisScreenContent(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                val label = if (netTransactionCurrMonth>= 0) "balance remaining" else "you overspent"
+                val label = if (netTransactionCurrMonth>= 0) "'s remaining balance" else " you overspent"
                 val color = if (netTransactionCurrMonth>= 0) Color(0xFF02AF34) else Color(0xFF9B2600)
 
-                MyText.Body(text = "This month's $label ", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                MyText.Header2(text = "This month$label")
                 MyText.Header1(abs(netTransactionCurrMonth).toIndianFormat(), color = color)
             }
         }
-
 
         ListOfItems(categorySpendingList, Modifier.padding(16.dp)) { spending ->
             CategoryAnalysisItem(spending, onCategoryClick)
@@ -221,7 +220,7 @@ fun AnalysisScreenPreview() {
         AnalysisScreenContent(
             categorySpendingList = sampleSpending,
             netTransactionPrevMonth = 1250.50,
-            netTransactionCurrMonth = -500.00,
+            netTransactionCurrMonth = 500.00,
             onCategoryClick = {}
         )
     }

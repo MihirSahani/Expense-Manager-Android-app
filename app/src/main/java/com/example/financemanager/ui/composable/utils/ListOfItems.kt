@@ -3,6 +3,9 @@ package com.example.financemanager.ui.composable.utils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -79,6 +82,25 @@ private fun <T> ListOfItemsBase(
                     thickness = 1.dp,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )           }
+            content(item)
+        }
+    }
+}
+
+@Composable
+fun <T> ListOfGrids(
+    items: List<T>,
+    modifier: Modifier = Modifier,
+    content: @Composable (T) -> Unit
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(50.dp),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        items(items) { item ->
             content(item)
         }
     }

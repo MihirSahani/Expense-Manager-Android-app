@@ -1,29 +1,28 @@
 package com.example.financemanager.ui.composable.category
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -34,11 +33,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
+import com.example.financemanager.repository.data.colors
+import com.example.financemanager.ui.composable.utils.ListOfGrids
+import com.example.financemanager.ui.composable.utils.ListOfItems
 import com.example.financemanager.ui.composable.utils.MyInput
 import com.example.financemanager.ui.composable.utils.MyText
 import com.example.financemanager.ui.theme.FinanceManagerTheme
@@ -55,7 +58,9 @@ fun AddEditCategoryScreen(navController: NavController, viewModel: CategoryVM) {
     var type by remember { mutableStateOf("Expense") }
     var color by remember { mutableStateOf("#FF0000") }
     var monthlyBudget by remember { mutableStateOf("") }
+
     var enableMonthlyBudget by remember { mutableStateOf(false) }
+    var showColorPicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(category) {
         category?.let {
@@ -82,6 +87,8 @@ fun AddEditCategoryScreen(navController: NavController, viewModel: CategoryVM) {
         onMonthlyBudgetChange = { monthlyBudget = it },
         enableMonthlyBudget = enableMonthlyBudget,
         onEnableMonthlyBudgetChange = { enableMonthlyBudget = it },
+        showColorPicker = showColorPicker,
+        onColorPickerChange = { showColorPicker = it },
         onSaveClick = {
             if (viewModel.categoryId == null) {
                 viewModel.addCategory(name, description, type, color)
@@ -99,7 +106,6 @@ fun AddEditCategoryScreen(navController: NavController, viewModel: CategoryVM) {
             }
             navController.popBackStack()
         },
-        onBackClick = { navController.popBackStack() }
     )
 }
 
@@ -119,8 +125,9 @@ fun AddEditCategoryScreenContent(
     onMonthlyBudgetChange: (String) -> Unit,
     enableMonthlyBudget: Boolean,
     onEnableMonthlyBudgetChange: (Boolean) -> Unit,
+    showColorPicker: Boolean,
+    onColorPickerChange: (Boolean) -> Unit,
     onSaveClick: () -> Unit,
-    onBackClick: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -154,7 +161,7 @@ fun AddEditCategoryScreenContent(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Monthly Budget")
+                MyText.Header2("Monthly Budget")
                 Spacer(modifier = Modifier.width(16.dp))
                 MyInput.Switch(
                     checked = enableMonthlyBudget,
@@ -180,20 +187,48 @@ fun AddEditCategoryScreenContent(
                     .fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Type", fontWeight = FontWeight.Bold)
-                RadioButton(selected = type == "Expense", onClick = { onTypeChange("Expense") })
-                Text("Expense")
-                Spacer(modifier = Modifier.width(16.dp))
-                RadioButton(selected = type == "Income", onClick = { onTypeChange("Income") })
-                Text("Income")
+                MyText.Header2("Type")
+
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(selected = type == "Expense", onClick = { onTypeChange("Expense") })
+                    MyText.Header2("Expense")
+                    Spacer(modifier = Modifier.width(16.dp))
+                    RadioButton(selected = type == "Income", onClick = { onTypeChange("Income") })
+                    MyText.Header2("Income")
+                }
             }
 
-            MyInput.TextField(
-                value = color,
-                onValueChange = onColorChange,
-                label = ("Color (Hex)"),
-                modifier = Modifier.fillMaxWidth()
-            )
+            // MyInput.TextField(
+            //     value = color,
+            //     onValueChange = onColorChange,
+            //     label = ("Color (Hex)"),
+            //     modifier = Modifier.fillMaxWidth()
+            // )
+
+            Row(
+                Modifier
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .fillMaxWidth()
+                    .clickable {
+                        onColorPickerChange(true)
+                    }
+                    .padding(8.dp, 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            )  {
+                MyText.Header1("Color")
+                Box(
+                    modifier = Modifier
+                        .size(30.dp)
+                        .clip(CircleShape)
+                        .background(parseColor(color))
+                )
+            }
 
             Button(
                 onClick = onSaveClick,
@@ -203,6 +238,38 @@ fun AddEditCategoryScreenContent(
             ) {
                 Text("Save")
             }
+        }
+
+        if(showColorPicker) {
+            AlertDialog(
+                properties = DialogProperties(usePlatformDefaultWidth = false),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                containerColor = MaterialTheme.colorScheme.background,
+                onDismissRequest = { onColorPickerChange(false) },
+                title = { MyText.Header1("Select Color") },
+                text = {
+                    ListOfGrids(colors) { color ->
+                        TextButton(
+                            onClick = {
+                                onColorChange(color)
+                                onColorPickerChange(false)
+                            }
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(30.dp)
+                                    .clip(CircleShape)
+                                    .background(parseColor(color))
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { onColorPickerChange(false) }) {
+                        MyText.Header1("Cancel")
+                    }
+                }
+            )
         }
     }
 }
@@ -225,8 +292,9 @@ fun AddCategoryScreenPreview() {
             onMonthlyBudgetChange = {},
             enableMonthlyBudget = false,
             onEnableMonthlyBudgetChange = {},
+            showColorPicker = false,
+            onColorPickerChange = {},
             onSaveClick = {},
-            onBackClick = {}
         )
     }
 }
@@ -249,8 +317,9 @@ fun EditCategoryScreenPreview() {
             onMonthlyBudgetChange = {},
             enableMonthlyBudget = true,
             onEnableMonthlyBudgetChange = {},
-            onSaveClick = {},
-            onBackClick = {}
+            showColorPicker = true,
+            onColorPickerChange = {},
+            onSaveClick = {}
         )
     }
 }
