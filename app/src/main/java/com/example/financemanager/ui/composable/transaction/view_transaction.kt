@@ -125,7 +125,8 @@ fun ViewTransactionContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { showCategoryDialog = true }
-                            .padding(16.dp),
+                            .padding(horizontal = 16.dp)
+                            .height(50.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -145,7 +146,8 @@ fun ViewTransactionContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { showAccountDialog = true }
-                        .padding(16.dp),
+                        .padding(horizontal = 16.dp)
+                        .height(50.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -279,7 +281,8 @@ fun DetailItem(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(horizontal = 16.dp)
+            .height(50.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -327,7 +330,7 @@ fun ViewTransactionPreview() {
         Category(id = 1, name = "Food", description = "Groceries", type = "Expense", color = "#FF5733", createdAt = "", updatedAt = "")
     )
     val sampleAccounts = listOf(
-        Account(id = 1, name = "Debit Card", type = "Bank", currency = "USD", currentBalance = 1000.0, bankName = "Chase", accountNo = "1234", isIncludedInTotal = true, createdAt = "", updatedAt = "")
+        Account(id = 1, name = "Debit Card", type = "Bank", currency = "USD", currentBalance = 1000.0, bankName = "Chase", rawAccountNo = "1234", isIncludedInTotal = true, createdAt = "", updatedAt = "")
     )
     FinanceManagerTheme {
         ViewTransactionContent(

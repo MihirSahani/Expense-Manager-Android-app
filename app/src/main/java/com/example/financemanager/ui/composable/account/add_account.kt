@@ -47,7 +47,7 @@ fun AddEditAccountScreen(
             currency = it.currency
             balanceText = it.currentBalance.toString()
             bankName = it.bankName
-            accountNumber = it.accountNo
+            accountNumber = it.rawAccountNo
             isIncludedInTotal = it.isIncludedInTotal
         }
     }
@@ -76,7 +76,7 @@ fun AddEditAccountScreen(
                 currency = currency,
                 currentBalance = balanceText.toDoubleOrNull() ?: 0.0,
                 bankName = bankName,
-                accountNo = accountNumber,
+                rawAccountNo = accountNumber,
                 isIncludedInTotal = isIncludedInTotal,
                 updatedAt = currentDateTime
             ) ?: Account(
@@ -85,7 +85,7 @@ fun AddEditAccountScreen(
                 currency = currency,
                 currentBalance = balanceText.toDoubleOrNull() ?: 0.0,
                 bankName = bankName,
-                accountNo = accountNumber,
+                rawAccountNo = accountNumber,
                 isIncludedInTotal = isIncludedInTotal,
                 createdAt = currentDateTime,
                 updatedAt = currentDateTime

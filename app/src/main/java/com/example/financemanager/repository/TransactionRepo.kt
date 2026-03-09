@@ -7,8 +7,8 @@ import com.example.financemanager.database.entity.AppSetting
 import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.PayeeCategoryMapper
 import com.example.financemanager.database.entity.Transaction
-import com.example.financemanager.database.entity.TransactionSummary
 import com.example.financemanager.database.localstorage.ExpenseManagementDatabase
+import com.example.financemanager.database.localstorage.dao.data.RawCategorySpending
 import com.example.financemanager.repository.data.Keys
 import com.example.financemanager.repository.data.Timeframe
 import kotlinx.coroutines.Deferred
@@ -41,6 +41,7 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
     private val bobDebit1Regex = """Rs\.([\d,.]+) transferred from A/c \.\.\.(\d{4}) to:(.*?)\. Total Bal""".toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
     private val bobCredit2Regex = """Your account is credited with INR ([\d,.]+) on .*? by (.*?); AvlBal""".toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
     private val bobDebit2Regex = """Rs\.([\d,.]+) Dr\. from A/C X+(\d{4}) and Cr\. to (.*?)\. Ref""".toRegex(setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
+    private val upiRegex = """[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}""".toRegex()
 
     suspend fun parseMessages(context: Context) {
         if (!parseMutex.tryLock()) return
@@ -124,9 +125,12 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
         }
 
         transactionAndCategory?.let { (transaction, _) ->
-            db.transactionDao().create(transaction)
-            if (isSalaryCreditTimeUpdateRequired) {
-                updateSalaryCreditTime()
+            db.withTransaction {
+                db.transactionDao().create(transaction)
+                updateAccountBalance(transaction)
+                if (isSalaryCreditTimeUpdateRequired) {
+                    updateSalaryCreditTime()
+                }
             }
         }
         return transactionAndCategory
@@ -213,15 +217,15 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
     }
 
     private suspend fun createTransaction(
-        amountStr: String, accountNo: String, payee: String, type: String, body: String,
+        amountStr: String, rawAccountNo: String, payee: String, type: String, body: String,
         smsDateLong: Long
     ): Pair<Transaction, Category?> {
         val amount = amountStr.replace(",", "").toDoubleOrNull() ?: 0.0
         val timestamp = System.currentTimeMillis()
         val dbPayee = db.payeeDisplayDao().get(payee) ?: payee.beautify()
-        val categoryId = db.PayeeCategoryMapperDao().get(dbPayee)
+        val categoryId = db.PayeeCategoryMapperDao().getCategory(dbPayee)
         val transaction = Transaction(
-            accountId = db.accountIdMapperDao().get(accountNo),
+            accountId = db.accountDao().get(rawAccountNo)?.id,
             type = type,
             amount = amount,
             categoryId = categoryId,
@@ -233,7 +237,7 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
             location = "",
             createdAt = timestamp,
             updatedAt = timestamp,
-            rawAccountIdName = accountNo
+            rawAccountIdName = rawAccountNo
         )
         return Pair(transaction, if (categoryId != null) db.categoryDao().getById(categoryId) else null)
     }
@@ -332,7 +336,7 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun getSumOfTransactionsByCategoryCurrentCycle(): Flow<List<TransactionSummary>> {
+    fun getSumOfTransactionsByCategoryCurrentCycle(): Flow<List<RawCategorySpending>> {
         return db.appSettingDao().getByKeyFlow(Keys.BUDGET_TIMEFRAME.ordinal)
             .flatMapLatest { timeframe ->
                 when (timeframe) {
@@ -413,15 +417,16 @@ class TransactionRepo(private val db: ExpenseManagementDatabase) {
                 if (forAll) {
                     db.PayeeCategoryMapperDao().insert(PayeeCategoryMapper(categoryId = catId, payee = t.payee))
                     db.transactionDao().updateCategoryForTransactionsWithPayee(t.payee, catId)
-                }
-                else {
+                } else {
                     db.transactionDao().update(t)
                 }
             }
         }
     }
 
-    fun String.beautify(): String {
+    private fun String.beautify(): String {
+        if(this.startsWith("DELOITTE CONSULTING INDIA P LTD", ignoreCase = true)) return "Deloitte Consulting India"
+        if (upiRegex.matches(this)) return this
         return this.split(" ").joinToString(" ") { word ->
             word.lowercase().replaceFirstChar { it.titlecaseChar() }
         }.replace("  ", " ")

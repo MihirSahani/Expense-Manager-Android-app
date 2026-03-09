@@ -3,7 +3,7 @@ package com.example.financemanager.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.financemanager.database.entity.Category
-import com.example.financemanager.database.entity.TransactionSummary
+import com.example.financemanager.database.localstorage.dao.data.RawCategorySpending
 import com.example.financemanager.repository.CategoryRepo
 import com.example.financemanager.repository.TransactionRepo
 import com.example.financemanager.viewmodel.data.CategorySpending
@@ -34,7 +34,7 @@ class AnalysisVM(
         )
 
     private fun transformToSpendingList(
-        categories: List<Category>, transactionSum: List<TransactionSummary>
+        categories: List<Category>, transactionSum: List<RawCategorySpending>
     ): List<CategorySpending> {
         val spendingList = categories
             .filter { it.type == "Expense" }

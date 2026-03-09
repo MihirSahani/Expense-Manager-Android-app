@@ -22,8 +22,10 @@ class CategoryRepo(private val db: ExpenseManagementDatabase) {
         coroutineScope {
             db.withTransaction {
                 db.categoryDao().delete(category)
-                val payee = db.PayeeCategoryMapperDao().getPayee(category.id)
-                db.transactionDao().updateCategoryForTransactionsWithPayee(payee, null)
+                val payees = db.PayeeCategoryMapperDao().getPayees(category.id)
+                for(payee in payees) {
+                    db.transactionDao().updateCategoryForTransactionsWithPayee(payee, null)
+                }
             }
         }
     }

@@ -52,6 +52,7 @@ class InitialVM(
     fun signUp(firstName: String, lastName: String) {
         viewModelScope.launch {
             onboardingRepo.createUser(firstName, lastName)
+            onboardingRepo.initializationDone()
         }
     }
 

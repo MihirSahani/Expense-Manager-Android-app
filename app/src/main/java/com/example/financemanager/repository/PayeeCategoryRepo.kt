@@ -5,7 +5,7 @@ import com.example.financemanager.database.localstorage.ExpenseManagementDatabas
 
 class PayeeCategoryRepo(private val db: ExpenseManagementDatabase) {
 
-    suspend fun get(payee: String) = db.PayeeCategoryMapperDao().get(payee)
+    suspend fun get(payee: String) = db.PayeeCategoryMapperDao().getCategory(payee)
 
     suspend fun insert(mapping: PayeeCategoryMapper) {
         db.PayeeCategoryMapperDao().insert(mapping)

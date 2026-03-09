@@ -5,9 +5,8 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.example.financemanager.database.DummyData
+import com.example.financemanager.database.PrepopulationData
 import com.example.financemanager.database.entity.Account
-import com.example.financemanager.database.entity.AccountIdMapper
 import com.example.financemanager.database.entity.AppSetting
 import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.PayeeCategoryMapper
@@ -15,7 +14,6 @@ import com.example.financemanager.database.entity.PayeeDisplayNames
 import com.example.financemanager.database.entity.Transaction
 import com.example.financemanager.database.entity.User
 import com.example.financemanager.database.localstorage.dao.AccountDao
-import com.example.financemanager.database.localstorage.dao.AccountIdMapperDao
 import com.example.financemanager.database.localstorage.dao.AppSettingDao
 import com.example.financemanager.database.localstorage.dao.CategoryDao
 import com.example.financemanager.database.localstorage.dao.PayeeCategoryMapperDao
@@ -30,8 +28,8 @@ import kotlinx.coroutines.launch
 
 @Database(entities = [
         User::class, Account::class, Category::class, Transaction::class, AppSetting::class,
-        PayeeCategoryMapper::class, AccountIdMapper::class, PayeeDisplayNames::class
-], version = 10)
+        PayeeCategoryMapper::class, PayeeDisplayNames::class
+], version = 12)
 abstract class ExpenseManagementDatabase: RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun accountDao(): AccountDao
@@ -39,7 +37,6 @@ abstract class ExpenseManagementDatabase: RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun appSettingDao(): AppSettingDao
     abstract fun PayeeCategoryMapperDao(): PayeeCategoryMapperDao
-    abstract fun accountIdMapperDao(): AccountIdMapperDao
     abstract fun payeeDisplayDao(): PayeeDisplayDao
 
     companion object {
@@ -55,13 +52,23 @@ abstract class ExpenseManagementDatabase: RoomDatabase() {
                 ).addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         super.onCreate(db)
-                        CoroutineScope(Dispatchers.IO).launch {
-                            val database = buildDatabase(context)
-                            prepopulateDatabase(database)
+                        INSTANCE?.let { database ->
+                            CoroutineScope(Dispatchers.IO).launch {
+                                prepopulateDatabase(database)
+                            }
+                        }
+                    }
+
+                    override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
+                        super.onDestructiveMigration(db)
+                        INSTANCE?.let { database ->
+                            CoroutineScope(Dispatchers.IO).launch {
+                                prepopulateDatabase(database)
+                            }
                         }
                     }
                 })
-                    .fallbackToDestructiveMigration(false)
+                    .fallbackToDestructiveMigration(true)
                     .build()
                 INSTANCE = instance
                 instance
@@ -69,22 +76,19 @@ abstract class ExpenseManagementDatabase: RoomDatabase() {
         }
 
         private suspend fun prepopulateDatabase(db: ExpenseManagementDatabase) {
-            DummyData.accounts.forEach { account ->
-                val id = db.accountDao().create(account)
-                if (account.accountNo.isNotBlank()) {
-                    db.accountIdMapperDao().insert(AccountIdMapper(account.accountNo, id.toInt()))
-                }
+            PrepopulationData.accounts.forEach { account ->
+                db.accountDao().create(account)
             }
-            DummyData.categories.forEach { category -> db.categoryDao().create(category) }
-            DummyData.payeeDisplayMapping.forEach { mapper -> db.payeeDisplayDao().insert(mapper) }
-            DummyData.payeeCategoryMapping.forEach { mapper -> db.PayeeCategoryMapperDao().insert(mapper) }
-            db.userDao().create(DummyData.user)
+            PrepopulationData.categories.forEach { category -> db.categoryDao().create(category) }
+            PrepopulationData.payeeDisplayMapping.forEach { mapper -> db.payeeDisplayDao().insert(mapper) }
+            PrepopulationData.payeeCategoryMapping.forEach { mapper -> db.PayeeCategoryMapperDao().insert(mapper) }
+            // db.userDao().create(DummyData.user)
 
             db.appSettingDao().insert(AppSetting(Keys.BUDGET_TIMEFRAME.ordinal, Timeframe.MONTHLY.ordinal.toLong()))
             db.appSettingDao().insert(AppSetting(Keys.PREVIOUS_SALARY_CREDIT_TIME.ordinal, 0L))
             db.appSettingDao().insert(AppSetting(Keys.SALARY_CREDIT_TIME.ordinal, 0L))
             db.appSettingDao().insert(AppSetting(Keys.LAST_SMS_TIMESTAMP.ordinal, 0L))
-            db.appSettingDao().insert(AppSetting(Keys.IS_INITIALIZATION_DONE.ordinal, 1L))
+            db.appSettingDao().insert(AppSetting(Keys.IS_INITIALIZATION_DONE.ordinal, 0L))
         }
     }
 }

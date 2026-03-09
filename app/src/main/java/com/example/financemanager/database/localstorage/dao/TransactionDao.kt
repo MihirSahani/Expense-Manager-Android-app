@@ -7,7 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.example.financemanager.database.entity.Transaction
-import com.example.financemanager.database.entity.TransactionSummary
+import com.example.financemanager.database.localstorage.dao.data.RawCategorySpending
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -27,8 +27,8 @@ abstract class TransactionDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun create(transaction: Transaction)
 
-    @Query("UPDATE `transactions` SET `category_id` = :categoryId WHERE payee = :payee")
-    abstract suspend fun updateCategoryForTransactionsWithPayee(payee: String, categoryId: Int?)
+    @Query("UPDATE `transactions` SET `category_id` = :toCategoryId WHERE payee = :payee")
+    abstract suspend fun updateCategoryForTransactionsWithPayee(payee: String, toCategoryId: Int?)
 
     @Query(
         "UPDATE `transactions` SET `account_id` = :accountId " +
@@ -57,7 +57,7 @@ abstract class TransactionDao {
     abstract fun getSumOfTransactionsByCategoryFlow(
         from: Long = 0L,
         to: Long = Long.MAX_VALUE
-    ): Flow<List<TransactionSummary>>
+    ): Flow<List<RawCategorySpending>>
 
 
     @Query(
@@ -93,7 +93,7 @@ abstract class TransactionDao {
 
     @Query(
         """
-    SELECT SUM(CASE WHEN type = 'expense' THEN -amount ELSE amount END) 
+    SELECT SUM(CASE WHEN UPPER(type) = 'EXPENSE' THEN -amount ELSE amount END) 
     FROM transactions 
     WHERE `raw_account_id_name`= :rawAccountName
 """

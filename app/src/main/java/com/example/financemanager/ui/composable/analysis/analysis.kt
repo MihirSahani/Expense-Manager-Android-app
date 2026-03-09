@@ -3,7 +3,7 @@ package com.example.financemanager.ui.composable.analysis
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -19,19 +19,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.financemanager.database.entity.Category
 import com.example.financemanager.ui.composable.Screen
 import com.example.financemanager.ui.composable.category.parseColor
-import com.example.financemanager.ui.composable.utils.ListOfItems
+import com.example.financemanager.ui.composable.utils.Chart
 import com.example.financemanager.ui.composable.utils.MyText
 import com.example.financemanager.ui.composable.utils.MyText.toIndianFormat
 import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.AnalysisVM
 import com.example.financemanager.viewmodel.CategoryAnalysisVM
 import com.example.financemanager.viewmodel.data.CategorySpending
-import java.util.Locale
 import kotlin.math.abs
 
 @Composable
@@ -58,51 +56,84 @@ fun AnalysisScreenContent(
     netTransactionCurrMonth: Double = 0.0,
     onCategoryClick: (Int?) -> Unit
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize()
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 16.dp)
     ) {
-        MyText.ScreenHeader("Analysis")
-        Column(
-            Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surface),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Row(
-                Modifier.fillMaxWidth().padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+        item {
+            MyText.ScreenHeader("Analysis")
+        }
+
+        item {
+            Column(
+                Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surface),
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                val label = if (netTransactionPrevMonth >= 0) "you saved" else "you overspent"
-                val color = if (netTransactionPrevMonth >= 0) Color(0xFF02AF34) else Color(0xFF9B2600)
+                Row(
+                    Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    val label = if (netTransactionPrevMonth >= 0) "you saved" else "you overspent"
+                    val color = if (netTransactionPrevMonth >= 0) Color(0xFF02AF34) else Color(0xFF9B2600)
 
-                MyText.Header2(text = "Last month $label")
-                MyText.Header2(abs(netTransactionPrevMonth).toIndianFormat(), color = color)
-            }
+                    MyText.Header2(text = "Last month $label")
+                    MyText.Header1(abs(netTransactionPrevMonth).toIndianFormat(), color = color)
+                }
 
-            HorizontalDivider(thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
+                HorizontalDivider(thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
 
-            Row(
-                Modifier.fillMaxWidth().padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                val label = if (netTransactionCurrMonth>= 0) "'s remaining balance" else " you overspent"
-                val color = if (netTransactionCurrMonth>= 0) Color(0xFF02AF34) else Color(0xFF9B2600)
+                Row(
+                    Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    val label = if (netTransactionCurrMonth>= 0) "'s remaining balance" else " you overspent"
+                    val color = if (netTransactionCurrMonth>= 0) Color(0xFF02AF34) else Color(0xFF9B2600)
 
-                MyText.Header2(text = "This month$label")
-                MyText.Header1(abs(netTransactionCurrMonth).toIndianFormat(), color = color)
+                    MyText.Header2(text = "This month$label")
+                    MyText.Header1(abs(netTransactionCurrMonth).toIndianFormat(), color = color)
+                }
             }
         }
 
-        ListOfItems(categorySpendingList, Modifier.padding(16.dp)) { spending ->
-            CategoryAnalysisItem(spending, onCategoryClick)
+        item {
+            Box(Modifier.fillMaxWidth().height(300.dp).padding(vertical = 16.dp)) {
+                Chart
+                    .DrawDonutChart(
+                        categorySpendingList,
+                        label = "Expenses\n${categorySpendingList.sumOf { it.totalSpending }.toIndianFormat()}"
+                    )
+            }
+        }
+
+        item {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+            ) {
+                categorySpendingList.forEachIndexed { index, spending ->
+                    if (index != 0) {
+                        HorizontalDivider(
+                            thickness = 1.dp,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                    }
+                    CategoryAnalysisItem(spending, onCategoryClick)
+                }
+            }
         }
     }
 }
+
 @Composable
 fun CategoryAnalysisItem(spending: CategorySpending, onCategoryClick: (Int?) -> Unit) {
        Row(
@@ -147,25 +178,12 @@ fun CategoryAnalysisItem(spending: CategorySpending, onCategoryClick: (Int?) -> 
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     MyText.Header1(spending.category.name)
-                    if (spending.category.description.isNotBlank()) {
-                        MyText.Body(text = spending.category.description)
-                    }
+                    MyText.Subtitle(text ="Spent: ${spending.totalSpending.toIndianFormat()}" +
+                            " ${if(spending.budget != null) "/ ${spending.budget.toIndianFormat()}" else ""}")
                 }
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // ------------------------------------------------------- Cat
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    MyText.Subtitle(text ="Spent: ${spending.totalSpending.toIndianFormat()}"
-                    )
-                    if (spending.budget != null) {
-                        MyText.Subtitle(
-                            text = "Budget: ${spending.budget.toIndianFormat()}"
-                        )
-                    }
-                }
                 if (spending.budget != null) {
 
                     Spacer(modifier = Modifier.height(8.dp))

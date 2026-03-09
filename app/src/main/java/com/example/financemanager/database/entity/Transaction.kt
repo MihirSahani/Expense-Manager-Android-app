@@ -36,8 +36,3 @@ data class Transaction(
     @ColumnInfo(name = "raw_account_id_name")
     var rawAccountIdName: String,
 )
-
-data class TransactionSummary(
-    val categoryId: Int?,
-    val totalAmount: Double
-)

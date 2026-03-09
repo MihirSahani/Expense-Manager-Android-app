@@ -58,7 +58,7 @@ object MyInput {
                 readOnly = readOnly,
                 enabled = enabled,
                 keyboardOptions = keyboardOptions,
-                shape = RoundedCornerShape(12.dp),
+               shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
                     focusedLabelColor = MaterialTheme.colorScheme.primary,

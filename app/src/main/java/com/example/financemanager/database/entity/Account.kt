@@ -26,7 +26,7 @@ data class Account (
     var bankName: String = "",
 
     @ColumnInfo(name = "account_number")
-    var accountNo: String = "",
+    var rawAccountNo: String = "",
 
     @ColumnInfo(name = "is_included_in_total")
     var isIncludedInTotal: Boolean = true,

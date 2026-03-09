@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -18,6 +19,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -33,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,9 +44,9 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import com.example.financemanager.repository.data.colors
 import com.example.financemanager.ui.composable.utils.ListOfGrids
-import com.example.financemanager.ui.composable.utils.ListOfItems
 import com.example.financemanager.ui.composable.utils.MyInput
 import com.example.financemanager.ui.composable.utils.MyText
+import com.example.financemanager.ui.composable.utils.MyText.toIndianFormat
 import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.CategoryVM
 
@@ -157,7 +160,8 @@ fun AddEditCategoryScreenContent(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
                     .background(MaterialTheme.colorScheme.surface)
-                    .padding(8.dp, 1.dp),
+                    .height(50.dp)
+                    .padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -179,55 +183,52 @@ fun AddEditCategoryScreenContent(
                 )
             }
 
-            Row(
+            Column(
                 modifier = Modifier
                     .clip(RoundedCornerShape(16.dp))
                     .background(MaterialTheme.colorScheme.surface)
-                    .padding(8.dp, 1.dp)
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
             ) {
-                MyText.Header2("Type")
-
                 Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .height(50.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    RadioButton(selected = type == "Expense", onClick = { onTypeChange("Expense") })
-                    MyText.Header2("Expense")
-                    Spacer(modifier = Modifier.width(16.dp))
-                    RadioButton(selected = type == "Income", onClick = { onTypeChange("Income") })
-                    MyText.Header2("Income")
-                }
-            }
+                    MyText.Header2("Type")
 
-            // MyInput.TextField(
-            //     value = color,
-            //     onValueChange = onColorChange,
-            //     label = ("Color (Hex)"),
-            //     modifier = Modifier.fillMaxWidth()
-            // )
-
-            Row(
-                Modifier
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.surface)
-                    .fillMaxWidth()
-                    .clickable {
-                        onColorPickerChange(true)
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(selected = type == "Expense", onClick = { onTypeChange("Expense") })
+                        MyText.Header2("Expense")
+                        Spacer(modifier = Modifier.width(16.dp))
+                        RadioButton(selected = type == "Income", onClick = { onTypeChange("Income") })
+                        MyText.Header2("Income")
                     }
-                    .padding(8.dp, 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            )  {
-                MyText.Header1("Color")
-                Box(
-                    modifier = Modifier
-                        .size(30.dp)
-                        .clip(CircleShape)
-                        .background(parseColor(color))
-                )
+                }
+                HorizontalDivider(thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .height(50.dp)
+                        .clickable {
+                            onColorPickerChange(true)
+                        },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                )  {
+                    MyText.Header2("Color")
+                    Box(
+                        modifier = Modifier
+                            .size(30.dp)
+                            .clip(CircleShape)
+                            .background(parseColor(color))
+                    )
+                }
             }
 
             Button(
@@ -246,7 +247,7 @@ fun AddEditCategoryScreenContent(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 containerColor = MaterialTheme.colorScheme.background,
                 onDismissRequest = { onColorPickerChange(false) },
-                title = { MyText.Header1("Select Color") },
+                title = { MyText.ScreenHeader("Select Color") },
                 text = {
                     ListOfGrids(colors) { color ->
                         TextButton(

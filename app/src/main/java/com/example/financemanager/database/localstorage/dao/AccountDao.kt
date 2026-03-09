@@ -32,6 +32,9 @@ abstract class AccountDao {
     @Query("SELECT * FROM `accounts` WHERE id = :id")
     abstract suspend fun get(id: Int): Account?
 
+    @Query("SELECT * FROM `accounts` WHERE `account_number` = :rawAccountNo")
+    abstract suspend fun get(rawAccountNo: String): Account?
+
     @Query("UPDATE `accounts` SET `balance` = `balance` + :diff WHERE id = :accountId")
     abstract suspend fun updateBalance(accountId: Int, diff: Double)
 }
