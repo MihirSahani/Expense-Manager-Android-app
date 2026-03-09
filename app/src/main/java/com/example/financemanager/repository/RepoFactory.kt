@@ -11,6 +11,7 @@ class RepoFactory(private val db: ExpenseManagementDatabase) {
     val categoryRepo: CategoryRepo by lazy { CategoryRepo(db) }
     val onboardingRepo: OnboardingRepo by lazy { OnboardingRepo(db) }
     val payeeCategoryRepo: PayeeCategoryRepo by lazy { PayeeCategoryRepo(db) }
+    val lendingRepo: LendingRepo by lazy { LendingRepo(db) }
 
 
     fun get(name: RepoName): Any {
@@ -22,6 +23,7 @@ class RepoFactory(private val db: ExpenseManagementDatabase) {
             RepoName.CATEGORY -> categoryRepo
             RepoName.ONBOARDING -> onboardingRepo
             RepoName.PAYEE_CATEGORY -> payeeCategoryRepo
+            RepoName.LENDING -> lendingRepo
         }
     }
 }

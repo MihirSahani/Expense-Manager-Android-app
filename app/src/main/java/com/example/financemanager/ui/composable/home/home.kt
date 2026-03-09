@@ -10,14 +10,12 @@ import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -33,7 +31,8 @@ fun HomeScreen(navController: NavController, viewModel: InitialVM) {
     HomeScreenContent(
         userName = userName,
         onAccountsClick = { navController.navigate(Screen.Accounts.route) },
-        onCategoriesClick = { navController.navigate(Screen.Categories.route) }
+        onCategoriesClick = { navController.navigate(Screen.Categories.route) },
+        onLendingsClick = { navController.navigate(Screen.Lending.route) }
     )
 }
 
@@ -41,7 +40,8 @@ fun HomeScreen(navController: NavController, viewModel: InitialVM) {
 fun HomeScreenContent(
     userName: String,
     onAccountsClick: () -> Unit,
-    onCategoriesClick: () -> Unit
+    onCategoriesClick: () -> Unit,
+    onLendingsClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -68,6 +68,11 @@ fun HomeScreenContent(
                     title = "Categories",
                     icon = Icons.Default.Category,
                     onClick = onCategoriesClick
+                )
+                HomeWidget(
+                    title = "Lendings",
+                    icon = Screen.Lending.icon,
+                    onClick = onLendingsClick
                 )
             }
         }
@@ -97,7 +102,6 @@ fun HomeWidget(
             modifier = Modifier.size(40.dp),
             tint = MaterialTheme.colorScheme.primary
         )
-        Spacer(modifier = Modifier.height(8.dp))
         MyText.Header1(title)
     }
 }
@@ -109,7 +113,8 @@ fun HomeScreenPreview() {
         HomeScreenContent(
             userName = "Munshi",
             onAccountsClick = {},
-            onCategoriesClick = {}
+            onCategoriesClick = {},
+            onLendingsClick = {}
         )
     }
 }

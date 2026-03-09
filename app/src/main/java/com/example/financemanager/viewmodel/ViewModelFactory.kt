@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.example.financemanager.repository.AccountRepo
 import com.example.financemanager.repository.AppSettingRepo
 import com.example.financemanager.repository.CategoryRepo
+import com.example.financemanager.repository.LendingRepo
 import com.example.financemanager.repository.OnboardingRepo
 import com.example.financemanager.repository.PayeeCategoryRepo
 import com.example.financemanager.repository.RepoFactory
@@ -52,6 +53,9 @@ class ViewModelFactory(repoFactory: RepoFactory) {
     val categoryAnalysisVM: CategoryAnalysisVM by lazy {
         CategoryAnalysisVM(repoFactory.get(RepoName.TRANSACTION) as TransactionRepo)
     }
+    val lendingVM: LendingVM by lazy {
+        LendingVM(repoFactory.get(RepoName.LENDING) as LendingRepo)
+    }
 
     fun getViewModel(name: ViewModelName): ViewModel {
         return when (name) {
@@ -63,6 +67,7 @@ class ViewModelFactory(repoFactory: RepoFactory) {
             ViewModelName.ANALYSIS -> analysisVM
             ViewModelName.SETTINGS -> settingsVM
             ViewModelName.CATEGORY_ANALYSIS -> categoryAnalysisVM
+            ViewModelName.LENDING -> lendingVM
         }
     }
 }

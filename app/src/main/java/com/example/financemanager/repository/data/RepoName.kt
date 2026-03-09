@@ -8,4 +8,5 @@ enum class RepoName {
     CATEGORY,
     ONBOARDING,
     PAYEE_CATEGORY,
+    LENDING,
 }

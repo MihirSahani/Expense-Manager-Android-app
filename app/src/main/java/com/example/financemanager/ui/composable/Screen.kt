@@ -5,6 +5,7 @@ import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PieChart
@@ -14,6 +15,7 @@ import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Assignment
 import androidx.compose.material.icons.outlined.Category
+import androidx.compose.material.icons.outlined.CurrencyExchange
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.PieChart
@@ -36,4 +38,5 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector,
     object ViewTransaction : Screen("view_transaction", "View Transaction", Icons.Outlined.Assignment, Icons.Default.Assignment)
     object ViewTransactionByCategory : Screen("view_transaction_by_category","View Transaction By Category", Icons.Outlined.Assignment, Icons.Default.Assignment)
     object AddTransaction : Screen("add_transaction", "Add Transaction", Icons.Outlined.Add, Icons.Default.Add)
+    object Lending : Screen("lending", "Lendings", Icons.Outlined.CurrencyExchange, Icons.Default.CurrencyExchange)
 }

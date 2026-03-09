@@ -9,6 +9,7 @@ import com.example.financemanager.database.PrepopulationData
 import com.example.financemanager.database.entity.Account
 import com.example.financemanager.database.entity.AppSetting
 import com.example.financemanager.database.entity.Category
+import com.example.financemanager.database.entity.Lending
 import com.example.financemanager.database.entity.PayeeCategoryMapper
 import com.example.financemanager.database.entity.PayeeDisplayNames
 import com.example.financemanager.database.entity.Transaction
@@ -16,6 +17,7 @@ import com.example.financemanager.database.entity.User
 import com.example.financemanager.database.localstorage.dao.AccountDao
 import com.example.financemanager.database.localstorage.dao.AppSettingDao
 import com.example.financemanager.database.localstorage.dao.CategoryDao
+import com.example.financemanager.database.localstorage.dao.LendingDao
 import com.example.financemanager.database.localstorage.dao.PayeeCategoryMapperDao
 import com.example.financemanager.database.localstorage.dao.PayeeDisplayDao
 import com.example.financemanager.database.localstorage.dao.TransactionDao
@@ -28,8 +30,8 @@ import kotlinx.coroutines.launch
 
 @Database(entities = [
         User::class, Account::class, Category::class, Transaction::class, AppSetting::class,
-        PayeeCategoryMapper::class, PayeeDisplayNames::class
-], version = 12)
+        PayeeCategoryMapper::class, PayeeDisplayNames::class, Lending::class
+], version = 14)
 abstract class ExpenseManagementDatabase: RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun accountDao(): AccountDao
@@ -38,6 +40,7 @@ abstract class ExpenseManagementDatabase: RoomDatabase() {
     abstract fun appSettingDao(): AppSettingDao
     abstract fun PayeeCategoryMapperDao(): PayeeCategoryMapperDao
     abstract fun payeeDisplayDao(): PayeeDisplayDao
+    abstract fun lendingDao(): LendingDao
 
     companion object {
         @Volatile
@@ -82,7 +85,8 @@ abstract class ExpenseManagementDatabase: RoomDatabase() {
             PrepopulationData.categories.forEach { category -> db.categoryDao().create(category) }
             PrepopulationData.payeeDisplayMapping.forEach { mapper -> db.payeeDisplayDao().insert(mapper) }
             PrepopulationData.payeeCategoryMapping.forEach { mapper -> db.PayeeCategoryMapperDao().insert(mapper) }
-            // db.userDao().create(DummyData.user)
+            PrepopulationData.lendings.forEach { lending -> db.lendingDao().insert(lending) }
+            db.userDao().create(PrepopulationData.user)
 
             db.appSettingDao().insert(AppSetting(Keys.BUDGET_TIMEFRAME.ordinal, Timeframe.MONTHLY.ordinal.toLong()))
             db.appSettingDao().insert(AppSetting(Keys.PREVIOUS_SALARY_CREDIT_TIME.ordinal, 0L))

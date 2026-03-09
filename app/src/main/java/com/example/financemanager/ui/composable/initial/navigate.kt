@@ -28,6 +28,7 @@ import com.example.financemanager.ui.composable.analysis.ViewTransactionByCatego
 import com.example.financemanager.ui.composable.category.AddEditCategoryScreen
 import com.example.financemanager.ui.composable.category.CategoryScreen
 import com.example.financemanager.ui.composable.home.HomeScreen
+import com.example.financemanager.ui.composable.lending.Lending
 import com.example.financemanager.ui.composable.transaction.AddTransactionScreen
 import com.example.financemanager.ui.composable.transaction.TransactionHistoryScreen
 import com.example.financemanager.ui.composable.transaction.ViewTransactionScreen
@@ -177,6 +178,11 @@ fun Navigate(viewModel: InitialVM) {
                     navController,
                     Graph.viewModelFactory.getViewModel(ViewModelName.TRANSACTION)
                             as TransactionVM
+                )
+            }
+            composable(Screen.Lending.route) {
+                Lending(
+                    Graph.viewModelFactory.getViewModel(ViewModelName.LENDING) as LendingVM
                 )
             }
         }

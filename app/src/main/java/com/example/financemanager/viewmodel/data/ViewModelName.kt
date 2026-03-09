@@ -8,5 +8,6 @@ enum class ViewModelName {
     USER_DETAILS_UPDATE,
     CATEGORY,
     ANALYSIS,
-    CATEGORY_ANALYSIS
+    CATEGORY_ANALYSIS,
+    LENDING,
 }

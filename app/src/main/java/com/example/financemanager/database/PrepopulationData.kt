@@ -3,6 +3,7 @@ package com.example.financemanager.database
 import com.example.financemanager.BuildConfig
 import com.example.financemanager.database.entity.Account
 import com.example.financemanager.database.entity.Category
+import com.example.financemanager.database.entity.Lending
 import com.example.financemanager.database.entity.PayeeCategoryMapper
 import com.example.financemanager.database.entity.PayeeDisplayNames
 import com.example.financemanager.database.entity.User
@@ -72,6 +73,12 @@ object PrepopulationData {
         PayeeDisplayNames(payee = "PPSL COMMUNI", displayName = "Airtel"),
         PayeeDisplayNames(payee = "Phonepemerchant@yesbank", displayName = "PhonePe Merchant"),
         PayeeDisplayNames(payee = "INTERNATIONAL AIR TRANSPO", displayName = "IATA Pay Account")
+    )
+
+    val lendings = listOf(
+        Lending(id = 1, isGiven = true, payee = "Amit", amount = 1000.0, isPaid = false, transactionDate = System.currentTimeMillis(), returnDate = 0L),
+        Lending(id = 2, isGiven = true, payee = "Shubham", amount = 50.0, isPaid = true, transactionDate = System.currentTimeMillis(), returnDate = 0L),
+        Lending(id = 3, isGiven = false, payee = "Munshi", amount = 200.0, isPaid = false, transactionDate = System.currentTimeMillis(), returnDate = 0L)
     )
 
     val user = User(firstName = "Mihir", lastName = "Sahani")
