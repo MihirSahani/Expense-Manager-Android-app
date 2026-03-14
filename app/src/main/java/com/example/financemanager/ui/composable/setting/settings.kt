@@ -25,6 +25,7 @@ import androidx.navigation.NavController
 import com.example.financemanager.ui.composable.Screen
 import com.example.financemanager.ui.composable.utils.MyInput
 import com.example.financemanager.ui.composable.utils.MyText
+import com.example.financemanager.ui.composable.utils.MyText.toStringDate
 import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.SettingsVM
 
@@ -32,7 +33,6 @@ import com.example.financemanager.viewmodel.SettingsVM
 fun SettingsScreen(navController: NavController, viewModel: SettingsVM) {
     val budgetTimeframe by viewModel.budgetTimeframe.collectAsState()
     val salaryCreditTime by viewModel.salaryCreditTime.collectAsState()
-
 
     SettingsScreenContent(
         budgetTimeframe = budgetTimeframe ?: 0L,
@@ -119,7 +119,7 @@ fun SettingsScreenContent(
                         Spacer(modifier = Modifier.width(16.dp))
                         MyText.Header1(text = "Salary Credit Time")
                     }
-                    MyText.Date(salaryCreditTime)
+                    MyText.Body(salaryCreditTime.toStringDate())
                 }
             }
             

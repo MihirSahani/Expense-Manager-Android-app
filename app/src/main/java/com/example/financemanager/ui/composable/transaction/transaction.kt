@@ -23,6 +23,8 @@ import com.example.financemanager.ui.composable.Screen
 import com.example.financemanager.ui.composable.category.parseColor
 import com.example.financemanager.ui.composable.utils.ListOfItems
 import com.example.financemanager.ui.composable.utils.MyText
+import com.example.financemanager.ui.composable.utils.MyText.toLongDate
+import com.example.financemanager.ui.composable.utils.MyText.toStringDate
 import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.TransactionVM
 import java.text.SimpleDateFormat
@@ -110,7 +112,7 @@ fun DateHeader(date: String) {
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        MyText.Body(text = date)
+        MyText.Body(text = date.toLongDate(pattern = "dd-MM-yyyy").toStringDate(pattern = "dd MMM yyyy"))
 
         HorizontalDivider(
             modifier = Modifier.weight(1f).padding(start = 8.dp),

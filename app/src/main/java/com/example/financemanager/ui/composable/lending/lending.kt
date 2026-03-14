@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Unarchive
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -26,6 +27,8 @@ import com.example.financemanager.database.entity.Lending
 import com.example.financemanager.ui.composable.utils.ListOfItems
 import com.example.financemanager.ui.composable.utils.MyInput
 import com.example.financemanager.ui.composable.utils.MyText
+import com.example.financemanager.ui.composable.utils.MyText.timeRemaining
+import com.example.financemanager.ui.composable.utils.MyText.toStringDate
 import com.example.financemanager.viewmodel.LendingVM
 
 @Composable
@@ -48,6 +51,12 @@ fun LendingContent(
     lendings: List<Lending>,
     onMarkPaid: (Int, Boolean) -> Unit
 ) {
+    val lendingGrouped = remember(lendings) {
+        lendings
+            .sortedByDescending { it.returnDate }
+            .groupBy { it.isGiven }
+    }
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -81,50 +90,79 @@ fun LendingContent(
                     MyText.Body(text = "No lendings yet")
                 }
             } else {
-                ListOfItems(if(isArchived) lendings.filter { it.isPaid } else lendings.filter { !it.isPaid }) { lending ->
-                    LendingItem(lending, onMarkPaid)
+                val archLendingsGrouped = when (isArchived) {
+                    true -> lendingGrouped.mapValues { (_, list) -> list.filter { it.isPaid } }
+                    false -> lendingGrouped.mapValues { (_, list) -> list.filter { !it.isPaid } }
                 }
+                ListOfItems(
+                    items = archLendingsGrouped,
+                    headerContent = { isGiven ->
+                        val type = if (isGiven) "Lent" else "Borrowed"
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            MyText.Body(type)
+                            HorizontalDivider(
+                                thickness = 1.dp,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                        }
+                    }
+                ) {
+                    LendingItem(it, onMarkPaid, isArchived)
+                }
+                // ListOfItems(
+                //     if(isArchived) lendings.filter { it.isPaid }
+                //     else lendings.filter { !it.isPaid }
+                // ) { lending ->
+                //     LendingItem(lending, onMarkPaid)
+                // }
             }
         }
     }
 }
 
 @Composable
-fun LendingItem(lending: Lending, onMarkPaid: (Int, Boolean) -> Unit) {
-    Row(
+fun LendingItem(lending: Lending, onMarkPaid: (Int, Boolean) -> Unit, isArchived: Boolean) {
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Row(Modifier.fillMaxWidth()) {
-            val type = if (lending.isGiven) "Lent" else "Borrowed"
-            MyText.Header1(text = lending.payee)
-            MyText.Body(text = "($type)")
-        }
-
-        Row(Modifier.fillMaxWidth()) {
-            val type = if (lending.isGiven) "Lent" else "Borrowed"
-            MyText.Header1(text = lending.payee)
-            MyText.Body(text = "($type)")
-            
-        }
-        Column(modifier = Modifier.weight(1f)) {
-
-        }
-        Column(horizontalAlignment = Alignment.End) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val type = if (lending.isGiven) "Lent" else "Borrowed"
+                MyText.Header1(text = lending.payee)
+                // MyText.Body(text = "\t($type)")
+            }
             MyText.TransactionAmount(
                 amount = lending.amount,
                 type = if (lending.isGiven) "income" else "expense"
             )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                MyText.Body(text = if(lending.isPaid) "Paid" else "Yet to Pay")
-                MyInput.Switch(checked = lending.isPaid, onCheckedChange = { onMarkPaid(lending.id, it) })
+        }
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column {
+                MyText.Body(
+                    "Transaction: ${lending.transactionDate.toStringDate(pattern = "dd MMM yyyy")}"
+                )
+                if(!isArchived) MyText.Body(lending.returnDate.timeRemaining())
             }
+            val text = if(lending.isPaid) "Mark as Unpaid" else "Mark as Paid"
+            MyInput.Button(text, onClick = { onMarkPaid(lending.id, !lending.isPaid) })
         }
     }
 }
@@ -136,10 +174,10 @@ fun LendingPreview() {
         isArchived = false,
         toggleIsArchived = {},
         lendings = listOf(
-            Lending(id = 1, isGiven = true, payee = "Amit", amount = 1000.0, isPaid = false, transactionDate = System.currentTimeMillis(), returnDate = 0L),
+            Lending(id = 1, isGiven = true, payee = "Amit", amount = 1000.0, isPaid = false, transactionDate = System.currentTimeMillis(), returnDate = System.currentTimeMillis().plus(1000 * 60 * 60 * 24 * 7)),
             Lending(id = 2, isGiven = true, payee = "Shubham", amount = 50.0, isPaid = true, transactionDate = System.currentTimeMillis(), returnDate = 0L),
             Lending(id = 3, isGiven = false, payee = "Munshi", amount = 200.0, isPaid = false, transactionDate = System.currentTimeMillis(), returnDate = 0L)
         ),
-        onMarkPaid = {a, b ->},
+        onMarkPaid = {_, _ ->},
     )
 }

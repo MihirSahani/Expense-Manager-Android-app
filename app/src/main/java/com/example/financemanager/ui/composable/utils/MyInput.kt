@@ -1,10 +1,17 @@
 package com.example.financemanager.ui.composable.utils
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -17,7 +24,9 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 object MyInput {
     @Composable
@@ -134,5 +143,53 @@ object MyInput {
                 disabledUncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.38f)
             )
         )
+    }
+
+    @Composable
+    fun Button(
+        text: String,
+        onClick: () -> Unit,
+        modifier: Modifier = Modifier,
+        enabled: Boolean = true,
+        leadingIcon: @Composable (() -> Unit)? = null
+    ) {
+        // Button(
+        //     onClick = onClick,
+        //     enabled = enabled,
+        //     shape = RoundedCornerShape(20),
+        //     colors = ButtonDefaults.buttonColors(
+        //         contentColor = MaterialTheme.colorScheme.onPrimary,
+        //         disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+        //         disabledContentColor = Color.White.copy(alpha = 0.6f)
+        //     ),
+        //     elevation = ButtonDefaults.buttonElevation(
+        //         defaultElevation = 0.dp,
+        //         pressedElevation = 0.dp
+        //     ),
+        //     // contentPadding = PaddingValues(horizontal = 32.dp, vertical = 14.dp),
+        //     modifier = modifier.padding((-10).dp)
+        // ) {
+        //     // Optional icon + text layout
+        //     if (leadingIcon != null) {
+        //         leadingIcon()
+        //         Spacer(modifier = Modifier.width(8.dp))
+        //     }
+        //     Text(
+        //         text = text,
+        //         fontSize = 16.sp,
+        //         fontWeight = FontWeight.SemiBold,
+        //         letterSpacing = 0.3.sp
+        //     )
+        // }
+
+        Box(
+            modifier
+                .padding(2.dp)
+                .background(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(20))
+                .clickable { onClick() }
+                .padding(8.dp)
+        ) {
+            MyText.Header1(text, color = MaterialTheme.colorScheme.onPrimaryContainer)
+        }
     }
 }

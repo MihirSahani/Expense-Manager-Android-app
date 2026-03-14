@@ -10,11 +10,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.financemanager.database.entity.Transaction
-import java.text.DecimalFormat
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.Locale
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import java.time.Instant
+import java.time.Period
 
 object MyText {
 
@@ -98,10 +102,53 @@ object MyText {
     }
 
     @Composable
-    fun Date(date: Long, color: Color = MaterialTheme.colorScheme.onSurfaceVariant) {
-        val format = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault())
-        val formattedDate = format.format(date)
-        Body(text = formattedDate, color)
+    fun Long.toStringDate(color: Color = MaterialTheme.colorScheme.onSurfaceVariant, pattern: String = "dd MMM yyyy HH:mm"): String {
+        val format = SimpleDateFormat(pattern, Locale.getDefault())
+        return format.format(this)
+    }
+
+    @Composable
+    fun String.toLongDate(color: Color = MaterialTheme.colorScheme.onSurfaceVariant, pattern: String = "dd MMM yyyy HH:mm"): Long {
+        val format = SimpleDateFormat(pattern, Locale.getDefault())
+        return format.parse(this)?.time ?: 0L
+    }
+
+    @OptIn(ExperimentalTime::class)
+    fun Long.timeRemaining(): String {
+
+        val returnInstant = Instant.ofEpochMilli(this)
+        val returnDate: LocalDate = returnInstant.atZone(ZoneId.systemDefault()).toLocalDate()
+        val currDate: LocalDate = LocalDate.now()
+
+        val output = StringBuilder()
+        var diff: Period
+        var counter: UInt = 0U
+
+        if (returnDate.isBefore(currDate)) {
+            output.append("Overdue: ")
+            diff = Period.between(returnDate, currDate)
+        } else {
+            output.append("Due in: ")
+            diff = Period.between(currDate, returnDate)
+        }
+
+        val years = diff.years
+        val months = diff.months
+        val days = diff.days
+
+        if (years == 0 && months == 0 && days == 0) return "Today"
+
+        if (years > 0) {
+            counter++
+            output.append("$years ${if (years == 1) "year" else "years"} ")
+        }
+        if (months > 0) {
+            counter++
+            output.append("$months ${if (months == 1) "month" else "months"} ")
+        }
+        if (days > 0 && counter != 2U) output.append("$days ${if (days == 1) "day" else "days"} ")
+
+        return output.toString().trim()
     }
 
     fun Double.toIndianFormat(): String {
