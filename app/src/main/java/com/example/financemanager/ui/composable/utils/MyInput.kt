@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -184,7 +185,8 @@ object MyInput {
 
         Box(
             modifier
-                .padding(2.dp)
+                // .padding(2.dp)
+                .fillMaxHeight()
                 .background(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(20))
                 .clickable { onClick() }
                 .padding(8.dp)

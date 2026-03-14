@@ -1,5 +1,6 @@
 package com.example.financemanager.ui.composable.lending
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -99,7 +100,8 @@ fun LendingContent(
                     headerContent = { isGiven ->
                         val type = if (isGiven) "Lent" else "Borrowed"
                         Row(
-                            Modifier.fillMaxWidth(),
+                            Modifier
+                                .fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -126,9 +128,11 @@ fun LendingContent(
 
 @Composable
 fun LendingItem(lending: Lending, onMarkPaid: (Int, Boolean) -> Unit, isArchived: Boolean) {
+    var isExpanded by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { isExpanded = !isExpanded }
             .padding(16.dp),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -150,20 +154,31 @@ fun LendingItem(lending: Lending, onMarkPaid: (Int, Boolean) -> Unit, isArchived
                 type = if (lending.isGiven) "income" else "expense"
             )
         }
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Column {
-                MyText.Body(
-                    "Transaction: ${lending.transactionDate.toStringDate(pattern = "dd MMM yyyy")}"
-                )
+        if (isExpanded) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column {
+                    MyText.Body(
+                        "Transaction: ${lending.transactionDate.toStringDate(pattern = "dd MMM yyyy")}"
+                    )
+                    if(!isArchived) MyText.Body(lending.returnDate.timeRemaining())
+                }
+                val text = if(lending.isPaid) "Mark as Unpaid" else "Mark as Paid"
+                MyInput.Button(text, onClick = { onMarkPaid(lending.id, !lending.isPaid) })
+            }
+        } else {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
                 if(!isArchived) MyText.Body(lending.returnDate.timeRemaining())
             }
-            val text = if(lending.isPaid) "Mark as Unpaid" else "Mark as Paid"
-            MyInput.Button(text, onClick = { onMarkPaid(lending.id, !lending.isPaid) })
         }
+
     }
 }
 
