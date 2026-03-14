@@ -22,4 +22,8 @@ class LendingRepo(private val db: ExpenseManagementDatabase) {
     suspend fun updateIsPaid(id: Int, isPaid: Boolean = true) {
         db.lendingDao().updateIsPaid(id, isPaid)
     }
+
+    suspend fun updateReturnDate(id: Int) {
+        db.lendingDao().updateReturnDate(id, System.currentTimeMillis())
+    }
 }

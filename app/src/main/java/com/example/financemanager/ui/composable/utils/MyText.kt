@@ -136,7 +136,7 @@ object MyText {
         val months = diff.months
         val days = diff.days
 
-        if (years == 0 && months == 0 && days == 0) return "Today"
+        if (years == 0 && months == 0 && days == 0) return "Due: Today"
 
         if (years > 0) {
             counter++

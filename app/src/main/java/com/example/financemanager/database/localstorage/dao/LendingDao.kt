@@ -28,4 +28,7 @@ abstract class LendingDao {
 
     @Query("UPDATE `lending` SET `is_paid` = :isPaid WHERE `id` = :id")
     abstract suspend fun updateIsPaid(id: Int, isPaid: Boolean)
+
+    @Query("UPDATE `lending` SET `return_date` = :returnDate WHERE `id` = :id")
+    abstract suspend fun updateReturnDate(id: Int, returnDate: Long)
 }

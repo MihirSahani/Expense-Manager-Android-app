@@ -115,12 +115,6 @@ fun LendingContent(
                 ) {
                     LendingItem(it, onMarkPaid, isArchived)
                 }
-                // ListOfItems(
-                //     if(isArchived) lendings.filter { it.isPaid }
-                //     else lendings.filter { !it.isPaid }
-                // ) { lending ->
-                //     LendingItem(lending, onMarkPaid)
-                // }
             }
         }
     }
@@ -155,16 +149,23 @@ fun LendingItem(lending: Lending, onMarkPaid: (Int, Boolean) -> Unit, isArchived
             )
         }
         if (isExpanded) {
-            Row(
+            Column(
                 Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.Center
             ) {
-                Column {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(2.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     MyText.Body(
-                        "Transaction: ${lending.transactionDate.toStringDate(pattern = "dd MMM yyyy")}"
+                        "Lent On: ${lending.transactionDate.toStringDate(pattern = "dd MMM yyyy")}"
                     )
                     if(!isArchived) MyText.Body(lending.returnDate.timeRemaining())
+                    else MyText.Body("Paid On: ${lending.returnDate.toStringDate(pattern = "dd MMM yyyy")}")
                 }
                 val text = if(lending.isPaid) "Mark as Unpaid" else "Mark as Paid"
                 MyInput.Button(text, onClick = { onMarkPaid(lending.id, !lending.isPaid) })
@@ -176,6 +177,7 @@ fun LendingItem(lending: Lending, onMarkPaid: (Int, Boolean) -> Unit, isArchived
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 if(!isArchived) MyText.Body(lending.returnDate.timeRemaining())
+                else MyText.Body("Paid On: ${lending.returnDate.toStringDate(pattern = "dd MMM yyyy")}")
             }
         }
 

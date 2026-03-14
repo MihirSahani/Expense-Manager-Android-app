@@ -34,6 +34,7 @@ class LendingVM(private val lendingRepo: LendingRepo): ViewModel() {
     fun markPaid(id: Int, value: Boolean = true) {
         viewModelScope.launch {
             lendingRepo.updateIsPaid(id, value)
+            lendingRepo.updateReturnDate(id)
         }
     }
 }
