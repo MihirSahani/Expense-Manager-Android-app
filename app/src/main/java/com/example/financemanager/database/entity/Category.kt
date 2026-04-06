@@ -17,6 +17,8 @@ data class Category(
     var type: String,
     @ColumnInfo(name = "color")
     var color: String,
+    @ColumnInfo(name = "icon")
+    var icon: Int?,
     @ColumnInfo(name = "created_at")
     var createdAt: String,
     @ColumnInfo(name = "updated_at")

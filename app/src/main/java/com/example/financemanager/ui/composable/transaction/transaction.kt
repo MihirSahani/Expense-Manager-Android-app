@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material.icons.filled.Warning
@@ -19,12 +20,14 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.Transaction
+import com.example.financemanager.repository.data.CategoryIcons
 import com.example.financemanager.ui.composable.Screen
 import com.example.financemanager.ui.composable.category.parseColor
 import com.example.financemanager.ui.composable.utils.ListOfItems
 import com.example.financemanager.ui.composable.utils.MyText
 import com.example.financemanager.ui.composable.utils.MyText.toLongDate
 import com.example.financemanager.ui.composable.utils.MyText.toStringDate
+import com.example.financemanager.ui.composable.utils.iconMapper
 import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.TransactionVM
 import java.text.SimpleDateFormat
@@ -137,7 +140,14 @@ fun TransactionItem(transaction: Transaction, category: Category?, onClick: () -
                     .size(32.dp)
                     .clip(CircleShape)
                     .background(parseColor(category.color))
-            )
+            ) {
+                Icon(
+                    iconMapper.getOrDefault(category.icon, Icons.Default.Add),
+                    contentDescription = category.name,
+                    modifier = Modifier.size(24.dp).align(Alignment.Center),
+                    tint = Color.Black
+                )
+            }
         } else {
             Box(
                 modifier = Modifier
@@ -176,8 +186,8 @@ fun TransactionItem(transaction: Transaction, category: Category?, onClick: () -
 @Composable
 fun TransactionHistoryPreview() {
     val sampleCategories = listOf(
-        Category(id = 1, name = "Food", description = "Groceries", type = "Expense", color = "#FF5733", createdAt = "", updatedAt = ""),
-        Category(id = 2, name = "Salary", description = "Monthly Income", type = "Income", color = "#33FF57", createdAt = "", updatedAt = "")
+        Category(id = 1, name = "Food", description = "Groceries", type = "Expense", color = "#FF5733", icon = CategoryIcons.GROCERIES.ordinal, createdAt = "", updatedAt = ""),
+        Category(id = 2, name = "Salary", description = "Monthly Income", type = "Income", color = "#33FF57", icon = CategoryIcons.SALARY.ordinal, createdAt = "", updatedAt = "")
     )
     val calendar = Calendar.getInstance()
     val sampleTransactions = listOf(

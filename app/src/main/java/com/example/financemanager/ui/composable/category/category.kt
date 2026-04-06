@@ -3,8 +3,6 @@ package com.example.financemanager.ui.composable.category
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -22,9 +20,11 @@ import androidx.navigation.NavController
 import com.example.financemanager.database.entity.Category
 import com.example.financemanager.viewmodel.CategoryVM
 import androidx.core.graphics.toColorInt
+import com.example.financemanager.repository.data.CategoryIcons
 import com.example.financemanager.ui.composable.Screen
 import com.example.financemanager.ui.composable.utils.ListOfItems
 import com.example.financemanager.ui.composable.utils.MyText
+import com.example.financemanager.ui.composable.utils.iconMapper
 import com.example.financemanager.ui.theme.FinanceManagerTheme
 
 @Composable
@@ -87,7 +87,14 @@ fun CategoryItem(category: Category, onClick: () -> Unit) {
                 .size(40.dp)
                 .clip(CircleShape)
                 .background(parseColor(category.color))
-        )
+        ) {
+            Icon(
+                iconMapper.getOrDefault(category.icon, Icons.Default.Add),
+                contentDescription = category.name,
+                modifier = Modifier.size(24.dp).align(Alignment.Center),
+                tint = Color.Black
+            )
+        }
         Spacer(modifier = Modifier.width(16.dp))
         Row(
             modifier = Modifier.weight(1f),
@@ -120,6 +127,7 @@ fun CategoryScreenPreview() {
             description = "Groceries and dining",
             type = "Expense",
             color = "#FF5733",
+            icon = CategoryIcons.FOOD.ordinal,
             createdAt = "",
             updatedAt = "",
             monthlyBudget = null
@@ -130,12 +138,14 @@ fun CategoryScreenPreview() {
             description = "Monthly income",
             type = "Income",
             color = "#33FF57",
+            icon = CategoryIcons.SALARY.ordinal,
             createdAt = "",
             updatedAt = "",
             monthlyBudget = null
         ),
         Category(
             id = 3, name = "Rent", description = "House rent", type = "Expense", color = "#3357FF",
+            icon = CategoryIcons.UTILITIES.ordinal,
             createdAt = "",
             updatedAt = "",
             monthlyBudget = null

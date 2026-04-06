@@ -30,7 +30,7 @@ class CategoryVM(
 
     var categoryId: Int? = null
 
-    fun addCategory(name: String, description: String, type: String, color: String) {
+    fun addCategory(name: String, description: String, type: String, color: String, icon: Int? = null) {
         viewModelScope.launch {
             val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
             val category = Category(
@@ -38,6 +38,7 @@ class CategoryVM(
                 description = description,
                 type = type,
                 color = color,
+                icon = icon,
                 createdAt = timestamp,
                 updatedAt = timestamp
             )

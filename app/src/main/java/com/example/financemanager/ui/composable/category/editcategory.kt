@@ -1,6 +1,7 @@
 package com.example.financemanager.ui.composable.category
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,10 +17,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -35,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -42,11 +47,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
+import com.example.financemanager.repository.data.CategoryIcons
 import com.example.financemanager.repository.data.colors
 import com.example.financemanager.ui.composable.utils.ListOfGrids
 import com.example.financemanager.ui.composable.utils.MyInput
 import com.example.financemanager.ui.composable.utils.MyText
 import com.example.financemanager.ui.composable.utils.MyText.toIndianFormat
+import com.example.financemanager.ui.composable.utils.iconMapper
 import com.example.financemanager.ui.theme.FinanceManagerTheme
 import com.example.financemanager.viewmodel.CategoryVM
 
@@ -61,9 +68,11 @@ fun AddEditCategoryScreen(navController: NavController, viewModel: CategoryVM) {
     var type by remember { mutableStateOf("Expense") }
     var color by remember { mutableStateOf("#FF0000") }
     var monthlyBudget by remember { mutableStateOf("") }
+    var icon by remember { mutableStateOf(CategoryIcons.FOOD) }
 
     var enableMonthlyBudget by remember { mutableStateOf(false) }
     var showColorPicker by remember { mutableStateOf(false) }
+    var showIconPicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(category) {
         category?.let {
@@ -84,7 +93,8 @@ fun AddEditCategoryScreen(navController: NavController, viewModel: CategoryVM) {
         onDescriptionChange = { description = it },
         type = type,
         onTypeChange = { type = it },
-        color = color,
+        selectedColor = color,
+        selectedIcon = icon,
         onColorChange = { color = it },
         monthlyBudget = monthlyBudget,
         onMonthlyBudgetChange = { monthlyBudget = it },
@@ -92,6 +102,9 @@ fun AddEditCategoryScreen(navController: NavController, viewModel: CategoryVM) {
         onEnableMonthlyBudgetChange = { enableMonthlyBudget = it },
         showColorPicker = showColorPicker,
         onColorPickerChange = { showColorPicker = it },
+        showIconPicker = showIconPicker,
+        onIconPickerChange = { showIconPicker = it },
+        onIconChange = { icon = it },
         onSaveClick = {
             if (viewModel.categoryId == null) {
                 viewModel.addCategory(name, description, type, color)
@@ -122,7 +135,8 @@ fun AddEditCategoryScreenContent(
     onDescriptionChange: (String) -> Unit,
     type: String,
     onTypeChange: (String) -> Unit,
-    color: String,
+    selectedColor: String,
+    selectedIcon: CategoryIcons,
     onColorChange: (String) -> Unit,
     monthlyBudget: String,
     onMonthlyBudgetChange: (String) -> Unit,
@@ -130,6 +144,9 @@ fun AddEditCategoryScreenContent(
     onEnableMonthlyBudgetChange: (Boolean) -> Unit,
     showColorPicker: Boolean,
     onColorPickerChange: (Boolean) -> Unit,
+    showIconPicker: Boolean,
+    onIconPickerChange: (Boolean) -> Unit,
+    onIconChange: (CategoryIcons) -> Unit,
     onSaveClick: () -> Unit,
 ) {
     Scaffold(
@@ -221,13 +238,20 @@ fun AddEditCategoryScreenContent(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 )  {
-                    MyText.Header2("Color")
+                    MyText.Header2("Color & Icon")
                     Box(
                         modifier = Modifier
                             .size(30.dp)
                             .clip(CircleShape)
-                            .background(parseColor(color))
-                    )
+                            .background(parseColor(selectedColor))
+                    ) {
+                        Icon(
+                            iconMapper.getOrDefault(selectedIcon.ordinal, Icons.Default.Add),
+                            contentDescription = selectedIcon.name,
+                            modifier = Modifier.size(20.dp).align(Alignment.Center),
+                            tint = Color.Black
+                        )
+                    }
                 }
             }
 
@@ -251,25 +275,93 @@ fun AddEditCategoryScreenContent(
                 text = {
                     ListOfGrids(colors) { color ->
                         TextButton(
-                            onClick = {
-                                onColorChange(color)
-                                onColorPickerChange(false)
-                            }
+                            onClick = { onColorChange(color) }
                         ) {
-                            Box(
-                                modifier = Modifier
+                            var modifier: Modifier = Modifier
+                            if(color == selectedColor) {
+                                modifier = modifier
+                                    .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                                    .padding(5.dp)
                                     .size(30.dp)
+                            }
+                            else {
+                                modifier = modifier
+                                    .size(40.dp)
+                            }
+                            Box(
+                                modifier = modifier
                                     .clip(CircleShape)
                                     .background(parseColor(color))
                             )
+
                         }
                     }
                 },
                 confirmButton = {
+                    TextButton(onClick = {
+                        onColorPickerChange(false)
+                        onIconPickerChange(true)
+                    }) {
+                        MyText.Header1("Next")
+                    }
+                },
+                dismissButton = {
                     TextButton(onClick = { onColorPickerChange(false) }) {
                         MyText.Header1("Cancel")
                     }
                 }
+            )
+        }
+
+        if(showIconPicker) {
+            AlertDialog(
+                properties = DialogProperties(usePlatformDefaultWidth = false),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                containerColor = MaterialTheme.colorScheme.background,
+                onDismissRequest = { onColorPickerChange(false) },
+                title = { MyText.ScreenHeader("Select Icon") },
+                text = {
+                    ListOfGrids(CategoryIcons.entries) { icon->
+                        TextButton(
+                            onClick = {
+                                onIconChange(icon)
+                            }
+                        ) {
+                            var modifier: Modifier = Modifier
+                            modifier = if(icon == selectedIcon) {
+                                modifier
+                                    .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                                    .padding(5.dp)
+                                    .size(30.dp)
+                            } else {
+                                modifier
+                                    .size(40.dp)
+                            }
+                            Box(
+                                modifier = modifier
+                                    .clip(CircleShape)
+                                    .background(parseColor(selectedColor))
+                            ) {
+                                Icon(
+                                    iconMapper.getOrDefault(
+                                        icon.ordinal,
+                                        Icons.Default.Add
+                                    ),
+                                    contentDescription = icon.name,
+                                    modifier = if(icon == selectedIcon) {
+                                        Modifier.size(20.dp).align(Alignment.Center)
+                                    } else { Modifier.size(24.dp).align(Alignment.Center) },
+                                    tint = Color.Black
+                                )
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { onIconPickerChange(false) }) {
+                        MyText.Header1("Confirm")
+                    }
+                },
             )
         }
     }
@@ -287,7 +379,8 @@ fun AddCategoryScreenPreview() {
             onDescriptionChange = {},
             type = "Expense",
             onTypeChange = {},
-            color = "#FF0000",
+            selectedColor = "#FF0000",
+            selectedIcon = CategoryIcons.FOOD,
             onColorChange = {},
             monthlyBudget = "",
             onMonthlyBudgetChange = {},
@@ -295,6 +388,9 @@ fun AddCategoryScreenPreview() {
             onEnableMonthlyBudgetChange = {},
             showColorPicker = false,
             onColorPickerChange = {},
+            showIconPicker = false,
+            onIconPickerChange = {},
+            onIconChange = {},
             onSaveClick = {},
         )
     }
@@ -302,7 +398,7 @@ fun AddCategoryScreenPreview() {
 
 @Preview(showBackground = true, name = "Edit Category")
 @Composable
-fun EditCategoryScreenPreview() {
+fun EditCategoryScreenColorPickerPreview() {
     FinanceManagerTheme {
         AddEditCategoryScreenContent(
             isEditing = true,
@@ -312,7 +408,8 @@ fun EditCategoryScreenPreview() {
             onDescriptionChange = {},
             type = "Expense",
             onTypeChange = {},
-            color = "#4CAF50",
+            selectedColor = "#4CAF50",
+            selectedIcon = CategoryIcons.FOOD,
             onColorChange = {},
             monthlyBudget = "20000",
             onMonthlyBudgetChange = {},
@@ -320,6 +417,38 @@ fun EditCategoryScreenPreview() {
             onEnableMonthlyBudgetChange = {},
             showColorPicker = true,
             onColorPickerChange = {},
+            showIconPicker = false,
+            onIconPickerChange = {},
+            onIconChange = {},
+            onSaveClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Edit Category")
+@Composable
+fun EditCategoryScreenIconPickerPreview() {
+    FinanceManagerTheme {
+        AddEditCategoryScreenContent(
+            isEditing = true,
+            name = "Groceries",
+            onNameChange = {},
+            description = "Weekly grocery shopping",
+            onDescriptionChange = {},
+            type = "Expense",
+            onTypeChange = {},
+            selectedColor = "#4CAF50",
+            selectedIcon = CategoryIcons.FOOD,
+            onColorChange = {},
+            monthlyBudget = "20000",
+            onMonthlyBudgetChange = {},
+            enableMonthlyBudget = true,
+            onEnableMonthlyBudgetChange = {},
+            showColorPicker = false,
+            onColorPickerChange = {},
+            showIconPicker = true,
+            onIconPickerChange = {},
+            onIconChange = {},
             onSaveClick = {}
         )
     }

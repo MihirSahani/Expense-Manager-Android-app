@@ -20,6 +20,7 @@ import androidx.navigation.NavController
 import com.example.financemanager.database.entity.Account
 import com.example.financemanager.database.entity.Category
 import com.example.financemanager.database.entity.Transaction
+import com.example.financemanager.repository.data.CategoryIcons
 import com.example.financemanager.ui.composable.utils.ListOfItems
 import com.example.financemanager.ui.composable.utils.MyInput
 import com.example.financemanager.ui.composable.utils.MyText
@@ -327,7 +328,7 @@ fun ViewTransactionPreview() {
         rawAccountIdName = "1234"
     )
     val sampleCategories = listOf(
-        Category(id = 1, name = "Food", description = "Groceries", type = "Expense", color = "#FF5733", createdAt = "", updatedAt = "")
+        Category(id = 1, name = "Food", description = "Groceries", type = "Expense", color = "#FF5733", icon = CategoryIcons.GROCERIES.ordinal, createdAt = "", updatedAt = "")
     )
     val sampleAccounts = listOf(
         Account(id = 1, name = "Debit Card", type = "Bank", currency = "USD", currentBalance = 1000.0, bankName = "Chase", rawAccountNo = "1234", isIncludedInTotal = true, createdAt = "", updatedAt = "")

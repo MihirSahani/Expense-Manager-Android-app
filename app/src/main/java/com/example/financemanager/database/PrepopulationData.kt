@@ -7,6 +7,7 @@ import com.example.financemanager.database.entity.Lending
 import com.example.financemanager.database.entity.PayeeCategoryMapper
 import com.example.financemanager.database.entity.PayeeDisplayNames
 import com.example.financemanager.database.entity.User
+import com.example.financemanager.repository.data.CategoryIcons
 import com.example.financemanager.repository.data.colors
 
 object PrepopulationData {
@@ -17,14 +18,14 @@ object PrepopulationData {
     )
 
     val categories = listOf(
-        Category(id = 1, name = "Food", description = "Dining and groceries", type = "Expense", color = colors[0], createdAt = "", updatedAt = "", monthlyBudget = 10_000.0),
-        Category(id = 2, name = "Transport", description = "Fuel and public transport", type = "Expense", color = colors[5], createdAt = "", updatedAt = "", monthlyBudget = 2_000.0),
-        Category(id = 3, name = "Salary", description = "Monthly pay", type = "Income", color = colors[9], createdAt = "", updatedAt = ""),
-        Category(id = 4, name = "Groceries", description = "Groceries", type = "Expense", color = colors[14], createdAt = "", updatedAt = ""),
-        Category(id = 5, name = "Utilities", description = "Electricity, water, gas", type = "Expense", color = colors[2], createdAt = "", updatedAt = "", 2_000.0),
-        Category(id = 6, name = "Family and Friends", description = "Gifts, vacations", type = "Expense", color = colors[1], createdAt = "", updatedAt = ""),
-        Category(id = 7, name = "Shopping", description = "Clothing, shoes, accessories", type = "Expense", color = colors[7], createdAt = "", updatedAt = "", 8_000.0),
-        Category(id = 8, name = "Investment", description = "Mutual Funds, stocks, etc", type = "Expense", color = colors[13], createdAt = "", updatedAt = "", 30_000.0)
+        Category(id = 1, name = "Food", description = "Dining and groceries", type = "Expense", color = colors[0], icon = CategoryIcons.FOOD.ordinal, createdAt = "", updatedAt = "", monthlyBudget = 10_000.0),
+        Category(id = 2, name = "Transport", description = "Fuel and public transport", type = "Expense", color = colors[5], icon = CategoryIcons.TRANSPORT.ordinal, createdAt = "", updatedAt = "", monthlyBudget = 2_000.0),
+        Category(id = 3, name = "Salary", description = "Monthly pay", type = "Income", color = colors[9], icon = CategoryIcons.SALARY.ordinal, createdAt = "", updatedAt = ""),
+        Category(id = 4, name = "Groceries", description = "Groceries", type = "Expense", color = colors[14], icon = CategoryIcons.GROCERIES.ordinal, createdAt = "", updatedAt = ""),
+        Category(id = 5, name = "Utilities", description = "Electricity, water, gas", type = "Expense", color = colors[2], icon = CategoryIcons.UTILITIES.ordinal, createdAt = "", updatedAt = "", 2_000.0),
+        Category(id = 6, name = "Family and Friends", description = "Gifts, vacations", type = "Expense", color = colors[1], icon = CategoryIcons.FRIENDS_AND_FAMILIES.ordinal, createdAt = "", updatedAt = ""),
+        Category(id = 7, name = "Shopping", description = "Clothing, shoes, accessories", type = "Expense", color = colors[7], icon = CategoryIcons.SHOPPING.ordinal, createdAt = "", updatedAt = "", 8_000.0),
+        Category(id = 8, name = "Investment", description = "Mutual Funds, stocks, etc", type = "Expense", color = colors[13], icon = CategoryIcons.INVESTMENT.ordinal, createdAt = "", updatedAt = "", 30_000.0)
     )
 
     val payeeCategoryMapping = listOf(

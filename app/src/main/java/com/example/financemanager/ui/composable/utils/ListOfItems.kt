@@ -94,7 +94,7 @@ fun <T> ListOfGrids(
     content: @Composable (T) -> Unit
 ) {
     LazyVerticalGrid(
-        columns = GridCells.Adaptive(50.dp),
+        columns = GridCells.Adaptive(60.dp),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),

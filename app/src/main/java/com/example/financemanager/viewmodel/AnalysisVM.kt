@@ -58,6 +58,7 @@ class AnalysisVM(
                         description = "Transactions without a category",
                         type = "Expense",
                         color = "#808080", // Gray,
+                        icon = null,
                         updatedAt = "",
                         createdAt = "",
                     ),

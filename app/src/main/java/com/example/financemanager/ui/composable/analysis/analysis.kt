@@ -21,6 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.financemanager.database.entity.Category
+import com.example.financemanager.repository.data.CategoryIcons
 import com.example.financemanager.ui.composable.Screen
 import com.example.financemanager.ui.composable.category.parseColor
 import com.example.financemanager.ui.composable.utils.Chart
@@ -219,17 +220,17 @@ fun CategoryAnalysisItem(spending: CategorySpending, onCategoryClick: (Int?) -> 
 fun AnalysisScreenPreview() {
     val sampleSpending = listOf(
         CategorySpending(
-            category = Category(id = 1, name = "Food", description = "Groceries", type = "Expense", color = "#FF5733", createdAt = "", updatedAt = "", monthlyBudget = 5000.0),
+            category = Category(id = 1, name = "Food", description = "Groceries", type = "Expense", color = "#FF5733", icon = CategoryIcons.FOOD.ordinal, createdAt = "", updatedAt = "", monthlyBudget = 5000.0),
             totalSpending = 3500.0,
             budget = 5000.0
         ),
         CategorySpending(
-            category = Category(id = 2, name = "Rent", description = "Monthly rent", type = "Expense", color = "#3357FF", createdAt = "", updatedAt = "", monthlyBudget = 15000.0),
+            category = Category(id = 2, name = "Rent", description = "Monthly rent", type = "Expense", color = "#3357FF", icon = CategoryIcons.UTILITIES.ordinal, createdAt = "", updatedAt = "", monthlyBudget = 15000.0),
             totalSpending = 15000.0,
             budget = 15000.0
         ),
         CategorySpending(
-            category = Category(id = 3, name = "Entertainment", description = "Movies, etc", type = "Expense", color = "#F033FF", createdAt = "", updatedAt = "", monthlyBudget = 2000.0),
+            category = Category(id = 3, name = "Entertainment", description = "Movies, etc", type = "Expense", color = "#F033FF", icon = CategoryIcons.FRIENDS_AND_FAMILIES.ordinal, createdAt = "", updatedAt = "", monthlyBudget = 2000.0),
             totalSpending = 2500.0,
             budget = 2000.0
         )

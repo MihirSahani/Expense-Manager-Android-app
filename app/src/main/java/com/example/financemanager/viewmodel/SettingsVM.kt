@@ -53,6 +53,8 @@ class SettingsVM(private val appSettingRepo: AppSettingRepo) : ViewModel() {
             createdAt = System.currentTimeMillis().toString(),
             updatedAt = System.currentTimeMillis().toString(),
             color = "#FF0000",
+            icon = null,
+            monthlyBudget = null
         )
         Graph.notificationManager.showTransactionNotification(testTransaction, testCategory)
     }
